@@ -1,0 +1,15 @@
+:root{
+  --bg:#020d18;--card:rgba(6,20,38,0.96);
+  --border:rgba(55,130,200,0.16);--border-hi:rgba(85,193,255,0.28);
+  --text:#fff;--muted:#7a9bbf;
+  --acc:#55c1ff;--acc2:#1b7cff;
+  --alert:#ff5f5f;--alert-dim:rgba(255,95,95,0.1);
+  --ok:#3fcf82;--ok-dim:rgba(63,207,130,0.1);
+  --warn:#f5a623;
+  --r:12px;--r2:16px;
+  --mono:'Space Mono',ui-monospace,monospace;
+  --cond:'Barlow Condensed',system-ui,sans-serif;
+  --sans:'Barlow',system-ui,sans-serif;
+}
+/* placeholder - full CSS uploaded in next commit if truncated */
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);}

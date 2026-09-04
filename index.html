@@ -350,13 +350,19 @@ select.enc-inp option{background:#0d1f36;color:#e8f4ff;}
 .atc-map-wrap{position:relative;width:100%;height:min(58vh,480px);min-height:300px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border);background:#0b1220;margin-bottom:12px;}
 #atc-live-map{position:absolute;inset:0;width:100%;height:100%;background:#0b1220;}
 .atc-traffic-status{position:absolute;left:10px;bottom:10px;z-index:500;font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.5px;color:#cde;background:rgba(0,0,0,.55);border:1px solid rgba(85,193,255,.25);padding:4px 9px;border-radius:6px;pointer-events:none;}
-.ac-plane{position:absolute;left:-12px;top:-12px;width:24px;height:24px;color:#f5a623;filter:drop-shadow(0 0 3px rgba(0,0,0,.85));}
-.ac-plane svg{width:24px;height:24px;display:block;}
-.ac-label{position:absolute;left:14px;top:-20px;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.25;color:#fff;background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:3px 6px;pointer-events:none;text-shadow:0 1px 2px #000;}
-.ac-label .ac-cs{font-weight:700;color:#ffe6a8;}
-.ac-label .ac-meta{color:#e8eef5;}
-#atc-live-map .leaflet-container{background:#0b1220;}
-#atc-live-map .leaflet-control-zoom a{background:#132033;color:#9ec9ff;border-color:#24364f;}
+.ac-marker{background:none!important;border:none!important;}
+.ac-plane{position:absolute;left:-11px;top:-11px;width:22px;height:22px;filter:drop-shadow(0 0 2px rgba(0,0,0,.95));}
+.ac-plane svg{width:22px;height:22px;display:block;}
+.ac-plane.c-hi{color:#d946ef;}
+.ac-plane.c-mid{color:#f5c542;}
+.ac-plane.c-lo{color:#d1d5db;}
+.ac-plane.c-gnd{color:#9ca3af;}
+.ac-label{position:absolute;left:14px;top:-18px;white-space:nowrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.2;color:#fff;background:#111;border:1px solid #222;border-radius:2px;padding:2px 5px 3px;pointer-events:none;text-shadow:0 1px 1px #000;}
+.ac-label .ac-cs{font-weight:700;color:#fff;letter-spacing:.3px;}
+.ac-label .ac-meta{color:#fff;font-weight:600;}
+#atc-live-map .leaflet-container{background:#0a0e14;}
+#atc-live-map .leaflet-control-zoom a{background:#0f2a36;color:#d6e8ef;border-color:#1a3a48;}
+#atc-live-map .leaflet-control-scale-line{background:rgba(20,20,20,.75);color:#ddd;border-color:#888;font-family:ui-monospace,monospace;font-size:10px;}
 .atc-map-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .atc-map-bar .adsb-link{margin:0;padding:8px 12px;font-size:12px;}
 .atc-map-hint{font-family:var(--cond);font-size:10px;letter-spacing:.6px;color:var(--muted);line-height:1.4;margin:0 0 10px;}
@@ -2101,9 +2107,9 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
           <button type="button" onclick="atcMapMode('rain')" title="Rain radar overlay">Rain</button>
           <button type="button" onclick="atcMapMode('tncc')" title="Center on TNCC">TNCC</button>
         </div>
-        <a class="adsb-link" id="atc-adsb-ext" href="https://globe.adsbexchange.com/?lat=12.1889&lon=-68.9597&zoom=10.5" target="_blank" rel="noopener">Open ADS-B Exchange →</a>
+        <a class="adsb-link" id="atc-adsb-ext" href="https://globe.adsbexchange.com/?lat=12.35&lon=-69.40&zoom=8.8" target="_blank" rel="noopener">Open ADS-B Exchange →</a>
       </div>
-      <p class="atc-map-hint">Live aircraft around Curaçao — callsign, speed (kt), altitude (ft). Orange icons match ADS-B style. Tap ↻ to refresh.</p>
+      <p class="atc-map-hint">ABC islands + Venezuela coast — labels show kt / ft / callsign. Colors by altitude (purple high, yellow mid, grey low). Data: adsb.lol (free).</p>
       <div class="atc-map-wrap">
         <div id="atc-live-map"></div>
         <div id="atc-traffic-status" class="atc-traffic-status">Loading traffic…</div>
@@ -4593,15 +4599,23 @@ async function fetchStationsData(){
 /* ── ATC ── */
 /* ── ATC live map (Leaflet + ADS-B, ADS-B Exchange style labels) ── */
 const ATC_ADSB_BASE='https://globe.adsbexchange.com/';
-const ATC_CENTER=[12.17,-68.99];
+const ATC_CENTER=[12.35,-69.40];
 let atcMap=null, atcBaseLayer=null, atcSatLayer=null, atcRainLayer=null, atcAcLayer=null, atcTimer=null;
 
-function atcPlaneIcon(track, labelHtml){
+function atcAltClass(alt){
+  const a=Number(alt);
+  if(!isFinite(a)||a<=0) return 'c-gnd';
+  if(a>=28000) return 'c-hi';
+  if(a>=10000) return 'c-mid';
+  return 'c-lo';
+}
+function atcPlaneIcon(track, labelHtml, alt){
   const rot=(typeof track==='number'&&isFinite(track))?track:0;
-  const html=`<div class="ac-plane" style="transform:rotate(${rot}deg)">
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 2.5l2.2 6.3h6.3l-5.1 3.7 2 6.2L12 15.6 6.6 18.7l2-6.2L3.5 8.8h6.3L12 2.5z"/></svg>
-</div><div class="ac-label">${labelHtml}</div>`;
-  return L.divIcon({className:'ac-marker', html, iconSize:[0,0], iconAnchor:[0,0]});
+  const cls=atcAltClass(alt);
+  const html='<div class="ac-plane '+cls+'" style="transform:rotate('+rot+'deg)">'+
+    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16z"/></svg>'+
+    '</div><div class="ac-label">'+labelHtml+'</div>';
+  return L.divIcon({className:'ac-marker', html:html, iconSize:[0,0], iconAnchor:[0,0]});
 }
 
 function atcFmtAlt(alt, vs){
@@ -4621,10 +4635,11 @@ async function atcInitMap(){
   try{ await ensureLeaflet(); }catch(e){ const st=document.getElementById('atc-traffic-status'); if(st) st.textContent='Map library failed to load'; return; }
   if(typeof L==='undefined') return;
   if(atcMap){ try{atcMap.invalidateSize();}catch(e){} return; }
-  atcMap=L.map(el,{zoomControl:true,attributionControl:true}).setView(ATC_CENTER,10);
+  atcMap=L.map(el,{zoomControl:true,attributionControl:true}).setView(ATC_CENTER,9);
   atcBaseLayer=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    attribution:'&copy; OSM &copy; CARTO', maxZoom:19, subdomains:'abcd'
+    attribution:'© OpenMapTiles © OSM', maxZoom:19, subdomains:'abcd'
   }).addTo(atcMap);
+  try{ L.control.scale({imperial:true,metric:false,position:'bottomleft'}).addTo(atcMap); }catch(e){}
   atcSatLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
     attribution:'Tiles &copy; Esri', maxZoom:19
   });
@@ -4641,23 +4656,15 @@ async function atcInitMap(){
   atcTrafficRefresh();
   if(atcTimer) clearInterval(atcTimer);
   atcTimer=setInterval(atcTrafficRefresh, 15000);
+  // Cloud/radar overlay like ADS-B Exchange
+  setTimeout(function(){ try{ atcMapMode('rain'); }catch(e){} },400);
   setTimeout(function(){try{atcMap.invalidateSize();}catch(e){}},250);
 }
 
 function atcParseAircraft(j){
-  if(!j) return [];
+  if(!j || j.error) return [];
   if(Array.isArray(j.ac)) return j.ac;
   if(Array.isArray(j.aircraft)) return j.aircraft;
-  if(Array.isArray(j.states)){
-    // OpenSky: [icao24,callsign,orig,time,last,lon,lat,baro,on_gnd,vel,hdg,vrate,...]
-    return j.states.map(function(s){
-      return {
-        hex:s[0], flight:s[1], lon:s[5], lat:s[6],
-        alt_baro:s[7], gs:s[9]!=null?s[9]*1.94384:null,
-        track:s[10], baro_rate:s[11]!=null?s[11]*196.85:null
-      };
-    });
-  }
   return [];
 }
 
@@ -4668,22 +4675,21 @@ async function atcTrafficRefresh(){
   if(st) st.textContent='Updating traffic…';
   const lat=(atcMap.getCenter()&&atcMap.getCenter().lat)||ATC_CENTER[0];
   const lon=(atcMap.getCenter()&&atcMap.getCenter().lng)||ATC_CENTER[1];
-  const dist=300;
+  const dist=400;
+  // Free community feed only — no OpenSky / no paid ADS-B Exchange key
   const urls=[
-    // Correct adsb.lol path is /v2/point/{lat}/{lon}/{nm} (old /lat/lon/dist returns empty)
     'https://api.adsb.lol/v2/point/'+lat.toFixed(4)+'/'+lon.toFixed(4)+'/'+dist,
-    'https://api.adsb.lol/v2/lat/'+lat.toFixed(4)+'/lon/'+lon.toFixed(4)+'/dist/'+dist,
-    'https://opensky-network.org/api/states/all?lamin='+(lat-3)+'&lomin='+(lon-4)+'&lamax='+(lat+3)+'&lomax='+(lon+4)
+    'https://api.adsb.lol/v2/lat/'+lat.toFixed(4)+'/lon/'+lon.toFixed(4)+'/dist/'+dist
   ];
   let list=[], via='';
   for(const u of urls){
     try{
-      // adsb.lol has no CORS — use proxy chain (robustFetch), not direct-only fetchJson
       const out=await fetchRetry(u);
       if(!out.ok||!out.text) continue;
+      if(/api[\s_-]*key/i.test(out.text)) continue;
       const j=extractJson(out.text);
       const ac=atcParseAircraft(j);
-      if(ac.length){ list=ac; via=out.via||''; break; }
+      if(ac.length){ list=ac; via='adsb.lol'; break; }
     }catch(e){}
   }
   atcAcLayer.clearLayers();
@@ -4698,16 +4704,17 @@ async function atcTrafficRefresh(){
     const track=ac.track!=null?ac.track:(ac.true_heading!=null?ac.true_heading:ac.heading);
     const vs=ac.baro_rate!=null?ac.baro_rate:ac.vert_rate;
     const spd=gs!=null&&isFinite(gs)?Math.round(gs)+' kt':'—';
-    const label='<div class="ac-meta">'+spd+' '+atcFmtAlt(alt,vs)+'</div><div class="ac-cs">'+escHtml(cs)+'</div>';
-    const m=L.marker([la,lo],{icon:atcPlaneIcon(track,label),interactive:true});
+    const altN=alt!=null&&isFinite(Number(alt))?Math.round(Number(alt)):'—';
+    const label='<div class="ac-meta">'+spd+' '+altN+' ft</div><div class="ac-cs">'+escHtml(cs)+'</div>';
+    const m=L.marker([la,lo],{icon:atcPlaneIcon(track,label,alt),interactive:true});
     m.bindPopup('<b>'+escHtml(cs)+'</b><br>'+spd+' · '+atcFmtAlt(alt,vs)+'<br>Track '+(track!=null?Math.round(track)+'°':'—'));
     m.addTo(atcAcLayer);
     n++;
   });
   if(st){
     st.textContent=n
-      ? (n+' aircraft nearby'+(via?' · '+via:''))
-      : 'No aircraft from feed — open ADS-B Exchange';
+      ? (n+' aircraft nearby · adsb.lol')
+      : 'No aircraft in range — open adsb.lol (free)';
   }
 }
 

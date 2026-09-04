@@ -1,6 +1,6 @@
 /* RWCAPP service worker — offline app shell.
    Bump CACHE on each release so browsers drop the old shell. */
-const CACHE = 'rwcapp-shell-v12';
+const CACHE = 'rwcapp-shell-v13';
 const SHELL = [
   './',
   './index.html',

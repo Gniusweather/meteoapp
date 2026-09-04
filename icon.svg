@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#062038"/>
+      <stop offset="1" stop-color="#020d18"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#55c1ff"/>
+      <stop offset="1" stop-color="#1b7cff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- cloud -->
+  <path fill="url(#acc)" d="M168 300a64 64 0 0 1 8-127 90 90 0 0 1 172 26 56 56 0 0 1-12 110H180a44 44 0 0 1-12-9z"/>
+  <!-- sun behind -->
+  <circle cx="350" cy="150" r="44" fill="#ffd166" opacity="0.9"/>
+  <!-- rain -->
+  <g stroke="#55c1ff" stroke-width="14" stroke-linecap="round">
+    <line x1="190" y1="350" x2="172" y2="398"/>
+    <line x1="256" y1="350" x2="238" y2="398"/>
+    <line x1="322" y1="350" x2="304" y2="398"/>
+  </g>
+  <text x="256" y="470" font-family="Arial,Helvetica,sans-serif" font-size="58" font-weight="800" fill="#55c1ff" text-anchor="middle" letter-spacing="4">RWC</text>
+</svg>

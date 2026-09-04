@@ -1,0 +1,19 @@
+{
+  "name": "RWCAPP — Regional Weather Curaçao",
+  "short_name": "RWCAPP",
+  "description": "Live METAR, TAF, SYNOP and observer tools for Curaçao, Aruba and Bonaire.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#020d18",
+  "theme_color": "#020d18",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

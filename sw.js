@@ -1,11 +1,11 @@
-/* RWCAPP service worker
-   v14 — small precache, network-first HTML so deploys show up fast. */
-const CACHE = 'rwcapp-shell-v14';
+/* RWCAPP service worker v15 */
+const CACHE = 'rwcapp-shell-v15';
 
-// Only the files needed to boot. Optional images / Leaflet are cached on demand.
 const PRECACHE = [
   './',
   './index.html',
+  './styles.css',
+  './app.js',
   './manifest.webmanifest',
   './icon.svg'
 ];
@@ -63,23 +63,15 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
-
   const url = new URL(req.url);
-
-  // Weather / traffic / fonts / tiles — never intercept (stay fresh, no SW delay)
   if (isLiveRequest(url)) return;
-
   const sameOrigin = url.origin === self.location.origin;
   const isLeaflet = url.hostname === 'unpkg.com';
   if (!sameOrigin && !isLeaflet) return;
-
-  // App HTML: network first so a new GitHub Pages deploy wins immediately
   if (sameOrigin && isHtmlRequest(req, url)) {
     e.respondWith(networkFirst(req));
     return;
   }
-
-  // Static shell + Leaflet: cache first, refresh in background
   e.respondWith(cacheFirst(req));
 });
 

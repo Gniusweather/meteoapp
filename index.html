@@ -255,24 +255,6 @@ tr.synop-decoded-row td{background:rgba(2,8,18,0.85);padding:10px;border-bottom:
 .sum-tbl th,.sum-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;font-family:var(--mono);}
 .sum-tbl th{font-family:var(--cond);letter-spacing:.8px;text-transform:uppercase;font-size:10px;color:var(--acc);}
 .sum-tbl .muted{color:var(--muted);}
-.sum-wx{font-family:var(--sans);font-size:10px;color:#d6eaff;background:rgba(85,193,255,0.08);border:1px solid var(--border);border-radius:5px;padding:2px 6px;display:inline-block;line-height:1.35;white-space:normal;}
-.sum-wx.wx-ts{background:rgba(255,95,95,0.14);border-color:rgba(255,95,95,0.35);color:#ffd9d9;}
-.sum-wx.wx-shwr{background:rgba(85,193,255,0.14);border-color:rgba(85,193,255,0.35);}
-.sum-cards{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
-.sum-row{border-radius:9px;border:1px solid var(--border);background:rgba(5,18,34,0.9);padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
-.sum-row.empty{opacity:.42;}
-.sum-row-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.sum-row-time{display:flex;align-items:baseline;gap:6px;font-family:var(--mono);}
-.sum-row-time .lh{font-size:14px;font-weight:700;color:#fff;}
-.sum-row-time .lz{font-size:10px;color:var(--muted);}
-.sum-row-src{font-family:var(--cond);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
-.sum-row-vals{display:grid;grid-template-columns:repeat(6,1fr);gap:4px 6px;font-family:var(--mono);font-size:11px;}
-.sum-row-vals .sv{display:flex;flex-direction:column;gap:1px;}
-.sum-row-vals .sv-lbl{font-family:var(--cond);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
-.sum-row-vals .sv-val{color:#e6f2ff;}
-.sum-row-vals .sv-val.alert{color:var(--alert);}
-.sum-row-vals .sv-val.warn{color:var(--warn);}
-@media(max-width:400px){.sum-row-vals{grid-template-columns:repeat(3,1fr);}}
 .enc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
 .enc-field{background:rgba(3,12,24,0.9);padding:8px 12px;display:flex;flex-direction:column;gap:3px;}
 .enc-field.wide{grid-column:span 2;}
@@ -293,6 +275,7 @@ select.enc-inp option{background:#0d1f36;color:#e8f4ff;}
 #enc-form-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 #synop-sub-encode .enc-out-wrap{flex:0 0 auto;position:relative;z-index:5;border-top:2px solid var(--acc);background:rgba(4,16,32,0.98);box-shadow:0 -8px 24px rgba(0,0,0,0.35);padding:8px 12px 10px;}
 #synop-sub-encode .enc-out{margin-bottom:0;}
+.enc-bdwn{display:flex;flex-direction:column;gap:2px;margin-top:4px;}
 .enc-row{display:grid;grid-template-columns:76px 1fr;gap:6px;font-size:11px;padding:2px 0;border-bottom:1px solid rgba(30,50,80,0.2);}
 .enc-row:last-child{border-bottom:none;}
 .enc-row-code{font-family:var(--mono);font-weight:700;color:var(--acc);letter-spacing:.5px;white-space:nowrap;}
@@ -300,6 +283,9 @@ select.enc-inp option{background:#0d1f36;color:#e8f4ff;}
 .enc-chk{display:flex;align-items:center;gap:6px;font-family:var(--cond);font-weight:700;font-size:11px;letter-spacing:.5px;color:#cfe6ff;cursor:pointer;padding:5px 0;}
 .enc-chk input{width:16px;height:16px;accent-color:var(--acc);cursor:pointer;}
 .enc-mode{font-family:var(--mono);font-weight:400;font-size:9px;letter-spacing:1px;color:var(--acc);background:rgba(27,124,255,0.12);border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin-left:6px;text-transform:none;}
+.enc-verify{font-family:var(--sans);font-size:12px;line-height:1.5;color:rgba(200,225,255,0.85);background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.25);border-radius:6px;padding:9px 12px;margin-top:2px;}
+.enc-verify .ev-hdr{font-family:var(--cond);font-weight:800;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ok);margin-bottom:5px;}
+.enc-verify b{color:#eef5ff;font-weight:600;}
 /* LESSONS */
 #lessons-sub-bar{position:sticky;top:0;z-index:15;background:#04101f;box-shadow:0 8px 12px -8px rgba(0,0,0,0.7);}
 .lsn-search-wrap{padding:4px 10px 10px;}
@@ -4469,39 +4455,45 @@ function encUpdate(){
   }
 
   const groups=[];
+  const bdwn=[];
 
   // AAXX header
   const aaxxLine=`${kind} AAXX ${yy}${gg}${iw}`;
+  bdwn.push([aaxxLine, `SYNOP header · Day ${yy} · ${gg}:00Z · wind in ${iw==='3'||iw==='4'?'kn':'m/s'}`]);
 
   // Station
   groups.push(iiiii);
+  bdwn.push([iiiii, `WMO station number`]);
 
   // Group 1: iRiXhVV
   const g1=ir+ix+h+vvCode;
   groups.push(g1);
+  bdwn.push([g1, `iR=${ir} iX=${ix} h=${h} VV=${vvCode} → vis ${v('enc-vis')||'?'} km`]);
 
   // Group 2: Nddff
   let g2=N+dd+ff;
   groups.push(g2);
   const wuLabel=iw==='3'||iw==='4'?'kn':'m/s';
   const dirTxt=dd==='00'?'calm':dd==='99'?'variable':dd==='//'?'—':dd+'0°';
+  bdwn.push([g2, `N=${N} dd=${dd} ff=${ff} → cover ${N}/8, dir ${dirTxt}, ${ffInt||0} ${wuLabel}`]);
   if(needExt){
     const ext='00'+String(ffInt).padStart(3,'0');
     groups.push(ext);
+    bdwn.push([ext, `Wind extension: ${ffInt} ${wuLabel}`]);
   }
 
   // Temperature
-  if(tEnc){const g='1'+tEnc;groups.push(g);}
+  if(tEnc){const g='1'+tEnc;groups.push(g);bdwn.push([g,`Temperature: ${v('enc-t')}°C`]);}
   // Dew point 2SnTdTdTd — or relative humidity as 29UUU when no dew point given
-  if(tdEnc){const g='2'+tdEnc;groups.push(g);}
+  if(tdEnc){const g='2'+tdEnc;groups.push(g);bdwn.push([g,`Dew point: ${v('enc-td')}°C`]);}
   else if(rhRaw!==''){
     const rh=Math.min(100,Math.max(0,Math.round(parseFloat(rhRaw))));
-    if(!isNaN(rh)){const g='29'+String(rh).padStart(3,'0');groups.push(g);}
+    if(!isNaN(rh)){const g='29'+String(rh).padStart(3,'0');groups.push(g);bdwn.push([g,`Relative humidity: ${rh}% (29UUU, no dew point)`]);}
   }
   // Station pressure
-  if(pstnEnc){const g='3'+pstnEnc;groups.push(g);}
+  if(pstnEnc){const g='3'+pstnEnc;groups.push(g);bdwn.push([g,`Station pressure: ${v('enc-pstn')} hPa`]);}
   // MSL pressure (reduced to mean sea level)
-  if(pmslEnc){const g='4'+pmslEnc;groups.push(g);}
+  if(pmslEnc){const g='4'+pmslEnc;groups.push(g);bdwn.push([g,`MSL pressure (reduced): ${v('enc-pmsl')} hPa`]);}
   // Tendency (FM-12 5appp — ppp is absolute 1/10 hPa; sign is in a)
   if(aVal!==''&&pppRaw!==''){
     const pppNum=parseFloat(pppRaw);
@@ -4509,6 +4501,7 @@ function encUpdate(){
       const ppp=String(Math.min(999,Math.round(Math.abs(pppNum)*10))).padStart(3,'0');
       const g='5'+aVal+ppp;
       groups.push(g);
+      bdwn.push([g,`Pres tendency: char ${aVal}, change ${pppNum>=0?'+':''}${pppRaw} hPa/3h`]);
     }
   }
   // Precipitation 6RRRtR — Sec 1 default tR=1 (6 h)
@@ -4519,7 +4512,7 @@ function encUpdate(){
       precipGroup='6'+rrrCode+trVal;
       const pDesc=['','6h','12h','18h','24h','1h','2h','3h','9h','15h'][parseInt(trVal)]||trVal+'h';
       precipDesc=`Precipitation Sec 1: ${rrrRaw} mm / ${pDesc}`;
-      groups.push(precipGroup);
+      groups.push(precipGroup);bdwn.push([precipGroup,precipDesc]);
     }
   }
   let precip3=null,precip3Desc='';
@@ -4560,22 +4553,26 @@ function encUpdate(){
   if(!isSN&&!omit8&&nhVal!==''&&clVal!==''&&cmVal!==''&&chVal!==''){
     const g='8'+nhVal+clVal+cmVal+chVal;
     groups.push(g);
+    bdwn.push([g,`Nh=${nhVal} CL=${clVal} CM=${cmVal} CH=${chVal}`]);
   }else if(omit8){
+    bdwn.push(['(8 omit)','Cloud group 8NhCLCMCH omitted']);
   }
   // Time of observation 9GGgg (exact hour + minutes)
   if(incl9){
     const ggm=String(Math.min(59,Math.max(0,parseInt(minVal)||0))).padStart(2,'0');
     const g='9'+gg+ggm;
     groups.push(g);
+    bdwn.push([g,`Obs time: ${gg}:${ggm} UTC`]);
   }
 
   // Section 3 — order follows FM-12 / 78988 practice:
   // 1SnTxTxTx  2SnTnTnTn  5jjjjj  6RRRt  7R24R24R24R24  8NsChshs
   const sec3=[];
+  const s3bdwn=[];
   const tmaxEnc=encT(tmaxRaw);
   const tminEnc=encT(tminRaw);
-  if(isClimate&&tmaxEnc){const g='1'+tmaxEnc;sec3.push(g);}
-  if(isClimate&&tminEnc){const g='2'+tminEnc;sec3.push(g);}
+  if(isClimate&&tmaxEnc){const g='1'+tmaxEnc;sec3.push(g);s3bdwn.push([g,`T max: ${tmaxRaw}°C`]);}
+  if(isClimate&&tminEnc){const g='2'+tminEnc;sec3.push(g);s3bdwn.push([g,`T min: ${tminRaw}°C`]);}
   // Supplementary group 5jjjjj (regional / national — e.g. 59001 at 78988)
   let j4src=s3_5raw;
   if(!j4src){
@@ -4590,10 +4587,11 @@ function encUpdate(){
     if(j4.length===4){
       const g='5'+j4;
       sec3.push(g);
+      s3bdwn.push([g,`Sec 3 group 5: ${j4}`]);
     }
   }
-  if(!isSN&&precip3){sec3.push(precip3);}
-  else if(!isSN&&precipGroup&&(ir==='0'||ir==='2')){sec3.push(precipGroup);}
+  if(!isSN&&precip3){sec3.push(precip3);s3bdwn.push([precip3,precip3Desc]);}
+  else if(!isSN&&precipGroup&&(ir==='0'||ir==='2')){sec3.push(precipGroup);s3bdwn.push([precipGroup,precipDesc+' (Sec 3)']);}
   // 24-hour precipitation 7R24 — only 00Z and 12Z main synops; omit if 0 mm
   const ggInt=parseInt(gg,10);
   if((ggInt===0||ggInt===12)&&r24Raw!==''){
@@ -4604,21 +4602,69 @@ function encUpdate(){
       else r24code=String(Math.min(9999,Math.round(r24))).padStart(4,'0');
       const g='7'+r24code;
       sec3.push(g);
+      s3bdwn.push([g,`24 h precip: ${r24Raw} mm`]);
     }
   }
   // Cloud layers 8NsChshs (up to 4 — significant cloud, common on 78988)
   s3Clouds.forEach(cl=>{
     const g='8'+cl.ns+cl.c+cl.hs;
     sec3.push(g);
+    s3bdwn.push([g,`Cloud layer ${cl.i}: Ns=${cl.ns} C=${cl.c} hshs=${cl.hs}`]);
   });
+  // SN: Section 3 group 8 is required. Build from S3 layers or Sec-1 N/CL + h.
+  if(isSN && !sec3.some(function(g){return g.charAt(0)==='8';})){
+    const ns=v('enc-s3-ns1')||v('enc-nh')||v('enc-n')||'/';
+    const c=v('enc-s3-c1')||v('enc-cl')||'/';
+    let hs=v('enc-s3-hs1').replace(/\D/g,'');
+    if(!hs){
+      const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35'};
+      hs=hmap[parseInt(v('enc-h'),10)]||'//';
+    }else hs=hs.padStart(2,'0').slice(-2);
+    const g='8'+ns+c+hs;
+    sec3.push(g);
+    s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs']);
+  }
 
   let body=groups.join(' ');
-  if(sec3.length){body+=' 333 '+sec3.join(' ')}
+  if(sec3.length){body+=' 333 '+sec3.join(' ');bdwn.push(['333','Section 3 separator']);s3bdwn.forEach(r=>bdwn.push(r));}
   body+='=';
 
   const full=aaxxLine+' '+body;
   const outEl=document.getElementById('enc-out');
+  const bdwnEl=document.getElementById('enc-bdwn');
   if(outEl) outEl.textContent=full;
+  if(bdwnEl){
+    bdwnEl.innerHTML=bdwn.map(([code,desc])=>`<div class="enc-row"><span class="enc-row-code">${escHtml(code)}</span><span class="enc-row-desc">${escHtml(desc)}</span></div>`).join('');
+  }
+
+  // Encode↔decode cross-check: round-trip the generated bulletin through the
+  // same decoder the app uses for live SYNOPs, and echo the key values back.
+  const verEl=document.getElementById('enc-verify');
+  if(verEl){
+    try{
+      const parsed=parseSynopBulletin(full);
+      const r=parsed.reports&&parsed.reports[0];
+      if(r){
+        const rows=[];
+        if(r.visText) rows.push(`Vis <b>${escHtml(r.visText)}</b>`);
+        let wind=r.dir==='Calm'?'Calm':(r.dir==='VRB'?'VRB':(r.dir==null?'—':r.dir+'°'));
+        if(r.windSp!=null) wind+=` @ ${r.windSp} ${parsed.windUnits}`;
+        rows.push(`Wind <b>${escHtml(wind)}</b>`);
+        if(r.N!=null) rows.push(`Cloud <b>${escHtml(T_N[r.N]||r.N)}</b>`);
+        if(r.T!=null) rows.push(`Temp <b>${r.T}°C</b>`);
+        if(r.Td!=null) rows.push(`Dew <b>${r.Td}°C</b>`);
+        else if(r.RH!=null) rows.push(`RH <b>${r.RH}%</b>`);
+        if(r.Pmsl!=null) rows.push(`MSLP <b>${r.Pmsl} hPa</b>`);
+        else if(r.Pstn!=null) rows.push(`QFE <b>${r.Pstn} hPa</b>`);
+        if(r.ww!=null) rows.push(`Wx <b>${escHtml(T_WW[r.ww]||r.ww)}</b>`);
+        if(r.precip&&r.precip.amount!=null) rows.push(`Precip <b>${escHtml(String(r.precip.amount))} mm/${escHtml(r.precip.pDesc||r.precip.period||'')}</b>`);
+        if(r.Tmax!=null) rows.push(`Tmax <b>${r.Tmax}°C</b>`);
+        if(r.Tmin!=null) rows.push(`Tmin <b>${r.Tmin}°C</b>`);
+        verEl.style.display='';
+        verEl.innerHTML=`<div class="ev-hdr">✓ Decoded back — round-trip check</div>${rows.join(' &nbsp;·&nbsp; ')}`;
+      }else{verEl.style.display='none';}
+    }catch(e){verEl.style.display='none';}
+  }
 }
 function encCopy(){
   const el=document.getElementById('enc-out');
@@ -6494,12 +6540,12 @@ async function loadDaySummary(force){
       if(localDateKey(loc)===localDateKey(now)) byLocal[lh]={msg:tg, utc:meta.date, parsed:null, src:'NOAA'};
     }
   }
-  let html='<div class="sum-cards">';
+  let html='<table class="sum-tbl"><thead><tr><th>Local</th><th>UTC</th><th>T</th><th>Td</th><th>Vis</th><th>Wind</th><th>QNH</th><th>N</th><th>RRR</th><th>Src</th></tr></thead><tbody>';
   for(let h=1;h<=24;h++){
     const row=byLocal[h];
     const utcLbl=String((h+4)%24).padStart(2,'0');
     if(!row){
-      html+='<div class="sum-row empty"><div class="sum-row-top"><div class="sum-row-time"><span class="lh">'+String(h).padStart(2,'0')+'</span><span class="lz">/'+utcLbl+'Z</span></div></div></div>';
+      html+='<tr><td>'+String(h).padStart(2,'0')+'</td><td>'+utcLbl+'</td><td colspan="8" class="muted">—</td></tr>';
       continue;
     }
     let p=null;
@@ -6507,28 +6553,9 @@ async function loadDaySummary(force){
     const r=p&&p.reports&&p.reports[0];
     const wind=r?(r.dir==null?'—':(r.dir+'°'))+' '+(r.windSp!=null?r.windSp+' kt':''):'—';
     const vis=r&&r.visText?r.visText:'—';
-    const tCl=r&&r.T!=null&&r.T>=35?' alert':(r&&r.T!=null&&r.T<=5?' warn':'');
-    const vCl=vis!=='—'&&/^\d/.test(vis)&&parseFloat(vis)<3?' alert':'';
-    const wxCode=r&&r.ww;
-    const wxTxt=wxCode&&T_WW[wxCode]?T_WW[wxCode]:null;
-    const wxCls=wxTxt&&/^TS|thunder/i.test(wxTxt)?' wx-ts':(wxTxt&&/shower/i.test(wxTxt)?' wx-shwr':'');
-    html+='<div class="sum-row">'
-      +'<div class="sum-row-top">'
-        +'<div class="sum-row-time"><span class="lh">'+String(h).padStart(2,'0')+'</span><span class="lz">/'+String(row.utc.getUTCHours()).padStart(2,'0')+'Z</span></div>'
-        +'<span class="sum-row-src">'+(row.src||'Ogimet')+'</span>'
-      +'</div>'
-      +'<div class="sum-row-vals">'
-        +'<div class="sv"><span class="sv-lbl">T</span><span class="sv-val'+tCl+'">'+(r&&r.T!=null?r.T+'°':'—')+'</span></div>'
-        +'<div class="sv"><span class="sv-lbl">Td</span><span class="sv-val">'+(r&&r.Td!=null?r.Td+'°':'—')+'</span></div>'
-        +'<div class="sv"><span class="sv-lbl">Vis</span><span class="sv-val'+vCl+'">'+vis+'</span></div>'
-        +'<div class="sv"><span class="sv-lbl">Wind</span><span class="sv-val">'+wind+'</span></div>'
-        +'<div class="sv"><span class="sv-lbl">QNH</span><span class="sv-val">'+(r&&r.Pmsl!=null?r.Pmsl:'—')+'</span></div>'
-        +'<div class="sv"><span class="sv-lbl">N</span><span class="sv-val">'+(r&&r.N!=null?r.N+'/8':'—')+'</span></div>'
-      +'</div>'
-      +(wxTxt?'<div><span class="sum-wx'+wxCls+'">'+escHtml(wxTxt)+(r.precip&&r.precip.amount!=null?' · '+r.precip.amount+' mm':'')+'</span></div>':(r&&r.precip&&r.precip.amount!=null?'<div><span class="sum-wx">'+r.precip.amount+' mm</span></div>':''))
-      +'</div>';
+    html+='<tr><td>'+String(h).padStart(2,'0')+'</td><td>'+String(row.utc.getUTCHours()).padStart(2,'0')+'</td><td>'+(r&&r.T!=null?r.T:'—')+'</td><td>'+(r&&r.Td!=null?r.Td:'—')+'</td><td>'+vis+'</td><td>'+wind+'</td><td>'+(r&&r.Pmsl!=null?r.Pmsl:'—')+'</td><td>'+(r&&r.N!=null?r.N:'—')+'</td><td>'+(r&&r.precip&&r.precip.amount!=null?r.precip.amount:'—')+'</td><td>'+(row.src||'Ogimet')+'</td></tr>';
   }
-  html+='</div>';
+  html+='</tbody></table>';
   box.innerHTML=html;
   try{localStorage.setItem(key, JSON.stringify({t:Date.now(),built:1,html:html}));}catch(e){}
 }
@@ -6572,7 +6599,7 @@ async function loadOgimetSummary(force){
       if(r) days[k].push(r);
     }catch(e){}
   });
-  let html='<table class="sum-tbl"><thead><tr><th>Local date</th><th>Obs</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis avg</th><th>Wind avg</th><th>QNH avg</th><th>Rain max</th><th>Wx</th></tr></thead><tbody>';
+  let html='<table class="sum-tbl"><thead><tr><th>Local date</th><th>Obs</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis avg</th><th>Wind avg</th><th>QNH avg</th><th>Rain max</th></tr></thead><tbody>';
   const keys=Object.keys(days).sort();
   const monthVals={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
   keys.forEach(function(k){
@@ -6591,12 +6618,9 @@ async function loadOgimetSummary(force){
     if(W!=null) monthVals.wind.push(W);
     if(P!=null) monthVals.pmsl.push(P);
     if(R!=null) monthVals.rain.push(R);
-    const wxSeen=[];
-    rs.forEach(r=>{ if(r.ww&&T_WW[r.ww]&&wxSeen.indexOf(r.ww)<0) wxSeen.push(r.ww); });
-    const wxHtml=wxSeen.length?wxSeen.map(c=>{const txt=T_WW[c];const cls=/^TS|thunder/i.test(txt)?' wx-ts':(/shower/i.test(txt)?' wx-shwr':'');return '<span class="sum-wx'+cls+'">'+escHtml(txt)+'</span>';}).join(' '):'<span class="muted">—</span>';
-    html+='<tr><td>'+k+'</td><td>'+rs.length+'</td><td>'+(T??'—')+'</td><td>'+(Tx??'—')+'</td><td>'+(Tn??'—')+'</td><td>'+(V!=null?V+' km':'—')+'</td><td>'+(W??'—')+'</td><td>'+(P??'—')+'</td><td>'+(R??'—')+'</td><td>'+wxHtml+'</td></tr>';
+    html+='<tr><td>'+k+'</td><td>'+rs.length+'</td><td>'+(T??'—')+'</td><td>'+(Tx??'—')+'</td><td>'+(Tn??'—')+'</td><td>'+(V!=null?V+' km':'—')+'</td><td>'+(W??'—')+'</td><td>'+(P??'—')+'</td><td>'+(R??'—')+'</td></tr>';
   });
-  html+='<tr><td><b>Month avg</b></td><td></td><td><b>'+(pickNum(monthVals.T)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmax)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmin)??'—')+'</b></td><td><b>'+(pickNum(monthVals.vis)!=null?pickNum(monthVals.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(monthVals.wind)??'—')+'</b></td><td><b>'+(pickNum(monthVals.pmsl)??'—')+'</b></td><td><b>'+(pickNum(monthVals.rain)??'—')+'</b></td><td></td></tr>';
+  html+='<tr><td><b>Month avg</b></td><td></td><td><b>'+(pickNum(monthVals.T)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmax)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmin)??'—')+'</b></td><td><b>'+(pickNum(monthVals.vis)!=null?pickNum(monthVals.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(monthVals.wind)??'—')+'</b></td><td><b>'+(pickNum(monthVals.pmsl)??'—')+'</b></td><td><b>'+(pickNum(monthVals.rain)??'—')+'</b></td></tr>';
   html+='</tbody></table>';
   box.innerHTML=html||'<div class="loading-msg">No Ogimet data this month.</div>';
   try{

@@ -255,6 +255,8 @@ tr.synop-decoded-row td{background:rgba(2,8,18,0.85);padding:10px;border-bottom:
 .sum-tbl th,.sum-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;font-family:var(--mono);}
 .sum-tbl th{font-family:var(--cond);letter-spacing:.8px;text-transform:uppercase;font-size:10px;color:var(--acc);}
 .sum-tbl .muted{color:var(--muted);}
+.sum-tbl .sum-g7{white-space:nowrap;font-size:11px;}
+.sum-tbl .sum-raw td{font-size:10px;color:var(--muted);padding-top:0;padding-bottom:10px;word-break:break-word;white-space:normal;line-height:1.35;}
 .enc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
 .enc-field{background:rgba(3,12,24,0.9);padding:8px 12px;display:flex;flex-direction:column;gap:3px;}
 .enc-field.wide{grid-column:span 2;}
@@ -6384,8 +6386,8 @@ async function loadWeather(){
 }
 
 /* ── 78988 day / ogimet summaries ── */
-const DAYSUM_KEY='rwc_daysum4_';
-const OGSUM_KEY='rwc_ogsum2_';
+const DAYSUM_KEY='rwc_daysum5_';
+const OGSUM_KEY='rwc_ogsum3_';
 function localDateKey(d){
   const x=d||new Date();
   const y=x.getFullYear(),m=String(x.getMonth()+1).padStart(2,'0'),dd=String(x.getDate()).padStart(2,'0');
@@ -6553,7 +6555,9 @@ async function loadDaySummary(force){
     const r=p&&p.reports&&p.reports[0];
     const wind=r?(r.dir==null?'—':(r.dir+'°'))+' '+(r.windSp!=null?r.windSp+' kt':''):'—';
     const vis=r&&r.visText?r.visText:'—';
+    const raw=(row.msg||'').replace(/\s+/g,' ').replace(/^(SI|SM|SN)\s+/i,'').trim();
     html+='<tr><td>'+String(h).padStart(2,'0')+'</td><td>'+String(row.utc.getUTCHours()).padStart(2,'0')+'</td><td>'+(r&&r.T!=null?r.T:'—')+'</td><td>'+(r&&r.Td!=null?r.Td:'—')+'</td><td>'+vis+'</td><td>'+wind+'</td><td>'+(r&&r.Pmsl!=null?r.Pmsl:'—')+'</td><td>'+(r&&r.N!=null?r.N:'—')+'</td><td>'+(r&&r.precip&&r.precip.amount!=null?r.precip.amount:'—')+'</td><td>'+(row.src||'Ogimet')+'</td></tr>';
+    html+='<tr class="sum-raw"><td colspan="10">'+escHtml(raw||'—')+'</td></tr>';
   }
   html+='</tbody></table>';
   box.innerHTML=html;
@@ -6599,7 +6603,7 @@ async function loadOgimetSummary(force){
       if(r) days[k].push(r);
     }catch(e){}
   });
-  let html='<table class="sum-tbl"><thead><tr><th>Local date</th><th>Obs</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis avg</th><th>Wind avg</th><th>QNH avg</th><th>Rain max</th></tr></thead><tbody>';
+  let html='<table class="sum-tbl"><thead><tr><th>Local date</th><th>Obs</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis</th><th>Wind</th><th>QNH</th><th>Rain</th><th>7 ww W1W2</th></tr></thead><tbody>';
   const keys=Object.keys(days).sort();
   const monthVals={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
   keys.forEach(function(k){
@@ -6618,9 +6622,17 @@ async function loadOgimetSummary(force){
     if(W!=null) monthVals.wind.push(W);
     if(P!=null) monthVals.pmsl.push(P);
     if(R!=null) monthVals.rain.push(R);
-    html+='<tr><td>'+k+'</td><td>'+rs.length+'</td><td>'+(T??'—')+'</td><td>'+(Tx??'—')+'</td><td>'+(Tn??'—')+'</td><td>'+(V!=null?V+' km':'—')+'</td><td>'+(W??'—')+'</td><td>'+(P??'—')+'</td><td>'+(R??'—')+'</td></tr>';
+    const withWw=rs.filter(function(r){return r.ww!=null&&r.ww!==''&&r.ww!=='//';});
+    const wx=withWw.length?withWw[Math.floor(withWw.length/2)]:null;
+    let g7='—', g7txt='';
+    if(wx){
+      const ww=String(wx.ww).padStart(2,'0');
+      g7='7'+ww+(wx.W1||'/')+(wx.W2||'/');
+      try{g7txt=(ovzWwNL(parseInt(ww,10))||ovzWawaNL(parseInt(ww,10))||'');}catch(e){}
+    }
+    html+='<tr><td>'+k+'</td><td>'+rs.length+'</td><td>'+(T??'—')+'</td><td>'+(Tx??'—')+'</td><td>'+(Tn??'—')+'</td><td>'+(V!=null?V+' km':'—')+'</td><td>'+(W??'—')+'</td><td>'+(P??'—')+'</td><td>'+(R??'—')+'</td><td class="sum-g7">'+g7+(g7txt?' '+g7txt:'')+'</td></tr>';
   });
-  html+='<tr><td><b>Month avg</b></td><td></td><td><b>'+(pickNum(monthVals.T)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmax)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmin)??'—')+'</b></td><td><b>'+(pickNum(monthVals.vis)!=null?pickNum(monthVals.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(monthVals.wind)??'—')+'</b></td><td><b>'+(pickNum(monthVals.pmsl)??'—')+'</b></td><td><b>'+(pickNum(monthVals.rain)??'—')+'</b></td></tr>';
+  html+='<tr><td><b>Month avg</b></td><td></td><td><b>'+(pickNum(monthVals.T)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmax)??'—')+'</b></td><td><b>'+(pickNum(monthVals.Tmin)??'—')+'</b></td><td><b>'+(pickNum(monthVals.vis)!=null?pickNum(monthVals.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(monthVals.wind)??'—')+'</b></td><td><b>'+(pickNum(monthVals.pmsl)??'—')+'</b></td><td><b>'+(pickNum(monthVals.rain)??'—')+'</b></td><td></td></tr>';
   html+='</tbody></table>';
   box.innerHTML=html||'<div class="loading-msg">No Ogimet data this month.</div>';
   try{

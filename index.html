@@ -4679,11 +4679,7 @@ function encCopy(){
 }
 // Auto-fill current UTC time when encoder tab opens
 function encInitTime(){
-  const d=new Date();
-  const yyEl=document.getElementById('enc-yy');
-  const ggEl=document.getElementById('enc-gg');
-  if(yyEl&&!yyEl.value) yyEl.value=d.getUTCDate();
-  if(ggEl&&!ggEl.value) ggEl.value=d.getUTCHours();
+  encStampUtc();
   encUpdate();
   encRefreshHints();
   encAutoClimate();
@@ -4888,13 +4884,46 @@ function encMarkPrefill(on){
     if(b) b.style.background=on?'rgba(85,193,255,0.35)':'';
   });
 }
+function encSynopUtc(now){
+  const d=now?new Date(now.getTime()):new Date();
+  if(d.getUTCMinutes()>=15) d.setUTCHours(d.getUTCHours()+1,0,0,0);
+  return {date:d, yy:d.getUTCDate(), gg:d.getUTCHours(), mm:d.getUTCMinutes()};
+}
 function encStampUtc(){
-  const d=new Date();
+  const u=encSynopUtc();
   const yy=document.getElementById('enc-yy');
   const gg=document.getElementById('enc-gg');
-  if(yy) yy.value=d.getUTCDate();
-  if(gg) gg.value=d.getUTCHours();
+  if(yy) yy.value=u.yy;
+  if(gg) gg.value=u.gg;
 }
+
+function encHsFromFt(ft){
+  const m=ft*0.3048;
+  if(!isFinite(m)||m<0) return '//';
+  if(m<30) return '00';
+  if(m<=1500) return String(Math.round(m/30)).padStart(2,'0');
+  return String(Math.min(89,50+Math.round((m-1500)/300))).padStart(2,'0');
+}
+function encLayersFromMetar(raw){
+  const out=[];
+  const re=/\b(FEW|SCT|BKN|OVC)(\d{3})(CB|TCU)?/gi;
+  let m;
+  while((m=re.exec(String(raw||'')))){
+    const cov=m[1].toUpperCase();
+    const ns={FEW:'2',SCT:'4',BKN:'6',OVC:'8'}[cov]||'/';
+    const ft=parseInt(m[2],10)*100;
+    let c='/';
+    if(m[3]&&/CB/i.test(m[3])) c='9';
+    else if(m[3]&&/TCU/i.test(m[3])) c='8';
+    else if(ft<2000) c='6';
+    else if(ft<6500) c='3';
+    else c='0';
+    out.push({ns:ns,c:c,hs:encHsFromFt(ft)});
+    if(out.length>=4) break;
+  }
+  return out;
+}
+
 async function encPrefill(){
   const st=document.getElementById('enc-mode-status');
   const pb=document.getElementById('enc-mode-prefill');
@@ -5000,13 +5029,44 @@ async function encPrefill(){
     encSetVal(x[0], x[1]);
   });
   if(est.n!=null) encSetVal('enc-n', est.n);
+  // Section 3 group 8 from TNCC METAR → KNMI → Open-Meteo
+  let layers=[];
+  try{
+    let raw='';
+    if(typeof metarState==='object'&&metarState.TNCC&&metarState.TNCC.lastRaw) raw=metarState.TNCC.lastRaw;
+    if(!raw){
+      const o=await fetchRetry('https://aviationweather.gov/api/data/metar?ids=TNCC&hours=2&format=raw');
+      if(o&&o.ok&&o.text) raw=o.text;
+    }
+    layers=encLayersFromMetar(raw);
+    if(layers.length) est._clsrc='TNCC METAR';
+  }catch(e){}
+  if(!layers.length&&est.n){
+    const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35'};
+    layers=[{ns:String(Math.min(8,parseInt(est.n,10)||0)),c:parseInt(est.n,10)>=5?'6':'8',hs:hmap[parseInt(est.h||'5',10)]||'10'}];
+    est._clsrc=est._csrc||'KNMI/model';
+  }
+  for(let i=1;i<=4;i++){
+    const L=layers[i-1];
+    if(L){
+      encSetVal('enc-s3-ns'+i, L.ns);
+      encSetVal('enc-s3-c'+i, L.c);
+      encSetVal('enc-s3-hs'+i, L.hs);
+    }
+  }
+  if(layers[0]){
+    encSetVal('enc-nh', layers[0].ns);
+    encSetVal('enc-cl', layers[0].c);
+    if(!document.getElementById('enc-cm').value) encSetVal('enc-cm','0');
+    if(!document.getElementById('enc-ch').value) encSetVal('enc-ch','0');
+  }
   encOnTempChange();
   encOnPresChange();
   {
     const p24el=document.getElementById('enc-ppp24');
     const p24=p24el&&p24el.value!==''?Number(p24el.value):null;
     const p24s=(p24!=null&&isFinite(p24))?(' · 24h P '+(p24>=0?'+':'')+p24+' hPa'):'';
-    const msg='PREFILL — '+(est._src||'no airport')+' · P '+(est._psrc||'model')+' · vis '+(est._vsrc||'model')+' '+est.vis+' km · N '+(est._csrc||'model')+' '+est.n+'/8 · '+est.t+'° / '+est.ff+' kt'+p24s;
+    const msg='PREFILL — '+(est._src||'no airport')+' · P '+(est._psrc||'model')+' · vis '+(est._vsrc||'model')+' '+est.vis+' km · N '+(est._csrc||'model')+' '+est.n+'/8 · clouds '+(est._clsrc||'model')+' · '+est.t+'° / '+est.ff+' kt'+p24s;
     if(st) st.textContent=msg;
     window._prefillMsg=msg;
     ['su-src','va-src'].forEach(function(id){const e=document.getElementById(id); if(e) e.textContent=msg;});
@@ -6386,7 +6446,7 @@ async function loadWeather(){
 }
 
 /* ── 78988 day / ogimet summaries ── */
-const DAYSUM_KEY='rwc_daysum5_';
+const DAYSUM_KEY='rwc_daysum6_';
 const OGSUM_KEY='rwc_ogsum3_';
 function localDateKey(d){
   const x=d||new Date();
@@ -6542,12 +6602,12 @@ async function loadDaySummary(force){
       if(localDateKey(loc)===localDateKey(now)) byLocal[lh]={msg:tg, utc:meta.date, parsed:null, src:'NOAA'};
     }
   }
-  let html='<table class="sum-tbl"><thead><tr><th>Local</th><th>UTC</th><th>T</th><th>Td</th><th>Vis</th><th>Wind</th><th>QNH</th><th>N</th><th>RRR</th><th>Src</th></tr></thead><tbody>';
+  let html='<table class="sum-tbl"><thead><tr><th>Local</th><th>UTC</th><th>T</th><th>Td</th><th>Vis</th><th>Wind</th><th>QNH</th><th>N</th><th>7ww</th><th>RRR</th><th>Src</th></tr></thead><tbody>';
   for(let h=1;h<=24;h++){
     const row=byLocal[h];
     const utcLbl=String((h+4)%24).padStart(2,'0');
     if(!row){
-      html+='<tr><td>'+String(h).padStart(2,'0')+'</td><td>'+utcLbl+'</td><td colspan="8" class="muted">—</td></tr>';
+      html+='<tr><td>'+String(h).padStart(2,'0')+'</td><td>'+utcLbl+'</td><td colspan="9" class="muted">—</td></tr>';
       continue;
     }
     let p=null;
@@ -6556,8 +6616,9 @@ async function loadDaySummary(force){
     const wind=r?(r.dir==null?'—':(r.dir+'°'))+' '+(r.windSp!=null?r.windSp+' kt':''):'—';
     const vis=r&&r.visText?r.visText:'—';
     const raw=(row.msg||'').replace(/\s+/g,' ').replace(/^(SI|SM|SN)\s+/i,'').trim();
-    html+='<tr><td>'+String(h).padStart(2,'0')+'</td><td>'+String(row.utc.getUTCHours()).padStart(2,'0')+'</td><td>'+(r&&r.T!=null?r.T:'—')+'</td><td>'+(r&&r.Td!=null?r.Td:'—')+'</td><td>'+vis+'</td><td>'+wind+'</td><td>'+(r&&r.Pmsl!=null?r.Pmsl:'—')+'</td><td>'+(r&&r.N!=null?r.N:'—')+'</td><td>'+(r&&r.precip&&r.precip.amount!=null?r.precip.amount:'—')+'</td><td>'+(row.src||'Ogimet')+'</td></tr>';
-    html+='<tr class="sum-raw"><td colspan="10">'+escHtml(raw||'—')+'</td></tr>';
+    const g7=(r&&r.ww!=null&&String(r.ww)!=='')?('7'+String(r.ww).padStart(2,'0')+(r.W1||'/')+(r.W2||'/')):'—';
+    html+='<tr><td>'+String(h).padStart(2,'0')+'</td><td>'+String(row.utc.getUTCHours()).padStart(2,'0')+'</td><td>'+(r&&r.T!=null?r.T:'—')+'</td><td>'+(r&&r.Td!=null?r.Td:'—')+'</td><td>'+vis+'</td><td>'+wind+'</td><td>'+(r&&r.Pmsl!=null?r.Pmsl:'—')+'</td><td>'+(r&&r.N!=null?r.N:'—')+'</td><td class="sum-g7">'+g7+'</td><td>'+(r&&r.precip&&r.precip.amount!=null?r.precip.amount:'—')+'</td><td>'+(row.src||'Ogimet')+'</td></tr>';
+    html+='<tr class="sum-raw"><td colspan="11">'+escHtml(raw||'—')+'</td></tr>';
   }
   html+='</tbody></table>';
   box.innerHTML=html;
@@ -6775,7 +6836,7 @@ function tplUpdate(pfx){
   const S=function(id,txt){suSet(pfx+'-'+id,txt);};
   const d=new Date();
   const due=document.getElementById(pfx+'-due');
-  if(due) due.textContent=(pfx==='va'?'VAISALA · ':'')+'SYNOP due at '+String((d.getUTCHours()+1)%24).padStart(2,'0')+'00 Hours';
+  if(due) due.textContent=(pfx==='va'?'VAISALA · ':'')+'SYNOP due at '+String(encSynopUtc().gg).padStart(2,'0')+'00 Hours';
   const ir=V('ir')||'/'; const ix=V('ix')||'/'; const h=V('h')||'/'; const vv=(V('vv')||'//').padStart(2,'0').slice(-2);
   const g1=ir+ix+h+vv; S('d-i',g1); S('g-i',g1);
   const N=V('n')||'/'; const dd=(V('dd')||'//').padStart(2,'0').slice(-2); const ff=(V('ff')||'//').padStart(2,'0').slice(-2);
@@ -6816,7 +6877,7 @@ function vaFillFromEnc(){
   document.querySelectorAll('input[name="va-iw"]').forEach(function(r){ r.checked = r.value==='4'; });
   const iw='4';
   set('va-mi','AAXX');
-  set('va-yygg', String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+iw);
+  set('va-yygg', String(encSynopUtc(d).yy).padStart(2,'0')+String(encSynopUtc(d).gg).padStart(2,'0')+iw);
   set('va-ii', (typeof encGetIIIII==='function'?encGetIIIII():'78988')||'78988');
   const ir=ev('enc-ir')||'4', ix=ev('enc-ix')||'3', h=ev('enc-h')||'9';
   const vv=typeof encVV==='function'?encVV(ev('enc-vis')):'80';
@@ -6866,10 +6927,11 @@ function vaFillFromEnc(){
 function vaUpdate(){
   const d=new Date();
   const cl=document.getElementById('va-clock');
-  if(cl) cl.textContent=String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')+'Z   '+String(d.getUTCDate()).padStart(2,'0')+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+d.getUTCFullYear();
+  const u=encSynopUtc(d);
+  if(cl) cl.textContent=String(u.gg).padStart(2,'0')+':00Z   '+String(u.yy).padStart(2,'0')+'-'+String(u.date.getUTCMonth()+1).padStart(2,'0')+'-'+u.date.getUTCFullYear();
   const iw=(document.querySelector('input[name="va-iw"]:checked')||{value:'4'}).value||'4';
   let yygg=suV('va-yygg');
-  if(!yygg){ yygg=String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+iw; const el=document.getElementById('va-yygg'); if(el&&!el.value) el.value=yygg; }
+  if(!yygg){ const u=encSynopUtc(d); yygg=String(u.yy).padStart(2,'0')+String(u.gg).padStart(2,'0')+iw; const el=document.getElementById('va-yygg'); if(el&&!el.value) el.value=yygg; }
   const ii=suV('va-ii')||'78988';
   const parts=[];
   const hvv=suV('va-hvv');

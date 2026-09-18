@@ -1,5 +1,5 @@
-/* RWCAPP service worker v27 — full single-file app */
-const CACHE = 'rwcapp-shell-v27';
+/* RWCAPP service worker v28 — full single-file app */
+const CACHE = 'rwcapp-shell-v28';
 const PRECACHE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './sw.js'];
 const LIVE_HOSTS = [
   'tgftp.nws.noaa.gov','aviationweather.gov','api.open-meteo.com','marine-api.open-meteo.com',

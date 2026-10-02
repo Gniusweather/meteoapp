@@ -6182,7 +6182,7 @@ function encIRIX(kind,gg,has7){
 let ir='1';
 if(kind==='SM') ir='0';
 else if(kind==='SI') ir='2';
-else ir='1';
+else ir='4';
 return {ir:ir, ix:has7?'1':'2'};
 }
 function encKindFromGG(gg){
@@ -6613,9 +6613,9 @@ function owWeertype(N,ww){
   else if(n>=6&&n<=7) base='zwaar bewolkt';
   else if(n===8) base='geheel bewolkt';
   const c=parseInt(ww,10);
-  const extra={10:'nevel',13:'weerlicht',17:'onweer',21:'bewolkt na regen',25:'bewolkt na regenbui',29:'bewolkt na onweer',60:'regen',61:'regen',63:'regen',80:'regenbui',81:'regenbui',95:'onweer',97:'onweer'};
+  const extra={10:'nevel',13:'weerlicht',14:'neerslag op afstand',15:'neerslag op afstand',16:'neerslag op afstand',17:'onweer',21:'bewolkt na regen',25:'bewolkt na regenbui',29:'bewolkt na onweer',50:'motregen',51:'motregen',53:'motregen',55:'motregen',60:'regen',61:'regen',63:'regen',65:'regen',80:'regenbui',81:'regenbui',95:'onweer',97:'onweer'};
   if(!isNaN(c)&&extra[c]){
-    if(c>=20&&c<=29) return extra[c];
+    if((c>=20&&c<=29)||(c>=50&&c<=57)||c===10||c===14||c===15||c===16) return extra[c];
     return (base?base+' · ':'')+extra[c];
   }
   return base;
@@ -6840,8 +6840,24 @@ async function owLoad(force){
       if(wx) row.wx=wx;
     }
     let tmax=null,tmin=null,rr=null;
-    if(d12&&d12.Tmax!=null) tmax=d12.Tmax;
-    else if(d18&&d18.Tmax!=null) tmax=d18.Tmax;
+    if(stn.icao==='SKBO'){
+      // Tmax: highest section-3 1snTx from 00Z-12Z; else latest 1snTx from previous evening 18Z-23Z or 00Z
+      let best=null, eve=null, eveH=-1;
+      parsed.forEach(function(r){
+        const cl=owFirstClimate(r.rep);
+        if(cl.Tmax==null) return;
+        const same=r.y===y&&r.mo===mo&&r.d===d;
+        const prevDay=r.y===py&&r.mo===pmo&&r.d===pd;
+        if(same && r.h>=0 && r.h<=12 && cl.Tmax>(best==null?-99:best)) best=cl.Tmax;
+        if((prevDay && r.h>=18 && r.h<=23) || (same && r.h===0)){
+          const hkey=(prevDay?0:100)+r.h;
+          if(hkey>eveH){ eve=cl.Tmax; eveH=hkey; }
+        }
+      });
+      tmax=best!=null?best:eve;
+    }
+    if(tmax==null && d12&&d12.Tmax!=null) tmax=d12.Tmax;
+    else if(tmax==null && d18&&d18.Tmax!=null) tmax=d18.Tmax;
     const autoMin=['TNCB','EHAM','TNCE'].includes(stn.icao);
     if(autoMin){
       if(d06&&d06.Tmin!=null) tmin=d06.Tmin;

@@ -3761,7 +3761,7 @@ const r24Raw=v('enc-r24');
 // Up to 4 Sec-3 cloud layers 8NsChshs
 const s3Clouds=[];
 for(let i=1;i<=4;i++){
-const ns=v('enc-s3-ns'+i), c=(i===1?'8':v('enc-s3-c'+i)), hs=v('enc-s3-hs'+i);
+const ns=v('enc-s3-ns'+i), c=v('enc-s3-c'+i), hs=v('enc-s3-hs'+i);
 if(ns!==''&&c!==''&&hs!=='') s3Clouds.push({ns,c,hs:hs.replace(/\D/g,'').padStart(2,'0').slice(-2),i});
 }
 const groups=[];
@@ -3923,16 +3923,18 @@ s3bdwn.push([g,`Cloud layer ${cl.i}: Ns=${cl.ns} C=${cl.c} hshs=${cl.hs}`]);
 // SN: Section 3 group 8 is required. Build from S3 layers or Sec-1 N/CL + h.
 if(isSN && N!=='0' && parseInt(N,10)!==0 && !sec3.some(function(g){return g.charAt(0)==='8';})){
 const ns=v('enc-s3-ns1')||v('enc-nh')||v('enc-n')||'/';
-const c='8';
-const cEl=p('enc-s3-c1'); if(cEl){ cEl.value='8'; }
+const c=v('enc-s3-c1')||v('enc-cl')||'/';
 let hs=v('enc-s3-hs1').replace(/\D/g,'');
+let hsApprox=false;
 if(!hs){
 const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35'};
 hs=hmap[parseInt(v('enc-h'),10)]||'//';
 }else hs=hs.padStart(2,'0').slice(-2);
+const hsNum=parseInt(hs,10);
+if(!isNaN(hsNum)&&((hsNum>=50&&hsNum<=66)||(hsNum>=71&&hsNum<=81&&hsNum!==77&&hsNum!==78))) hsApprox=true;
 const g='8'+ns+c+hs;
 sec3.push(g);
-s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs']);
+s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs'+(hsApprox?' ⚠ height code in unconfirmed WMO 1677 band — verify':'')]);
 }
 let body=groups.join(' ');
 if(sec3.length){body+=' 333 '+sec3.join(' ');bdwn.push(['333','Section 3 separator']);s3bdwn.forEach(r=>bdwn.push(r));}
@@ -4236,10 +4238,14 @@ const hEl=document.getElementById('enc-h');
 if(hEl){ hEl.value=h; hEl.dataset.auto='1'; }
 const hint=document.getElementById('enc-h-est');
 if(hint) hint.textContent='· '+ft+' ft / '+Math.round(ft*0.3048)+' m';
-const hs=encHsFromFt(ft);
+const hsR=encHsFromFt(ft);
 const hs1=document.getElementById('enc-s3-hs1');
-if(hs1 && (hs1.value===''||hs1.dataset.auto==='1')){ hs1.value=hs; hs1.dataset.auto='1'; }
-return {ft:ft,h:h,hs:hs};
+if(hs1 && (hs1.value===''||hs1.dataset.auto==='1')){
+hs1.value=hsR.hs; hs1.dataset.auto='1';
+hs1.title=hsR.approx?'Estimated from T/Td — height code in an unconfirmed part of WMO Table 1677; verify before transmission.':'';
+hs1.style.outline=hsR.approx?'1px dashed #f90':'';
+}
+return {ft:ft,h:h,hs:hsR.hs,hsApprox:hsR.approx};
 }
 function encStampUtc(){
 const u=encSynopUtc();
@@ -4248,12 +4254,35 @@ const gg=document.getElementById('enc-gg');
 if(yy) yy.value=u.yy;
 if(gg) gg.value=u.gg;
 }
+// WMO Code Table 1677 — Height of base of cloud layer/mass (hshs), in feet.
+// Confirmed exact against official WMO source for: 00, 01-49 (hs*100ft), 67-70, 77-78, 82-88.
+// hs range 50-66, 71-81 (excl. 77,78) is not confirmed from source and is interpolated;
+// encApplyCloudBase() flags these so a human can double-check before transmission.
 function encHsFromFt(ft){
-const m=ft*0.3048;
-if(!isFinite(m)||m<0) return '//';
-if(m<30) return '00';
-if(m<=1500) return String(Math.round(m/30)).padStart(2,'0');
-return String(Math.min(89,50+Math.round((m-1500)/300))).padStart(2,'0');
+if(!isFinite(ft)||ft==null) return {hs:'//',approx:false};
+const f=Math.max(0,ft);
+if(f<100) return {hs:'00',approx:false};
+if(f<=4950) return {hs:String(Math.min(49,Math.round(f/100))).padStart(2,'0'),approx:false};
+if(f<17000){
+const hsApprox=49+Math.round((f-4900)/((17000-4900)/(67-49)));
+return {hs:String(Math.max(50,Math.min(66,hsApprox))).padStart(2,'0'),approx:true};
+}
+if(f<=20500){
+const hs=67+Math.round((f-17000)/1000);
+return {hs:String(Math.min(70,hs)).padStart(2,'0'),approx:false};
+}
+if(f<28500){
+const hsApprox=70+Math.round((f-20000)/1000);
+return {hs:String(Math.max(71,Math.min(78,hsApprox))).padStart(2,'0'),approx: !(f>=27000&&f<29000)};
+}
+if(f<32000){
+return {hs:'80',approx:true};
+}
+if(f<38500){
+const c=82+Math.round((f-32000)/1000);
+return {hs:String(Math.min(88,c)).padStart(2,'0'),approx:false};
+}
+return {hs:'89',approx:false};
 }
 function encLayersFromMetar(raw){
 const out=[];
@@ -4269,7 +4298,8 @@ else if(m[3]&&/TCU/i.test(m[3])) c='8';
 else if(ft<2000) c='6';
 else if(ft<6500) c='3';
 else c='0';
-out.push({ns:ns,c:c,hs:encHsFromFt(ft)});
+const hsR=encHsFromFt(ft);
+out.push({ns:ns,c:c,hs:hsR.hs,hsApprox:hsR.approx});
 if(out.length>=4) break;
 }
 return out;
@@ -4523,7 +4553,7 @@ est._clsrc=est._csrc||'KNMI/model';
 const L=layers[0];
 if(L){
 encSetVal('enc-s3-ns1', L.ns);
-encSetVal('enc-s3-c1', '8');
+encSetVal('enc-s3-c1', L.c);
 encSetVal('enc-s3-hs1', L.hs);
 }
 for(let i=2;i<=4;i++){
@@ -4644,7 +4674,7 @@ if(last==='0000') encSetVal('enc-r24',0);
 const clouds=[...sec3.matchAll(/\b8(\d)(\d)(\d{2})\b/g)];
 if(clouds[0]){
 encSetVal('enc-s3-ns1',clouds[0][1]);
-encSetVal('enc-s3-c1','8');
+encSetVal('enc-s3-c1',clouds[0][2]);
 encSetVal('enc-s3-hs1',clouds[0][3]);
 }
 for(let i=2;i<=4;i++){

@@ -1048,9 +1048,9 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 </div>
 <div class="sub-tab-bar" id="synop-sub-bar">
-<button class="sub-tab-btn" data-sub="tnca" onclick="switchSubTab('synop','tnca')">🇦🇼 Aruba</button>
-<button class="sub-tab-btn" data-sub="tncb" onclick="switchSubTab('synop','tncb')">🇧🇶 Bonaire</button>
-<button class="sub-tab-btn" data-sub="tncc" onclick="switchSubTab('synop','tncc')">🇨🇼 Curaçao</button>
+<button class="sub-tab-btn" data-sub="tnca" onclick="switchSubTab('synop','tnca')">TNCA</button>
+<button class="sub-tab-btn" data-sub="tncb" onclick="switchSubTab('synop','tncb')">TNCB</button>
+<button class="sub-tab-btn" data-sub="tncc" onclick="switchSubTab('synop','tncc')">TNCC</button>
 <button class="sub-tab-btn" data-sub="rules" onclick="switchSubTab('synop','rules')">FM-12</button>
 <button class="sub-tab-btn active" data-sub="encode" onclick="switchSubTab('synop','encode')">Encode</button>
 <button class="sub-tab-btn" data-sub="sutron" onclick="switchSubTab('synop','sutron')">Sutron</button>
@@ -3761,7 +3761,7 @@ const r24Raw=v('enc-r24');
 // Up to 4 Sec-3 cloud layers 8NsChshs
 const s3Clouds=[];
 for(let i=1;i<=4;i++){
-const ns=v('enc-s3-ns'+i), c=v('enc-s3-c'+i), hs=v('enc-s3-hs'+i);
+const ns=v('enc-s3-ns'+i), c=(i===1?'8':v('enc-s3-c'+i)), hs=v('enc-s3-hs'+i);
 if(ns!==''&&c!==''&&hs!=='') s3Clouds.push({ns,c,hs:hs.replace(/\D/g,'').padStart(2,'0').slice(-2),i});
 }
 const groups=[];
@@ -3923,18 +3923,16 @@ s3bdwn.push([g,`Cloud layer ${cl.i}: Ns=${cl.ns} C=${cl.c} hshs=${cl.hs}`]);
 // SN: Section 3 group 8 is required. Build from S3 layers or Sec-1 N/CL + h.
 if(isSN && N!=='0' && parseInt(N,10)!==0 && !sec3.some(function(g){return g.charAt(0)==='8';})){
 const ns=v('enc-s3-ns1')||v('enc-nh')||v('enc-n')||'/';
-const c=v('enc-s3-c1')||v('enc-cl')||'/';
+const c='8';
+const cEl=p('enc-s3-c1'); if(cEl){ cEl.value='8'; }
 let hs=v('enc-s3-hs1').replace(/\D/g,'');
-let hsApprox=false;
 if(!hs){
 const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35'};
 hs=hmap[parseInt(v('enc-h'),10)]||'//';
 }else hs=hs.padStart(2,'0').slice(-2);
-const hsNum=parseInt(hs,10);
-if(!isNaN(hsNum)&&((hsNum>=50&&hsNum<=66)||(hsNum>=71&&hsNum<=81&&hsNum!==77&&hsNum!==78))) hsApprox=true;
 const g='8'+ns+c+hs;
 sec3.push(g);
-s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs'+(hsApprox?' ⚠ height code in unconfirmed WMO 1677 band — verify':'')]);
+s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs']);
 }
 let body=groups.join(' ');
 if(sec3.length){body+=' 333 '+sec3.join(' ');bdwn.push(['333','Section 3 separator']);s3bdwn.forEach(r=>bdwn.push(r));}
@@ -4238,14 +4236,10 @@ const hEl=document.getElementById('enc-h');
 if(hEl){ hEl.value=h; hEl.dataset.auto='1'; }
 const hint=document.getElementById('enc-h-est');
 if(hint) hint.textContent='· '+ft+' ft / '+Math.round(ft*0.3048)+' m';
-const hsR=encHsFromFt(ft);
+const hs=encHsFromFt(ft);
 const hs1=document.getElementById('enc-s3-hs1');
-if(hs1 && (hs1.value===''||hs1.dataset.auto==='1')){
-hs1.value=hsR.hs; hs1.dataset.auto='1';
-hs1.title=hsR.approx?'Estimated from T/Td — height code in an unconfirmed part of WMO Table 1677; verify before transmission.':'';
-hs1.style.outline=hsR.approx?'1px dashed #f90':'';
-}
-return {ft:ft,h:h,hs:hsR.hs,hsApprox:hsR.approx};
+if(hs1 && (hs1.value===''||hs1.dataset.auto==='1')){ hs1.value=hs; hs1.dataset.auto='1'; }
+return {ft:ft,h:h,hs:hs};
 }
 function encStampUtc(){
 const u=encSynopUtc();
@@ -4254,35 +4248,12 @@ const gg=document.getElementById('enc-gg');
 if(yy) yy.value=u.yy;
 if(gg) gg.value=u.gg;
 }
-// WMO Code Table 1677 — Height of base of cloud layer/mass (hshs), in feet.
-// Confirmed exact against official WMO source for: 00, 01-49 (hs*100ft), 67-70, 77-78, 82-88.
-// hs range 50-66, 71-81 (excl. 77,78) is not confirmed from source and is interpolated;
-// encApplyCloudBase() flags these so a human can double-check before transmission.
 function encHsFromFt(ft){
-if(!isFinite(ft)||ft==null) return {hs:'//',approx:false};
-const f=Math.max(0,ft);
-if(f<100) return {hs:'00',approx:false};
-if(f<=4950) return {hs:String(Math.min(49,Math.round(f/100))).padStart(2,'0'),approx:false};
-if(f<17000){
-const hsApprox=49+Math.round((f-4900)/((17000-4900)/(67-49)));
-return {hs:String(Math.max(50,Math.min(66,hsApprox))).padStart(2,'0'),approx:true};
-}
-if(f<=20500){
-const hs=67+Math.round((f-17000)/1000);
-return {hs:String(Math.min(70,hs)).padStart(2,'0'),approx:false};
-}
-if(f<28500){
-const hsApprox=70+Math.round((f-20000)/1000);
-return {hs:String(Math.max(71,Math.min(78,hsApprox))).padStart(2,'0'),approx: !(f>=27000&&f<29000)};
-}
-if(f<32000){
-return {hs:'80',approx:true};
-}
-if(f<38500){
-const c=82+Math.round((f-32000)/1000);
-return {hs:String(Math.min(88,c)).padStart(2,'0'),approx:false};
-}
-return {hs:'89',approx:false};
+const m=ft*0.3048;
+if(!isFinite(m)||m<0) return '//';
+if(m<30) return '00';
+if(m<=1500) return String(Math.round(m/30)).padStart(2,'0');
+return String(Math.min(89,50+Math.round((m-1500)/300))).padStart(2,'0');
 }
 function encLayersFromMetar(raw){
 const out=[];
@@ -4298,8 +4269,7 @@ else if(m[3]&&/TCU/i.test(m[3])) c='8';
 else if(ft<2000) c='6';
 else if(ft<6500) c='3';
 else c='0';
-const hsR=encHsFromFt(ft);
-out.push({ns:ns,c:c,hs:hsR.hs,hsApprox:hsR.approx});
+out.push({ns:ns,c:c,hs:encHsFromFt(ft)});
 if(out.length>=4) break;
 }
 return out;
@@ -4553,7 +4523,7 @@ est._clsrc=est._csrc||'KNMI/model';
 const L=layers[0];
 if(L){
 encSetVal('enc-s3-ns1', L.ns);
-encSetVal('enc-s3-c1', L.c);
+encSetVal('enc-s3-c1', '8');
 encSetVal('enc-s3-hs1', L.hs);
 }
 for(let i=2;i<=4;i++){
@@ -4674,7 +4644,7 @@ if(last==='0000') encSetVal('enc-r24',0);
 const clouds=[...sec3.matchAll(/\b8(\d)(\d)(\d{2})\b/g)];
 if(clouds[0]){
 encSetVal('enc-s3-ns1',clouds[0][1]);
-encSetVal('enc-s3-c1',clouds[0][2]);
+encSetVal('enc-s3-c1','8');
 encSetVal('enc-s3-hs1',clouds[0][3]);
 }
 for(let i=2;i<=4;i++){
@@ -6107,7 +6077,7 @@ async function loadOgimetSummary(force){
 const box=document.getElementById('ogsum-table');
 if(!box) return;
 if(ogSumMode==='year'){
-renderOgYear(box); return;
+await renderOgYear(box); return;
 }
 const now=new Date();
 const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
@@ -6185,21 +6155,92 @@ y[now.getMonth()+1]={T:pickNum(monthVals.T),Tmax:pickNum(monthVals.Tmax),Tmin:pi
 localStorage.setItem(yk, JSON.stringify(y));
 }catch(e){}
 }
-function renderOgYear(box){
+async function ogSumFetchMonthAvg(y, m){
+// Fetch one calendar month of 78988 and return average row for year table
+const begin=new Date(Date.UTC(y, m-1, 1, 0, 0, 0));
+const endEx=new Date(Date.UTC(y, m, 1, 0, 0, 0));
+const now=new Date();
+const end=endEx>now?now:endEx;
+if(begin>now) return null;
+let text=await fetchOgimet78988(utcStamp(begin), utcStamp(end));
+if(!text||!/AAXX/.test(text)){
+  text='';
+  for(var d0=1;d0<=31;d0+=10){
+    var a=new Date(Date.UTC(y, m-1, d0, 0, 0, 0));
+    var b=new Date(Date.UTC(y, m-1, Math.min(d0+9,31), 23, 59, 0));
+    if(b>end) b=end;
+    if(a>end) break;
+    var chunk=await fetchOgimet78988(utcStamp(a), utcStamp(b));
+    if(chunk) text+=chunk+'\n';
+  }
+}
+if(!text||!/AAXX/.test(text)) return null;
+const days={};
+splitOgimetReports(text).forEach(function(msg){
+  const meta=parseSynopHourUTC(msg.includes('AAXX')?msg:('AAXX 00000 '+msg));
+  if(!meta||!meta.date) return;
+  const loc=new Date(meta.date.getTime()-4*3600*1000);
+  if(loc.getUTCFullYear()!==y || (loc.getUTCMonth()+1)!==m) return;
+  const k=localDateKey(loc);
+  days[k]=days[k]||[];
+  try{
+    const p=parseSynopBulletin(msg.includes('AAXX')?msg:('AAXX 00004\n'+msg));
+    const r=p&&p.reports&&p.reports[0];
+    if(r) days[k].push(r);
+  }catch(e){}
+});
+const keys=Object.keys(days);
+if(!keys.length) return null;
+const monthVals={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
+keys.forEach(function(k){
+  const rs=days[k];
+  const T=pickNum(rs.map(r=>r.T));
+  const Tx=pickNum(rs.map(r=>r.Tmax!=null?r.Tmax:r.T));
+  const Tn=pickNum(rs.map(r=>r.Tmin!=null?r.Tmin:r.T));
+  const V=pickNum(rs.map(visKm));
+  const W=pickNum(rs.map(r=>r.windSp));
+  const P=pickNum(rs.map(r=>r.Pmsl));
+  const R=pickNum(rs.map(r=>r.precip&&r.precip.amount));
+  if(T!=null) monthVals.T.push(T);
+  if(Tx!=null) monthVals.Tmax.push(Tx);
+  if(Tn!=null) monthVals.Tmin.push(Tn);
+  if(V!=null) monthVals.vis.push(V);
+  if(W!=null) monthVals.wind.push(W);
+  if(P!=null) monthVals.pmsl.push(P);
+  if(R!=null) monthVals.rain.push(R);
+});
+return {
+  T:pickNum(monthVals.T), Tmax:pickNum(monthVals.Tmax), Tmin:pickNum(monthVals.Tmin),
+  vis:pickNum(monthVals.vis), wind:pickNum(monthVals.wind), pmsl:pickNum(monthVals.pmsl),
+  rain:pickNum(monthVals.rain), n:keys.length
+};
+}
+async function renderOgYear(box){
 const y=new Date().getFullYear();
-let store={};
-try{store=JSON.parse(localStorage.getItem(OGSUM_KEY+'year_'+y)||'{}')||{};}catch(e){}
+const curM=new Date().getMonth()+1;
 const names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const yk=OGSUM_KEY+'year_'+y;
+let store={};
+try{store=JSON.parse(localStorage.getItem(yk)||'{}')||{};}catch(e){}
+box.innerHTML='<div class="loading-msg">Loading year '+y+' from Ogimet (missing months)…</div>';
+// Backfill any missing month up to current month
+for(let m=1;m<=curM;m++){
+  if(store[m] && store[m].n) continue;
+  try{
+    const row=await ogSumFetchMonthAvg(y, m);
+    if(row){ store[m]=row; try{localStorage.setItem(yk, JSON.stringify(store));}catch(e){} }
+  }catch(e){}
+}
 let html='<table class="sum-tbl"><thead><tr><th>Month</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis</th><th>Wind</th><th>QNH</th><th>Rain</th></tr></thead><tbody>';
 let any=false;
 for(let m=1;m<=12;m++){
-const r=store[m];
-if(!r){ html+='<tr><td>'+names[m]+'</td><td colspan="7" class="muted">no data yet — open Month after that month has loaded</td></tr>'; continue; }
-any=true;
-html+='<tr><td>'+names[m]+'</td><td>'+(r.T??'—')+'</td><td>'+(r.Tmax??'—')+'</td><td>'+(r.Tmin??'—')+'</td><td>'+(r.vis!=null?r.vis+' km':'—')+'</td><td>'+(r.wind??'—')+'</td><td>'+(r.pmsl??'—')+'</td><td>'+(r.rain??'—')+'</td></tr>';
+  const r=store[m];
+  if(!r){ html+='<tr><td>'+names[m]+'</td><td colspan="7" class="muted">'+(m>curM?'—':'no data')+'</td></tr>'; continue; }
+  any=true;
+  html+='<tr><td>'+names[m]+'</td><td>'+(r.T??'—')+'</td><td>'+(r.Tmax??'—')+'</td><td>'+(r.Tmin??'—')+'</td><td>'+(r.vis!=null?r.vis+' km':'—')+'</td><td>'+(r.wind??'—')+'</td><td>'+(r.pmsl??'—')+'</td><td>'+(r.rain??'—')+'</td></tr>';
 }
 html+='</tbody></table>';
-box.innerHTML=html+(any?'':'<p class="wx-model-note">Year table fills as each month is loaded once from Ogimet.</p>');
+box.innerHTML=html+(any?'':'<p class="wx-model-note">No year data from Ogimet yet.</p>');
 }
 /* ── TABS ── */
 function suV(id){const e=document.getElementById(id);return e?String(e.value||'').trim():'';}
@@ -6209,10 +6250,10 @@ const n=parseInt(code4,10); if(isNaN(n)) return '';
 let v=n/10; if(v<500) v+=1000; return v.toFixed(1);
 }
 function encIRIX(kind,gg,has7){
-let ir='1';
+let ir='4';
 if(kind==='SM') ir='0';
 else if(kind==='SI') ir='2';
-else ir='4';
+else ir='4'; // SN non-synoptic hour
 return {ir:ir, ix:has7?'1':'2'};
 }
 function encKindFromGG(gg){

@@ -4286,8 +4286,8 @@ return null;
 async function encEnsureDaysumP(){
 try{
 const st=JSON.parse(localStorage.getItem(DAYSUM_KEY+localDateKey())||'{}')||{};
-if(st.hoursP&&Object.keys(st.hoursP).length) return;
-if(typeof loadDaySummary==='function') await loadDaySummary(true);
+if(st.hoursP&&Object.keys(st.hoursP).length>=2) return;
+await savePressureBackground(false);
 }catch(e){}
 }
 function encPppCode(raw){
@@ -5996,6 +5996,83 @@ const st=document.getElementById('enc-mode-status');
 if(st&&st.textContent) st.textContent=st.textContent.replace(/\s*· 24h P.+$/,'')+' · 24h P '+((d24>=0?'+':'')+d24)+' hPa';
 encUpdate();
 }
+async 
+function daysumReadStore(){
+  const key=DAYSUM_KEY+localDateKey();
+  let st={};
+  try{st=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){st={};}
+  st.hoursP=st.hoursP||{};
+  st.hoursN=st.hoursN||{};
+  return {key:key, st:st};
+}
+function daysumWriteStore(key, st){
+  st.t=Date.now();
+  try{localStorage.setItem(key, JSON.stringify(st));}catch(e){}
+}
+function daysumMergePmsl(hoursP, utcH, p){
+  if(p==null||!isFinite(p)) return;
+  const h=((parseInt(utcH,10)%24)+24)%24;
+  hoursP[h]=Math.round(p*10)/10;
+  hoursP[String(h)]=hoursP[h];
+}
+async function savePressureBackground(force){
+try{
+  const now=new Date();
+  const bag=daysumReadStore();
+  const key=bag.key, st=bag.st;
+  if(!force && st.pBgAt && (Date.now()-st.pBgAt)<15*60*1000 && st.hoursP && Object.keys(st.hoursP).length>=3) return st.hoursP;
+  const begin=new Date(now.getTime()-30*3600*1000);
+  let got=false;
+  try{
+    const text=await fetchOgimet78988(utcStamp(begin), utcStamp(now));
+    if(text && /AAXX/.test(text)){
+      splitOgimetReports(text).forEach(function(msg){
+        try{
+          const full=msg.includes('AAXX')?msg:('AAXX 00004\n'+msg);
+          const meta=parseSynopHourUTC(full);
+          const p=parseSynopBulletin(full);
+          const r=p&&p.reports&&p.reports[0];
+          if(r&&r.Pmsl!=null&&meta&&meta.date){
+            daysumMergePmsl(st.hoursP, meta.date.getUTCHours(), r.Pmsl);
+            got=true;
+          }
+        }catch(e){}
+      });
+    }
+  }catch(e){}
+  // KNMI fallback for current UTC hour if still missing
+  const utcH=now.getUTCHours();
+  if(st.hoursP[utcH]==null && st.hoursP[String(utcH)]==null){
+    try{
+      const o=await fetchRetry(KNMI_URL, 1);
+      const raw=o&&o.ok?o.text:'';
+      const parsed=raw?parseKnmiBonaire(raw):null;
+      let p=null;
+      if(parsed){
+        const cell=parsed['Pressure (hPa)']||parsed['Pressure']||parsed['pressure'];
+        if(cell&&cell.value!=null) p=parseFloat(String(cell.value).replace(',','.'));
+        if((p==null||!isFinite(p))&&parsed.pressure!=null) p=parseFloat(parsed.pressure);
+      }
+      if(p!=null&&isFinite(p)&&p>900&&p<1100){
+        daysumMergePmsl(st.hoursP, utcH, p);
+        st.hoursPSrc=st.hoursPSrc||{};
+        st.hoursPSrc[utcH]='knmi';
+        got=true;
+      }
+    }catch(e){}
+  }
+  st.pBgAt=Date.now();
+  if(got) daysumWriteStore(key, st);
+  return st.hoursP;
+}catch(e){ return {}; }
+}
+let _pBgTimer=null;
+function startPressureBackground(){
+  if(_pBgTimer) return;
+  savePressureBackground(false);
+  _pBgTimer=setInterval(function(){ savePressureBackground(false); }, 20*60*1000);
+}
+
 async function loadDaySummary(force){
 const box=document.getElementById('daysum-table');
 if(!box) return;
@@ -6006,10 +6083,14 @@ try{store=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){store={};}
 Object.keys(localStorage).forEach(function(k){
 if(k.indexOf(DAYSUM_KEY)===0&&k!==key) localStorage.removeItem(k);
 });
-if(!force&&store.built&&store.html&&store.html.indexOf('AAXX')>=0&&Date.now()-store.t<10*60*1000){
-box.innerHTML=store.html; return;
+// Instant paint from cache
+let hadCache=false;
+if(store.built&&store.html&&store.html.indexOf('AAXX')>=0){
+  box.innerHTML=store.html;
+  hadCache=true;
+  if(!force&&Date.now()-store.t<10*60*1000) return;
 }
-box.innerHTML='<div class="loading-msg">Loading 78988 day file…</div>';
+if(!hadCache) box.innerHTML='<div class="loading-msg">Loading 78988 day file…</div>';
 const now=new Date();
 const begin=new Date(now.getTime()-36*3600*1000);
 let [tg, og]=await Promise.all([fetchTgftp78988(), fetchOgimet78988(utcStamp(begin), utcStamp(now))]);
@@ -6216,15 +6297,14 @@ return {
 };
 }
 async function renderOgYear(box){
-const y=new Date().getFullYear();
-const curM=new Date().getMonth()+1;
+const y=2026; // fixed climate year Jan–Dec 2026
 const names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const yk=OGSUM_KEY+'year_'+y;
 let store={};
 try{store=JSON.parse(localStorage.getItem(yk)||'{}')||{};}catch(e){}
-box.innerHTML='<div class="loading-msg">Loading year '+y+' from Ogimet (missing months)…</div>';
-// Backfill any missing month up to current month
-for(let m=1;m<=curM;m++){
+box.innerHTML='<div class="loading-msg">Loading 2026 year summary (Jan–Dec) from Ogimet…</div>';
+// Fetch all 12 months; future months with no bulletins stay empty
+for(let m=1;m<=12;m++){
   if(store[m] && store[m].n) continue;
   try{
     const row=await ogSumFetchMonthAvg(y, m);
@@ -6233,14 +6313,25 @@ for(let m=1;m<=curM;m++){
 }
 let html='<table class="sum-tbl"><thead><tr><th>Month</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis</th><th>Wind</th><th>QNH</th><th>Rain</th></tr></thead><tbody>';
 let any=false;
+const acc={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
 for(let m=1;m<=12;m++){
   const r=store[m];
-  if(!r){ html+='<tr><td>'+names[m]+'</td><td colspan="7" class="muted">'+(m>curM?'—':'no data')+'</td></tr>'; continue; }
+  if(!r){ html+='<tr><td>'+names[m]+'</td><td colspan="7" class="muted">no data</td></tr>'; continue; }
   any=true;
+  if(r.T!=null) acc.T.push(r.T);
+  if(r.Tmax!=null) acc.Tmax.push(r.Tmax);
+  if(r.Tmin!=null) acc.Tmin.push(r.Tmin);
+  if(r.vis!=null) acc.vis.push(r.vis);
+  if(r.wind!=null) acc.wind.push(r.wind);
+  if(r.pmsl!=null) acc.pmsl.push(r.pmsl);
+  if(r.rain!=null) acc.rain.push(r.rain);
   html+='<tr><td>'+names[m]+'</td><td>'+(r.T??'—')+'</td><td>'+(r.Tmax??'—')+'</td><td>'+(r.Tmin??'—')+'</td><td>'+(r.vis!=null?r.vis+' km':'—')+'</td><td>'+(r.wind??'—')+'</td><td>'+(r.pmsl??'—')+'</td><td>'+(r.rain??'—')+'</td></tr>';
 }
+if(any){
+  html+='<tr><td><b>Year avg</b></td><td><b>'+(pickNum(acc.T)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmax)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmin)??'—')+'</b></td><td><b>'+(pickNum(acc.vis)!=null?pickNum(acc.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(acc.wind)??'—')+'</b></td><td><b>'+(pickNum(acc.pmsl)??'—')+'</b></td><td><b>'+(pickNum(acc.rain)??'—')+'</b></td></tr>';
+}
 html+='</tbody></table>';
-box.innerHTML=html+(any?'':'<p class="wx-model-note">No year data from Ogimet yet.</p>');
+box.innerHTML=html+(any?'':'<p class="wx-model-note">No 2026 year data from Ogimet yet.</p>');
 }
 /* ── TABS ── */
 function suV(id){const e=document.getElementById(id);return e?String(e.value||'').trim():'';}
@@ -6611,6 +6702,10 @@ if(panel==='synop'&&name==='daysum') loadDaySummary(false);
 if(panel==='synop'&&name==='ogsum') loadOgimetSummary(false);
 }
 window.switchSubTab=switchSubTab;
+window.ogSumView=ogSumView;
+window.loadOgimetSummary=loadOgimetSummary;
+window.savePressureBackground=savePressureBackground;
+
 const loadedTabs={metar:true,taf:false,synop:false,stations:false,atc:false,weather:false,ow:false};
 function byId(id){return document.getElementById(id);}
 async function fetchURL(url,tries){
@@ -7075,6 +7170,7 @@ renderMetar('TNCC',`TNCC ${t} 12020G30KT 9999 SCT022 29/25 Q1012`);
 // Longer intervals = less background work on mobile
 setInterval(function(){refreshAllMetars();}, METAR_MS);
 setInterval(function(){updateVis();}, VIS_MS);
+try{startPressureBackground();}catch(e){}
 })();
 </script>
 <script>

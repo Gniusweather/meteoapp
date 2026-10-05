@@ -4283,6 +4283,10 @@ const st=JSON.parse(localStorage.getItem(DAYSUM_KEY+localDateKey())||'{}')||{};
 const hp=st.hoursP||{};
 if(hp[utcH]!=null) return parseFloat(hp[utcH]);
 if(hp[String(utcH)]!=null) return parseFloat(hp[String(utcH)]);
+// Fallback: TNCB / 78990 synop same UTC hour when Curaçao missing
+const hb=st.hoursPTncb||{};
+if(hb[utcH]!=null) return parseFloat(hb[utcH]);
+if(hb[String(utcH)]!=null) return parseFloat(hb[String(utcH)]);
 }catch(e){}
 return null;
 }
@@ -4384,9 +4388,21 @@ if(st) st.textContent='PREFILL — Curaçao Airport + KNMI pressure…';
 const wmo=encGetIIIII();
 const coords={78988:[12.19,-68.96],78982:[12.50,-70.02],78990:[12.13,-68.27]}[wmo]||[12.19,-68.96];
 let est={dd:null,ff:null,vis:null,t:null,td:null,rh:null,pmsl:null,pstn:null,rrr:null,rrr3:null,r24:null,tmax:null,tmin:null,n:null,h:null};
-// 1) Curaçao International Airport (Stations API) — primary
+// Parallel: stations + KNMI + Open-Meteo (faster prefill)
+const omUrl='https://api.open-meteo.com/v1/forecast?latitude='+coords[0]+'&longitude='+coords[1]+
+'&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,surface_pressure,pressure_msl,visibility'+
+'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=1&wind_speed_unit=kn&timezone=UTC';
+let stationsOk=null, knTxt='', omOut=null;
 try{
-await fetchStationsData();
+const pack=await Promise.all([
+  fetchStationsData().then(function(){return true;}).catch(function(){return false;}),
+  fetchRetry(KNMI_URL,1).then(function(kn){return (kn&&kn.ok&&kn.text)?kn.text:(cacheGet('wxpage')||'');}).catch(function(){return cacheGet('wxpage')||'';}),
+  fetchJson(omUrl).catch(function(){return null;})
+]);
+stationsOk=pack[0]; knTxt=pack[1]||''; omOut=pack[2];
+}catch(e){}
+// 1) Curaçao International Airport — primary
+try{
 const apt=(currentData||[]).find(function(r){
 const n=String(r.station||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 return (n.indexOf('curacao')>=0||n.indexOf('hato')>=0)&&(n.indexOf('airport')>=0||n.indexOf('hato')>=0);
@@ -4407,14 +4423,10 @@ if(td!=null) est.td=td;
 est._src=apt.station||'TNCC airport';
 }
 }catch(e){}
-// 2) KNMI live pressure
+// 2) KNMI live pressure / vis / cloud
 try{
-let txt='';
-const kn=await fetchRetry(KNMI_URL);
-if(kn&&kn.ok&&kn.text) txt=kn.text;
-if(!txt) txt=cacheGet('wxpage')||'';
-if(txt){
-const parsed=parseKnmiBonaire(txt);
+if(knTxt){
+const parsed=parseKnmiBonaire(knTxt);
 if(parsed){
 let pval=null, vis=null, octa=null;
 Object.keys(parsed).forEach(function(k){
@@ -4439,13 +4451,9 @@ if(octa!=null&&est.n==null){ est.n=String(octa); est._csrc='KNMI'; }
 }
 }
 }catch(e){}
-// 3) Open-Meteo only fills gaps (vis, tmax/tmin, clouds)
+// 3) Open-Meteo gaps only
 try{
-const url='https://api.open-meteo.com/v1/forecast?latitude='+coords[0]+'&longitude='+coords[1]+
-'&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,surface_pressure,pressure_msl,visibility'+
-'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=1&wind_speed_unit=kn&timezone=UTC';
-const out=await fetchJson(url);
-const j=out&&out.json;
+const j=omOut&&omOut.json;
 const c=j&&j.current;
 if(c){
 if(!est._vsrc&&c.visibility!=null) est.vis=Math.round((c.visibility/1000)*10)/10;
@@ -5919,19 +5927,22 @@ if(out&&out.ok&&out.text&&out.text.indexOf('78988')>=0) return out.text.replace(
 }catch(e){}
 return null;
 }
-async function fetchOgimet78988(begin,end){
+async function fetchOgimetBlock(block,begin,end){
+const id=String(block||'78988');
 const urls=[
-'https://www.ogimet.com/cgi-bin/getsynop?block=78988&begin='+begin+'&end='+end,
-'https://www.ogimet.com/cgi-bin/getsynop?block=78988&begin='+begin+'&end='+end+'&header=yes'
+'https://www.ogimet.com/cgi-bin/getsynop?block='+id+'&begin='+begin+'&end='+end,
+'https://www.ogimet.com/cgi-bin/getsynop?block='+id+'&begin='+begin+'&end='+end+'&header=yes'
 ];
 for(var i=0;i<urls.length;i++){
 try{
 const out=await fetchRetry(urls[i],2);
-if(out&&out.ok&&out.text&&/AAXX|78988/.test(out.text)) return out.text;
+if(out&&out.ok&&out.text&&(new RegExp('AAXX|'+id)).test(out.text)) return out.text;
 }catch(e){}
 }
 return '';
 }
+async function fetchOgimet78988(begin,end){ return fetchOgimetBlock('78988',begin,end); }
+async function fetchOgimet78990(begin,end){ return fetchOgimetBlock('78990',begin,end); }
 function splitOgimetReports(text,wmo){
 const id=wmo||'78988';
 const list=[];
@@ -6004,6 +6015,7 @@ function daysumReadStore(){
   let st={};
   try{st=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){st={};}
   st.hoursP=st.hoursP||{};
+  st.hoursPTncb=st.hoursPTncb||{};
   st.hoursN=st.hoursN||{};
   return {key:key, st:st};
 }
@@ -6026,9 +6038,15 @@ try{
   const begin=new Date(now.getTime()-30*3600*1000);
   let got=false;
   try{
-    const text=await fetchOgimet78988(utcStamp(begin), utcStamp(now));
+    const stampB=utcStamp(begin), stampN=utcStamp(now);
+    const pair=await Promise.all([
+      fetchOgimet78988(stampB, stampN),
+      fetchOgimet78990(stampB, stampN)
+    ]);
+    const text=pair[0]||'';
+    const textB=pair[1]||'';
     if(text && /AAXX/.test(text)){
-      splitOgimetReports(text).forEach(function(msg){
+      splitOgimetReports(text,'78988').forEach(function(msg){
         try{
           const full=msg.includes('AAXX')?msg:('AAXX 00004\n'+msg);
           const meta=parseSynopHourUTC(full);
@@ -6036,6 +6054,21 @@ try{
           const r=p&&p.reports&&p.reports[0];
           if(r&&r.Pmsl!=null&&meta&&meta.date){
             daysumMergePmsl(st.hoursP, meta.date.getUTCHours(), r.Pmsl);
+            got=true;
+          }
+        }catch(e){}
+      });
+    }
+    // TNCB 78990 pressures for 3h tendency fallback
+    if(textB && /AAXX/.test(textB)){
+      splitOgimetReports(textB,'78990').forEach(function(msg){
+        try{
+          const full=msg.includes('AAXX')?msg:('AAXX 00004\n'+msg);
+          const meta=parseSynopHourUTC(full);
+          const p=parseSynopBulletin(full);
+          const r=p&&p.reports&&p.reports[0];
+          if(r&&r.Pmsl!=null&&meta&&meta.date){
+            daysumMergePmsl(st.hoursPTncb, meta.date.getUTCHours(), r.Pmsl);
             got=true;
           }
         }catch(e){}
@@ -6668,6 +6701,8 @@ dest.replaceWith(sel);
 return sel;
 }
 function tplAttachCodeSelects(){
+if(window._tplSelAttached) return;
+window._tplSelAttached=true;
 [['enc-ir','su-ir','suUpdate'],['enc-ix','su-ix','suUpdate'],['enc-h','su-h','suUpdate'],['enc-n','su-n','suUpdate'],['enc-a','su-a','suUpdate'],['enc-ww','su-ww','suUpdate'],['enc-w1','su-w1','suUpdate'],['enc-w2','su-w2','suUpdate']].forEach(function(x){tplCloneSelect(x[0],x[1],x[2]);});
 [['enc-ww','va-ww','vaUpdate'],['enc-w1','va-w1','vaUpdate'],['enc-w2','va-w2','vaUpdate'],['enc-a','va-a','vaUpdate'],['enc-n','va-ndd','vaUpdate']].forEach(function(x){
 const dest=document.getElementById(x[1]);
@@ -6696,7 +6731,11 @@ function switchSubTab(panel,name){
 const bar=document.getElementById(panel+'-sub-bar');
 if(bar)bar.querySelectorAll('.sub-tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.sub===name));
 document.querySelectorAll('[id^="'+panel+'-sub-"]').forEach(p=>p.classList.toggle('active',p.id===panel+'-sub-'+name));
-if(panel==='synop'&&name==='encode') encInitTime();
+if(panel==='synop'&&name==='encode'){
+  encInitTime();
+  try{encTendFromDaysum();}catch(e){}
+  try{encUpdate();}catch(e){}
+}
 if(panel==='synop'&&name==='sutron'){tplAttachCodeSelects();tplFillFromEnc('su');suUpdate();}
 if(panel==='synop'&&name==='vaisala'){tplAttachCodeSelects();document.querySelectorAll('input[name="va-iw"]').forEach(function(r){r.checked=r.value==='4';});tplFillFromEnc('va');vaUpdate();}
 if(panel==='metar'&&name==='encode') metarEncInit();

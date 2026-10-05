@@ -3688,8 +3688,7 @@ const isSI=ggH===3||ggH===9||ggH===15||ggH===21;
 const isSN=!isSM&&!isSI;
 const isClimate=ggH===0||ggH===12;
 const kind=isSM?'SM':isSI?'SI':'SN';
-let iw=v('enc-iw')||'4';
-if(isSM){ iw='0'; const iwe=p('enc-iw'); if(iwe) iwe.value='0'; }
+let iw='4'; const iwe=p('enc-iw'); if(iwe) iwe.value='4';
 const _has7=(function(){
 const w=parseInt(v('enc-ww')||v('enc-wawa'),10);
 if(!isNaN(w)&&w>=5) return true;
@@ -6639,7 +6638,8 @@ const d=new Date();
 const cl=document.getElementById('va-clock');
 const u=encSynopUtc(d);
 if(cl) cl.textContent=String(u.gg).padStart(2,'0')+':00Z   '+String(u.yy).padStart(2,'0')+'-'+String(u.date.getUTCMonth()+1).padStart(2,'0')+'-'+u.date.getUTCFullYear();
-const iw=(document.querySelector('input[name="va-iw"]:checked')||{value:'4'}).value||'4';
+document.querySelectorAll('input[name="va-iw"]').forEach(function(r){r.checked=r.value==='4';});
+const iw='4';
 let yygg=suV('va-yygg');
 if(!yygg){ const u=encSynopUtc(d); yygg=String(u.yy).padStart(2,'0')+String(u.gg).padStart(2,'0')+iw; const el=document.getElementById('va-yygg'); if(el&&!el.value) el.value=yygg; }
 const ii=suV('va-ii')||'78988';
@@ -6810,20 +6810,67 @@ function owRound(n){
   const x=Number(n);
   return (x-Math.floor(x))>=0.5?Math.ceil(x):Math.floor(x);
 }
+function owNbase(N){
+  const n=N==null||N==='/'?NaN:parseInt(N,10);
+  if(n===0) return 'onbewolkt';
+  if(n>=1&&n<=3) return 'licht bewolkt';
+  if(n>=4&&n<=5) return 'half bewolkt';
+  if(n>=6&&n<=7) return 'zwaar bewolkt';
+  if(n===8) return 'geheel bewolkt';
+  return '';
+}
+function owWwNL(c){
+  // Dutch section-1 group 7 ww (paper form). 710// → 10 = nevel.
+  if(c==null||isNaN(c)||c<10) return '';
+  if(c===10) return 'nevel';
+  if(c===11||c===12) return 'laaghangende mist';
+  if(c===13) return 'weerlicht';
+  if(c>=14&&c<=16) return 'neerslag op afstand';
+  if(c===17||c===95||c===97) return 'onweer';
+  if(c===19) return 'windhoos';
+  if(c===20) return 'bewolkt na motregen';
+  if(c===21) return 'bewolkt na regen';
+  if(c===22) return 'bewolkt na sneeuw';
+  if(c===23) return 'bewolkt na regen en sneeuw';
+  if(c===24) return 'bewolkt na regen of motregen met ijzel';
+  if(c===25) return 'bewolkt na regenbui';
+  if(c===26) return 'bewolkt na sneeuwbui';
+  if(c===27) return 'bewolkt na hagelbui';
+  if(c===28) return 'bewolkt na mist';
+  if(c===29) return 'bewolkt na onweer';
+  if(c>=30&&c<=35) return 'stofstorm';
+  if(c>=36&&c<=39) return 'driftsneeuw';
+  if(c===40) return 'mist op afstand';
+  if(c===41) return 'mistbank';
+  if(c>=42&&c<=49) return 'mist';
+  if(c>=50&&c<=55) return 'motregen';
+  if(c===56||c===57) return 'motregen met ijzel';
+  if(c===58||c===59) return 'regen en motregen';
+  if(c>=60&&c<=65) return 'regen';
+  if(c===66||c===67) return 'regen met ijzel';
+  if(c===68||c===69) return 'regen en sneeuw';
+  if(c>=70&&c<=75) return 'sneeuw';
+  if(c===77) return 'motsneeuw';
+  if(c===79) return 'ijsregen';
+  if(c>=80&&c<=82) return 'regenbui';
+  if(c===83||c===84) return 'natte sneeuwbui';
+  if(c===85||c===86) return 'sneeuwbui';
+  if(c>=87&&c<=90) return 'hagelbui';
+  if(c===91||c===92) return 'regen na onweer';
+  if(c===96||c===99) return 'onweer met hagel';
+  return '';
+}
 function owWeertype(N,ww){
-  let n=N==null||N==='/'?null:parseInt(N,10);
-  if(isNaN(n)) n=null;
-  let base='';
-  if(n===0) base='onbewolkt';
-  else if(n>=1&&n<=3) base='licht bewolkt';
-  else if(n>=4&&n<=5) base='half bewolkt';
-  else if(n>=6&&n<=7) base='zwaar bewolkt';
-  else if(n===8) base='geheel bewolkt';
+  const base=owNbase(N);
   const c=parseInt(ww,10);
-  const extra={10:'nevel',13:'weerlicht',14:'neerslag op afstand',15:'neerslag op afstand',16:'neerslag op afstand',17:'onweer',21:'bewolkt na regen',25:'bewolkt na regenbui',29:'bewolkt na onweer',50:'motregen',51:'motregen',53:'motregen',55:'motregen',60:'regen',61:'regen',63:'regen',65:'regen',80:'regenbui',81:'regenbui',95:'onweer',97:'onweer'};
-  if(!isNaN(c)&&extra[c]){
-    if((c>=20&&c<=29)||(c>=50&&c<=57)||c===10||c===14||c===15||c===16) return extra[c];
-    return (base?base+' · ':'')+extra[c];
+  const wx=owWwNL(c);
+  if(wx){
+    // 20–29: dots on the form are the N cloud amount
+    if(c>=20&&c<=29){
+      const tail=wx.replace(/^bewolkt\s+/,'');
+      return (base||'bewolkt')+' '+tail;
+    }
+    return wx;
   }
   return base;
 }
@@ -6899,12 +6946,14 @@ function owParseOgimet(text){
   return rows;
 }
 function owPickHour(rows,y,mo,d,hours){
-  const want=new Set(hours);
-  let best=null;
-  rows.forEach(r=>{
-    if(r.y===y&&r.mo===mo&&r.d===d&&want.has(r.h)) best=r;
-  });
-  return best;
+  // Prefer the first listed hour (US main is 11Z / 11:52, not 12Z)
+  const order=(hours||[]).map(function(h){return parseInt(h,10);});
+  for(let i=0;i<order.length;i++){
+    const h=order[i];
+    const hit=(rows||[]).find(function(r){return r.y===y&&r.mo===mo&&r.d===d&&r.h===h;});
+    if(hit) return hit;
+  }
+  return null;
 }
 function owFirstClimate(repText){
   // Section 3: first 1snTxTxTx and first 2snTnTnTn only.
@@ -6958,6 +7007,16 @@ function owMetarTemps(lines){
     if(!wx) wx=owWxFromMetar(raw);
   });
   return {tmax,tmin,wx};
+}
+async function owFetchMetar24(icao){
+  const url='https://aviationweather.gov/api/data/metar?ids='+encodeURIComponent(icao)+'&format=raw&hours=24';
+  try{
+    const out=await owGet(url);
+    if(!out) return [];
+    return String(out).split(/\n+/).map(function(l){return l.trim();}).filter(function(l){
+      return l.indexOf(icao)>=0 && /\s(M?\d{2})\/(M?\d{2})\s/.test(l);
+    });
+  }catch(e){ return []; }
 }
 function owBlankRows(){
   return OW_STATIONS.map(x=>x.sep?x:{...x,wx:'',tmax:'',tmin:'',rr:''});
@@ -7033,10 +7092,10 @@ async function owLoad(force){
       parsed=owParseOgimet(await owGet('https://www.ogimet.com/ultimos_synops2.php?estado=Cura&fmt=html&Enviar=Ver'));
     }
     const us=['KATL','KMIA','KLGA','TJSJ'].includes(stn.icao);
-    const r12=owPickHour(parsed,y,mo,d, us?[11,12]:[12]);
-    const r18=owPickHour(parsed,py,pmo,pd, us?[17,18]:[18]);
+    const r12=owPickHour(parsed,y,mo,d, us?[11]:[12]);
+    const r18=owPickHour(parsed,py,pmo,pd, us?[17]:[18]);
     const r00=owPickHour(parsed,y,mo,d,[0])||owPickHour(parsed,py,pmo,pd,[23]);
-    const r06=owPickHour(parsed,y,mo,d, us?[5,6]:[6]);
+    const r06=owPickHour(parsed,y,mo,d, us?[5]:[6]);
     const d12=r12?owDecode(r12.rep):null;
     const d18=r18?owDecode(r18.rep):null;
     const d00=r00?owDecode(r00.rep):null;
@@ -7063,18 +7122,32 @@ async function owLoad(force){
       });
       tmax=best!=null?best:eve;
     }
-    if(tmax==null && d12&&d12.Tmax!=null) tmax=d12.Tmax;
-    else if(tmax==null && d18&&d18.Tmax!=null) tmax=d18.Tmax;
-    const autoMin=['TNCB','EHAM','TNCE'].includes(stn.icao);
-    if(autoMin){
-      if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
-    }else if(d12&&d12.Tmin!=null) tmin=d12.Tmin;
-    else if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
+    const metarMm=['MUHA','SMJP','SVVA'].includes(stn.icao);
+    if(!metarMm){
+      if(tmax==null && d12&&d12.Tmax!=null) tmax=d12.Tmax;
+      else if(tmax==null && d18&&d18.Tmax!=null) tmax=d18.Tmax;
+      const autoMin=['TNCB','EHAM','TNCE'].includes(stn.icao);
+      if(autoMin){
+        if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
+      }else if(d12&&d12.Tmin!=null) tmin=d12.Tmin;
+      else if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
+    }
     if(d12&&d12._r24!=null) rr=d12._r24;
     else if(d06&&d06._r24!=null) rr=d06._r24;
     if(tmax!=null) row.tmax=owRound(tmax);
     if(tmin!=null) row.tmin=owRound(tmin);
     if(rr!=null) row.rr=(Math.round(rr*10)/10).toFixed(1);
+  }));
+  // MUHA / SMJP / SVVA: Tmax/Tmin from last 24h METARs only
+  if(stEl) stEl.textContent='Laden METAR 24u (MUHA/SMJP/SVVA)…';
+  await Promise.all(OW_STATIONS.map(async function(stn,idx){
+    if(stn.sep) return;
+    if(!['MUHA','SMJP','SVVA'].includes(stn.icao)) return;
+    const lines=await owFetchMetar24(stn.icao);
+    const mt=owMetarTemps(lines);
+    const row=rows[idx];
+    if(mt.tmax!=null) row.tmax=owRound(mt.tmax);
+    if(mt.tmin!=null) row.tmin=owRound(mt.tmin);
   }));
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
   owRender(rows, fd, got);

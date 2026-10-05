@@ -4205,9 +4205,12 @@ return {date:d, yy:d.getUTCDate(), gg:d.getUTCHours(), mm:d.getUTCMinutes()};
 function encCloudBaseFt(t,td){
 const T=parseFloat(t), D=parseFloat(td);
 if(!isFinite(T)||!isFinite(D)) return null;
-const ft=(T-D)/2.5*1000;
-if(!isFinite(ft)||ft<0) return 0;
-return Math.round(ft);
+let ft=(T-D)/2.5*1000;
+if(!isFinite(ft)||ft<0) ft=0;
+ft=Math.round(ft);
+// Auto cloud base never below 1600 ft for Sec1 h / Sec3 8NsChshs
+if(ft<1600) ft=1600;
+return ft;
 }
 function encHfromFt(ft){
 const m=ft*0.3048;
@@ -5996,7 +5999,6 @@ const st=document.getElementById('enc-mode-status');
 if(st&&st.textContent) st.textContent=st.textContent.replace(/\s*· 24h P.+$/,'')+' · 24h P '+((d24>=0?'+':'')+d24)+' hPa';
 encUpdate();
 }
-async 
 function daysumReadStore(){
   const key=DAYSUM_KEY+localDateKey();
   let st={};

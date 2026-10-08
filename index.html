@@ -6831,7 +6831,7 @@ function owWwNL(c){
   if(c===20) return 'bewolkt na motregen';
   if(c===21) return 'bewolkt na regen';
   if(c===22) return 'bewolkt na sneeuw';
-  if(c===23) return 'bewolkt na regen en sneeuw';
+  if(c===23) return 'bewolkt na regen en sneeuw of na ijs';
   if(c===24) return 'bewolkt na regen of motregen met ijzel';
   if(c===25) return 'bewolkt na regenbui';
   if(c===26) return 'bewolkt na sneeuwbui';
@@ -6864,15 +6864,14 @@ function owWeertype(N,ww){
   const base=owNbase(N);
   const c=parseInt(ww,10);
   const wx=owWwNL(c);
-  if(wx){
-    // 20–29: dots on the form are the N cloud amount
-    if(c>=20&&c<=29){
-      const tail=wx.replace(/^bewolkt\s+/,'');
-      return (base||'bewolkt')+' '+tail;
-    }
-    return wx;
+  if(!wx) return base;
+  // 20-29: dots on the form are the N cloud amount
+  if(c>=20&&c<=29){
+    const tail=wx.replace(/^bewolkt\s+/,'');
+    return (base||'bewolkt')+' '+tail;
   }
-  return base;
+  // ww 10+: keep N text and add the weather text, no code number
+  return base?(base+' · '+wx):wx;
 }
 function owWxFromMetar(raw){
   if(!raw) return '';

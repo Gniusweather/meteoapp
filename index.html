@@ -695,6 +695,7 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
 <button class="nav-btn" data-tab="atc" onclick="switchTab('atc')"><span class="ic">✈</span>ATC</button>
 <button class="nav-btn" data-tab="weather" onclick="switchTab('weather')"><span class="ic">🌤</span>Weather</button>
 <button class="nav-btn" data-tab="ow" onclick="switchTab('ow')"><span class="ic">📋</span>OW</button>
+<button class="nav-btn" data-tab="ow2" onclick="switchTab('ow2')"><span class="ic">📋</span>OW2</button>
 </nav>
 <div class="scroll" id="scrollArea">
 <!-- METAR -->
@@ -2622,6 +2623,22 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
       <div class="ow-code"><span>Code:QF-OBS-OW</span><span>V 1.0</span></div>
       <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
       <div id="ow-table-host"></div>
+    </div>
+  </div>
+</div>
+<div class="panel" id="tab-ow2">
+  <div class="s-head">
+    <div class="s-title">OW2</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="ow-status" id="ow2-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <button class="s-btn" id="ow2-refresh-btn" onclick="owLoad(true)">↻</button>
+    </div>
+  </div>
+  <div class="ow-wrap">
+    <div class="ow-paper">
+      <div class="ow-code"><span>Code:QF-OBS-OW2</span><span>V 1.0</span></div>
+      <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
+      <div id="ow2-table-host"></div>
     </div>
   </div>
 </div>
@@ -6831,7 +6848,7 @@ function owWwNL(c){
   if(c===20) return 'bewolkt na motregen';
   if(c===21) return 'bewolkt na regen';
   if(c===22) return 'bewolkt na sneeuw';
-  if(c===23) return 'bewolkt na regen en sneeuw';
+  if(c===23) return 'bewolkt na regen en sneeuw of na ijs';
   if(c===24) return 'bewolkt na regen of motregen met ijzel';
   if(c===25) return 'bewolkt na regenbui';
   if(c===26) return 'bewolkt na sneeuwbui';
@@ -6865,7 +6882,6 @@ function owWeertype(N,ww){
   const c=parseInt(ww,10);
   const wx=owWwNL(c);
   if(wx){
-    // 20–29: dots on the form are the N cloud amount
     if(c>=20&&c<=29){
       const tail=wx.replace(/^bewolkt\s+/,'');
       return (base||'bewolkt')+' '+tail;
@@ -6873,6 +6889,17 @@ function owWeertype(N,ww){
     return wx;
   }
   return base;
+}
+function ow2Weertype(N,ww){
+  const base=owNbase(N);
+  const c=parseInt(ww,10);
+  const wx=owWwNL(c);
+  if(!wx) return base;
+  if(c>=20&&c<=29){
+    const tail=wx.replace(/^bewolkt\s+/,'');
+    return (base||'bewolkt')+' '+tail;
+  }
+  return base?(base+' · '+wx):wx;
 }
 function owWxFromMetar(raw){
   if(!raw) return '';
@@ -6946,7 +6973,6 @@ function owParseOgimet(text){
   return rows;
 }
 function owPickHour(rows,y,mo,d,hours){
-  // Prefer the first listed hour (US main is 11Z / 11:52, not 12Z)
   const order=(hours||[]).map(function(h){return parseInt(h,10);});
   for(let i=0;i<order.length;i++){
     const h=order[i];
@@ -6954,6 +6980,15 @@ function owPickHour(rows,y,mo,d,hours){
     if(hit) return hit;
   }
   return null;
+}
+function owPick1152(rows,y,mo,d){
+  const hits=(rows||[]).filter(function(r){return r.y===y&&r.mo===mo&&r.d===d&&r.h===11;});
+  if(!hits.length) return null;
+  const exact=hits.find(function(r){return r.mi===52;});
+  if(exact) return exact;
+  const near=hits.find(function(r){return r.mi>=50&&r.mi<=59;});
+  if(near) return near;
+  return hits[0];
 }
 function owFirstClimate(repText){
   // Section 3: first 1snTxTxTx and first 2snTnTnTn only.
@@ -7029,9 +7064,10 @@ function owCopyCell(ev){
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done).catch(function(){});
   else { const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); done(); }
 }
-function owRender(rows, fd, filled){
-  const host=$('ow-table-host');
+function owRender(rows, fd, filled, hostId, wxKey){
+  const host=$(hostId||'ow-table-host');
   if(!host) return;
+  wxKey=wxKey||'wx';
   const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
   const dow=days[new Date(Date.UTC(fd.y,fd.mo-1,fd.d,16)).getUTCDay()]||'';
   const dd=String(fd.d).padStart(2,'0')+' - '+String(fd.mo).padStart(2,'0')+' - '+fd.y;
@@ -7048,9 +7084,9 @@ function owRender(rows, fd, filled){
     if(r.sep){ html+='<tr class="ow-sep"><td colspan="5"></td></tr>'; return; }
     html+='<tr>';
     html+=cell('', r.name, r.name);
-    html+=cell('wx', r.wx, '---');
-    html+=cell('num', r.tmax, '---');
-    html+=cell('num', r.tmin, '---');
+    html+=cell('wx', r[wxKey], '---');
+    html+=cell('num', r[wxKey==='wx2'?'tmax2':'tmax'], '---');
+    html+=cell('num', r[wxKey==='wx2'?'tmin2':'tmin'], '---');
     html+=cell('num', r.rr, '--.--');
     html+='</tr>';
   });
@@ -7071,9 +7107,11 @@ async function owLoad(force){
   if(!force && owLastKey===key && host.getAttribute('data-filled')==='1') return;
   if(owBusy && !force) return;
   owBusy=true;
-  const rows=owBlankRows();
-  owRender(rows, fd, false);
-  if(stEl) stEl.textContent='Laden SYNOP…';
+  try{
+  const keep=window.owKeep && window.owKeep.key===key ? window.owKeep.rows : null;
+  const rows=keep ? keep.map(function(r){return Object.assign({}, r);}) : owBlankRows();
+  if(!keep) owRender(rows, fd, false);
+  if(stEl) stEl.textContent=keep?'Herladen 12Z…':'Laden SYNOP…';
   const y=fd.y,mo=fd.mo,d=fd.d;
   const prev=new Date(Date.UTC(y,mo-1,d)-86400e3);
   const py=prev.getUTCFullYear(),pmo=prev.getUTCMonth()+1,pd=prev.getUTCDate();
@@ -7092,7 +7130,7 @@ async function owLoad(force){
       parsed=owParseOgimet(await owGet('https://www.ogimet.com/ultimos_synops2.php?estado=Cura&fmt=html&Enviar=Ver'));
     }
     const us=['KATL','KMIA','KLGA','TJSJ'].includes(stn.icao);
-    const r12=owPickHour(parsed,y,mo,d, us?[11]:[12]);
+    const r12=us?owPick1152(parsed,y,mo,d):owPickHour(parsed,y,mo,d,[12]);
     const r18=owPickHour(parsed,py,pmo,pd, us?[17]:[18]);
     const r00=owPickHour(parsed,y,mo,d,[0])||owPickHour(parsed,py,pmo,pd,[23]);
     const r06=owPickHour(parsed,y,mo,d, us?[5]:[6]);
@@ -7103,7 +7141,9 @@ async function owLoad(force){
     const row=rows[idx];
     if(d12){
       const wx=owWeertype(d12.N,d12.ww);
-      if(wx) row.wx=wx;
+      if(wx && !row.wx) row.wx=wx;
+      const wx2=ow2Weertype(d12.N,d12.ww);
+      if(wx2 && !row.wx2) row.wx2=wx2;
     }
     let tmax=null,tmin=null,rr=null;
     if(stn.icao==='SKBO'){
@@ -7122,38 +7162,45 @@ async function owLoad(force){
       });
       tmax=best!=null?best:eve;
     }
-    const metarMm=['MUHA','SMJP','SVVA'].includes(stn.icao);
-    if(!metarMm){
-      if(tmax==null && d12&&d12.Tmax!=null) tmax=d12.Tmax;
-      else if(tmax==null && d18&&d18.Tmax!=null) tmax=d18.Tmax;
-      const autoMin=['TNCB','EHAM','TNCE'].includes(stn.icao);
-      if(autoMin){
-        if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
-      }else if(d12&&d12.Tmin!=null) tmin=d12.Tmin;
-      else if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
-    }
+    if(tmax==null && d12&&d12.Tmax!=null) tmax=d12.Tmax;
+    else if(tmax==null && d18&&d18.Tmax!=null) tmax=d18.Tmax;
+    const autoMin=['TNCB','EHAM','TNCE'].includes(stn.icao);
+    if(autoMin){
+      if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
+    }else if(d12&&d12.Tmin!=null) tmin=d12.Tmin;
+    else if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
     if(d12&&d12._r24!=null) rr=d12._r24;
     else if(d06&&d06._r24!=null) rr=d06._r24;
-    if(tmax!=null) row.tmax=owRound(tmax);
-    if(tmin!=null) row.tmin=owRound(tmin);
-    if(rr!=null) row.rr=(Math.round(rr*10)/10).toFixed(1);
+    if(tmax!=null && (row.tmax==null||row.tmax==='')) row.tmax=owRound(tmax);
+    if(tmin!=null && (row.tmin==null||row.tmin==='')) row.tmin=owRound(tmin);
+    if(tmax!=null && (row.tmax2==null||row.tmax2==='')) row.tmax2=owRound(tmax);
+    if(tmin!=null && (row.tmin2==null||row.tmin2==='')) row.tmin2=owRound(tmin);
+    if(rr!=null && (row.rr==null||row.rr==='')) row.rr=(Math.round(rr*10)/10).toFixed(1);
   }));
-  // MUHA / SMJP / SVVA: Tmax/Tmin from last 24h METARs only
-  if(stEl) stEl.textContent='Laden METAR 24u (MUHA/SMJP/SVVA)…';
+  // OW2 only: 24h METAR fills gaps. OW stays SYNOP-only. Rain stays SYNOP.
+  const st2pre=$('ow2-status');
+  if(st2pre) st2pre.textContent='Laden METAR 24u…';
   await Promise.all(OW_STATIONS.map(async function(stn,idx){
     if(stn.sep) return;
-    if(!['MUHA','SMJP','SVVA'].includes(stn.icao)) return;
+    const row=rows[idx];
+    const need=!row.wx2 || row.tmax2==null || row.tmax2==='' || row.tmin2==null || row.tmin2==='';
+    if(!need) return;
     const lines=await owFetchMetar24(stn.icao);
     const mt=owMetarTemps(lines);
-    const row=rows[idx];
-    if(mt.tmax!=null) row.tmax=owRound(mt.tmax);
-    if(mt.tmin!=null) row.tmin=owRound(mt.tmin);
+    if(!row.wx2 && mt.wx) row.wx2=mt.wx;
+    if((row.tmax2==null||row.tmax2==='') && mt.tmax!=null) row.tmax2=owRound(mt.tmax);
+    if((row.tmin2==null||row.tmin2==='') && mt.tmin!=null) row.tmin2=owRound(mt.tmin);
   }));
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
+  window.owKeep={key:key, rows:rows.map(function(r){return Object.assign({}, r);})};
   owRender(rows, fd, got);
+  owRender(rows, fd, got, 'ow2-table-host', 'wx2');
+  const st2=$('ow2-status');
+  if(st2) st2.textContent=got?('Gevuld · N+ww · '+key):('Geen SYNOP — ⚙ CORS proxy · '+key);
   if(got) owLastKey=key;
   if(stEl) stEl.textContent=got?('Gevuld · SYNOP · '+key):('Geen SYNOP — ⚙ CORS proxy · '+key);
-  owBusy=false;
+  }catch(e){}
+  finally{ owBusy=false; }
 }
 function owWatch(){
   if(owTimer) return;
@@ -7168,6 +7215,7 @@ window.owCopyCell=owCopyCell;
 try{
   const _fd=owFormDay();
   owRender(owBlankRows(), _fd, false);
+  owRender(owBlankRows(), _fd, false, 'ow2-table-host', 'wx2');
 }catch(e){}
 
 function switchTab(name){
@@ -7184,7 +7232,7 @@ if(name==='taf')loadAllTafs();
 else if(name==='synop'){loadAllSynops();switchSubTab('synop','encode');}
 else if(name==='stations')fetchStationsData();
 else if(name==='weather')loadWeather();
-else if(name==='ow')owLoad(false);
+else if(name==='ow'||name==='ow2')owLoad(false);
 }
 if(name==='atc'){
 try{atcInitMap();}catch(e){}

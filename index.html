@@ -695,6 +695,7 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
 <button class="nav-btn" data-tab="atc" onclick="switchTab('atc')"><span class="ic">✈</span>ATC</button>
 <button class="nav-btn" data-tab="weather" onclick="switchTab('weather')"><span class="ic">🌤</span>Weather</button>
 <button class="nav-btn" data-tab="ow" onclick="switchTab('ow')"><span class="ic">📋</span>OW</button>
+<button class="nav-btn" data-tab="ow2" onclick="switchTab('ow2')"><span class="ic">📋</span>OW2</button>
 </nav>
 <div class="scroll" id="scrollArea">
 <!-- METAR -->
@@ -2622,6 +2623,22 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
       <div class="ow-code"><span>Code:QF-OBS-OW</span><span>V 1.0</span></div>
       <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
       <div id="ow-table-host"></div>
+    </div>
+  </div>
+</div>
+<div class="panel" id="tab-ow2">
+  <div class="s-head">
+    <div class="s-title">OW2</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="ow-status" id="ow2-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <button class="s-btn" id="ow2-refresh-btn" onclick="owLoad(true)">↻</button>
+    </div>
+  </div>
+  <div class="ow-wrap">
+    <div class="ow-paper">
+      <div class="ow-code"><span>Code:QF-OBS-OW2</span><span>V 1.0</span></div>
+      <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
+      <div id="ow2-table-host"></div>
     </div>
   </div>
 </div>
@@ -6864,13 +6881,24 @@ function owWeertype(N,ww){
   const base=owNbase(N);
   const c=parseInt(ww,10);
   const wx=owWwNL(c);
+  if(wx){
+    if(c>=20&&c<=29){
+      const tail=wx.replace(/^bewolkt\s+/,'');
+      return (base||'bewolkt')+' '+tail;
+    }
+    return wx;
+  }
+  return base;
+}
+function ow2Weertype(N,ww){
+  const base=owNbase(N);
+  const c=parseInt(ww,10);
+  const wx=owWwNL(c);
   if(!wx) return base;
-  // 20-29: dots on the form are the N cloud amount
   if(c>=20&&c<=29){
     const tail=wx.replace(/^bewolkt\s+/,'');
     return (base||'bewolkt')+' '+tail;
   }
-  // ww 10+: keep N text and add the weather text, no code number
   return base?(base+' · '+wx):wx;
 }
 function owWxFromMetar(raw){
@@ -7028,9 +7056,10 @@ function owCopyCell(ev){
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done).catch(function(){});
   else { const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); done(); }
 }
-function owRender(rows, fd, filled){
-  const host=$('ow-table-host');
+function owRender(rows, fd, filled, hostId, wxKey){
+  const host=$(hostId||'ow-table-host');
   if(!host) return;
+  wxKey=wxKey||'wx';
   const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
   const dow=days[new Date(Date.UTC(fd.y,fd.mo-1,fd.d,16)).getUTCDay()]||'';
   const dd=String(fd.d).padStart(2,'0')+' - '+String(fd.mo).padStart(2,'0')+' - '+fd.y;
@@ -7103,6 +7132,8 @@ async function owLoad(force){
     if(d12){
       const wx=owWeertype(d12.N,d12.ww);
       if(wx) row.wx=wx;
+      const wx2=ow2Weertype(d12.N,d12.ww);
+      if(wx2) row.wx2=wx2;
     }
     let tmax=null,tmin=null,rr=null;
     if(stn.icao==='SKBO'){
@@ -7150,6 +7181,9 @@ async function owLoad(force){
   }));
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
   owRender(rows, fd, got);
+  owRender(rows, fd, got, 'ow2-table-host', 'wx2');
+  const st2=$('ow2-status');
+  if(st2) st2.textContent=got?('Gevuld · N+ww · '+key):('Geen SYNOP — ⚙ CORS proxy · '+key);
   if(got) owLastKey=key;
   if(stEl) stEl.textContent=got?('Gevuld · SYNOP · '+key):('Geen SYNOP — ⚙ CORS proxy · '+key);
   owBusy=false;
@@ -7167,6 +7201,7 @@ window.owCopyCell=owCopyCell;
 try{
   const _fd=owFormDay();
   owRender(owBlankRows(), _fd, false);
+  owRender(owBlankRows(), _fd, false, 'ow2-table-host', 'wx2');
 }catch(e){}
 
 function switchTab(name){
@@ -7183,7 +7218,7 @@ if(name==='taf')loadAllTafs();
 else if(name==='synop'){loadAllSynops();switchSubTab('synop','encode');}
 else if(name==='stations')fetchStationsData();
 else if(name==='weather')loadWeather();
-else if(name==='ow')owLoad(false);
+else if(name==='ow'||name==='ow2')owLoad(false);
 }
 if(name==='atc'){
 try{atcInitMap();}catch(e){}

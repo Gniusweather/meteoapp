@@ -5033,8 +5033,13 @@ const end=new Date();
 const begin=new Date(end.getTime()-36*3600*1000);
 const fmt=d=>d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0');
 const url='https://www.ogimet.com/cgi-bin/getsynop?block='+source.wmo+'&begin='+fmt(begin)+'&end='+fmt(end)+'&header=yes';
-const out=await fetchRetry(url,2);
-if(!out.ok||!out.text) return;
+let out=await fetchRetry(url,2);
+if(!out||!out.ok||!out.text||out.text.indexOf(source.wmo)<0){
+  const prox='https://r.jina.ai/http://'+url.replace(/^https?:\/\//,'');
+  const p=await fetchRetry(prox,1);
+  if(p&&p.ok&&p.text&&p.text.indexOf(source.wmo)>=0) out=p;
+}
+if(!out||!out.ok||!out.text) return;
 const rows=String(out.text).split(/\n/).filter(function(ln){return ln.indexOf(source.wmo)>=0;});
 let pick=null;
 rows.forEach(function(ln){

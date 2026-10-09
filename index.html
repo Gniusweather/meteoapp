@@ -5934,12 +5934,26 @@ if(/\bm\b/i.test(s)){const n=parseFloat(s);return isFinite(n)?n/1000:null;}
 const n=parseFloat(s);
 return isFinite(n)?n:null;
 }
+async function fetchNoaaSiTncc(){
+const url='https://tgftp.nws.noaa.gov/data/raw/si/sica20.tncc..txt';
+try{
+const out=await fetchRetry(url,2);
+if(out&&out.ok&&out.text&&out.text.indexOf('78988')>=0) return out.text;
+}catch(e){}
+return '';
+}
 async function fetchTgftp78988(){
 try{
+const parts=[];
 const sm=await ovzFetchTgftpSmca();
-if(sm&&sm.indexOf('78988')>=0) return sm.replace(/\s+/g,' ').trim();
+if(sm&&sm.indexOf('78988')>=0) parts.push(sm);
+else{
 const out=await fetchRetry('https://tgftp.nws.noaa.gov/data/raw/sm/smca01.tncc..txt',2);
-if(out&&out.ok&&out.text&&out.text.indexOf('78988')>=0) return out.text.replace(/\s+/g,' ').trim();
+if(out&&out.ok&&out.text&&out.text.indexOf('78988')>=0) parts.push(out.text);
+}
+const si=await fetchNoaaSiTncc();
+if(si) parts.push(si);
+if(parts.length) return parts.join('\n');
 }catch(e){}
 return null;
 }
@@ -6144,27 +6158,29 @@ if(store.built&&store.html&&store.html.indexOf('AAXX')>=0){
 if(!hadCache) box.innerHTML='<div class="loading-msg">Loading 78988 day file…</div>';
 const now=new Date();
 const begin=new Date(now.getTime()-36*3600*1000);
-let [tg, og]=await Promise.all([fetchTgftp78988(), fetchOgimet78988(utcStamp(begin), utcStamp(now))]);
-if(!og||!/AAXX/.test(og||'')){
-const b2=new Date(now.getTime()-48*3600*1000);
-og=await fetchOgimet78988(utcStamp(b2), utcStamp(now));
-}
+const [smTxt, siTxt]=await Promise.all([
+  fetchRetry('https://tgftp.nws.noaa.gov/data/raw/sm/smca01.tncc..txt',2).then(function(o){return (o&&o.ok&&o.text)||'';}).catch(function(){return '';}),
+  fetchRetry('https://tgftp.nws.noaa.gov/data/raw/si/sica20.tncc..txt',2).then(function(o){return (o&&o.ok&&o.text)||'';}).catch(function(){return '';})
+]);
 const todayAst=localDateKey(now);
 const byLocal={}; const hoursP={}; const hoursN={};
-splitOgimetReports(og).forEach(function(msg){
-const meta=parseSynopHourUTC(msg.includes('AAXX')?msg:('AAXX 00000 '+msg));
-if(!meta||!meta.date) return;
-const lh=localHourFromUtc(meta.date);
-if(localDateKey(meta.date)!==todayAst) return;
-byLocal[lh]=byLocal[lh]||{msg, utc:meta.date, parsed:null};
-});
-if(tg){
-const meta=parseSynopHourUTC(tg);
-if(meta&&meta.date&&localDateKey(meta.date)===todayAst){
-const lh=localHourFromUtc(meta.date);
-byLocal[lh]={msg:tg, utc:meta.date, parsed:null, src:'NOAA'};
+function takeNoaa(text, kind){
+  String(text||'').split(/=/).forEach(function(chunk){
+    const msg=chunk.indexOf('AAXX')>=0?chunk.slice(chunk.indexOf('AAXX')):chunk;
+    if(msg.indexOf('78988')<0) return;
+    const meta=parseSynopHourUTC(msg.includes('AAXX')?msg:('AAXX 00000 '+msg));
+    if(!meta||!meta.date||localDateKey(meta.date)!==todayAst) return;
+    const hh=meta.date.getUTCHours();
+    const sm=(hh===0||hh===6||hh===12||hh===18);
+    const si=(hh===3||hh===9||hh===15||hh===21);
+    if(kind==='SM'&&!sm) return;
+    if(kind==='SI'&&!si) return;
+    const lh=localHourFromUtc(meta.date);
+    byLocal[lh]={msg:msg, utc:meta.date, parsed:null, src:kind==='SM'?'NOAA SM':'NOAA SI'};
+  });
 }
-}
+takeNoaa(smTxt,'SM');
+takeNoaa(siTxt,'SI');
 let html='<table class="sum-tbl"><thead><tr><th>Local</th><th>UTC</th><th>T</th><th>Td</th><th>Vis</th><th>Wind</th><th>QNH</th><th>N</th><th>7ww</th><th>RRR</th><th>Src</th></tr></thead><tbody>';
 for(let h=1;h<=24;h++){
 const row=byLocal[h];
@@ -6904,15 +6920,21 @@ function ow2Weertype(N,ww){
 function owWxFromMetar(raw){
   if(!raw) return '';
   const u=raw.toUpperCase();
-  if(/\bTS|\bVCTS/.test(u)) return 'Onweer';
-  if(/\bSHRA|\b\+RA|\bRA\b|\bDZ\b/.test(u)) return 'Regen';
-  if(/\bHZ\b|\bBR\b/.test(u)) return 'Nevel';
-  if(/\bOVC/.test(u)) return 'Geheel bewolkt';
-  if(/\bBKN/.test(u)) return 'Zwaar bewolkt';
-  if(/\bSCT/.test(u)) return 'Half bewolkt';
-  if(/\bFEW/.test(u)) return 'Licht bewolkt';
-  if(/\bSKC|\bNSC|\bCLR|\bCAVOK/.test(u)) return 'Onbewolkt';
-  return '';
+  let cloud='';
+  if(/\bOVC/.test(u)) cloud='geheel bewolkt';
+  else if(/\bBKN/.test(u)) cloud='zwaar bewolkt';
+  else if(/\bSCT/.test(u)) cloud='half bewolkt';
+  else if(/\bFEW/.test(u)) cloud='licht bewolkt';
+  else if(/\bSKC|\bNSC|\bCLR|\bCAVOK/.test(u)) cloud='onbewolkt';
+  let wx='';
+  if(/\bTS|\bVCTS|\+TS/.test(u)) wx='onweer';
+  else if(/\bSHRA|\bSH\b/.test(u)) wx='regenbui';
+  else if(/\bDZ\b/.test(u)&&/\bRA\b/.test(u)) wx='regen en motregen';
+  else if(/\bDZ\b/.test(u)) wx='motregen';
+  else if(/\b\+RA|\bRA\b/.test(u)) wx='regen';
+  else if(/\bHZ\b|\bBR\b|\bFG\b/.test(u)) wx='nevel';
+  if(cloud&&wx) return cloud+' · '+wx;
+  return wx||cloud;
 }
 function owParseR24(raw){
   if(!raw) return null;
@@ -7087,7 +7109,7 @@ function owRender(rows, fd, filled, hostId, wxKey){
     html+=cell('wx', r[wxKey], '---');
     html+=cell('num', r[wxKey==='wx2'?'tmax2':'tmax'], '---');
     html+=cell('num', r[wxKey==='wx2'?'tmin2':'tmin'], '---');
-    html+=cell('num', r.rr, '--.--');
+    html+=cell('num', wxKey==='wx2'?r.rr2:r.rr, '--.--');
     html+='</tr>';
   });
   html+='<tr><td class="ow-foot" colspan="5">** Seru Mahuma, '+dow+', '+dd+' · 08:00 uur LT / 12Z **</td></tr>';
@@ -7142,8 +7164,7 @@ async function owLoad(force){
     if(d12){
       const wx=owWeertype(d12.N,d12.ww);
       if(wx && !row.wx) row.wx=wx;
-      const wx2=ow2Weertype(d12.N,d12.ww);
-      if(wx2 && !row.wx2) row.wx2=wx2;
+      row.wx2=ow2Weertype(d12.N,d12.ww)||'';
     }
     let tmax=null,tmin=null,rr=null;
     if(stn.icao==='SKBO'){
@@ -7173,23 +7194,27 @@ async function owLoad(force){
     else if(d06&&d06._r24!=null) rr=d06._r24;
     if(tmax!=null && (row.tmax==null||row.tmax==='')) row.tmax=owRound(tmax);
     if(tmin!=null && (row.tmin==null||row.tmin==='')) row.tmin=owRound(tmin);
-    if(tmax!=null && (row.tmax2==null||row.tmax2==='')) row.tmax2=owRound(tmax);
-    if(tmin!=null && (row.tmin2==null||row.tmin2==='')) row.tmin2=owRound(tmin);
     if(rr!=null && (row.rr==null||row.rr==='')) row.rr=(Math.round(rr*10)/10).toFixed(1);
+    // OW2: only groups present on this fetch. No invented 0.0 rain, no stale max/min.
+    row.tmax2=tmax!=null?owRound(tmax):'';
+    row.tmin2=tmin!=null?owRound(tmin):'';
+    row.rr2=rr!=null?(Math.round(rr*10)/10).toFixed(1):'';
   }));
-  // OW2 only: 24h METAR fills gaps. OW stays SYNOP-only. Rain stays SYNOP.
+  // OW2: SYNOP first, then 24h METAR fills every empty weertype/max/min.
   const st2pre=$('ow2-status');
   if(st2pre) st2pre.textContent='Laden METAR 24u…';
   await Promise.all(OW_STATIONS.map(async function(stn,idx){
     if(stn.sep) return;
     const row=rows[idx];
-    const need=!row.wx2 || row.tmax2==null || row.tmax2==='' || row.tmin2==null || row.tmin2==='';
-    if(!need) return;
     const lines=await owFetchMetar24(stn.icao);
     const mt=owMetarTemps(lines);
     if(!row.wx2 && mt.wx) row.wx2=mt.wx;
     if((row.tmax2==null||row.tmax2==='') && mt.tmax!=null) row.tmax2=owRound(mt.tmax);
     if((row.tmin2==null||row.tmin2==='') && mt.tmin!=null) row.tmin2=owRound(mt.tmin);
+    if((row.rr2==null||row.rr2==='') && lines.length){
+      const wet=lines.some(function(l){return /\b(RA|SHRA|DZ|TS|SH)\b/.test(l.toUpperCase());});
+      if(!wet) row.rr2='0.0';
+    }
   }));
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
   window.owKeep={key:key, rows:rows.map(function(r){return Object.assign({}, r);})};

@@ -1437,7 +1437,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field wide">
 <div class="enc-lbl">Present Weather ww</div>
-<select class="enc-inp" id="enc-ww" onchange="encUpdate()">
+<select class="enc-inp" id="enc-ww" onchange="encMarkManual('enc-ww');encUpdate()">
 <option value="">— omit —</option>
 <optgroup label="00–09  No sig phenomena">
 <option value="00">00 – No sig cloud</option>
@@ -1836,7 +1836,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 <div class="enc-field" style="grid-column:1/-1;font-family:var(--cond);font-size:10px;color:var(--acc);letter-spacing:1px;font-weight:700">LAYER 2</div>
 <div class="enc-field">
 <div class="enc-lbl">Ns (oktas)</div>
-<select class="enc-inp" id="enc-s3-ns2" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-ns2" onchange="encMarkManual('enc-s3-ns2');encUpdate()">
 <option value="">— omit —</option>
 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -1845,7 +1845,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">C (genus)</div>
-<select class="enc-inp" id="enc-s3-c2" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-c2" onchange="encMarkManual('enc-s3-c2');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Ci</option><option value="1">1 – Cc</option><option value="2">2 – Cs</option>
 <option value="3">3 – Ac</option><option value="4">4 – As</option><option value="5">5 – Ns</option>
@@ -1855,14 +1855,14 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">hshs (base)</div>
-<input class="enc-inp" type="text" id="enc-s3-hs2" maxlength="2" pattern="\d{2}" placeholder="e.g. 28" oninput="encUpdate()">
+<input class="enc-inp" type="text" id="enc-s3-hs2" maxlength="2" pattern="\d{2}" placeholder="e.g. 28" oninput="encMarkManual('enc-s3-hs2');encUpdate()">
 </div>
 </div>
 <div class="enc-grid" style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)">
 <div class="enc-field" style="grid-column:1/-1;font-family:var(--cond);font-size:10px;color:var(--acc);letter-spacing:1px;font-weight:700">LAYER 3</div>
 <div class="enc-field">
 <div class="enc-lbl">Ns (oktas)</div>
-<select class="enc-inp" id="enc-s3-ns3" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-ns3" onchange="encMarkManual('enc-s3-ns3');encUpdate()">
 <option value="">— omit —</option>
 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -1871,7 +1871,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">C (genus)</div>
-<select class="enc-inp" id="enc-s3-c3" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-c3" onchange="encMarkManual('enc-s3-c3');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Ci</option><option value="1">1 – Cc</option><option value="2">2 – Cs</option>
 <option value="3">3 – Ac</option><option value="4">4 – As</option><option value="5">5 – Ns</option>
@@ -1881,14 +1881,14 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">hshs (base)</div>
-<input class="enc-inp" type="text" id="enc-s3-hs3" maxlength="2" pattern="\d{2}" placeholder="e.g. 65" oninput="encUpdate()">
+<input class="enc-inp" type="text" id="enc-s3-hs3" maxlength="2" pattern="\d{2}" placeholder="e.g. 65" oninput="encMarkManual('enc-s3-hs3');encUpdate()">
 </div>
 </div>
 <div class="enc-grid">
 <div class="enc-field" style="grid-column:1/-1;font-family:var(--cond);font-size:10px;color:var(--acc);letter-spacing:1px;font-weight:700">LAYER 4</div>
 <div class="enc-field">
 <div class="enc-lbl">Ns (oktas)</div>
-<select class="enc-inp" id="enc-s3-ns4" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-ns4" onchange="encMarkManual('enc-s3-ns4');encUpdate()">
 <option value="">— omit —</option>
 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -1897,7 +1897,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">C (genus)</div>
-<select class="enc-inp" id="enc-s3-c4" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-c4" onchange="encMarkManual('enc-s3-c4');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Ci</option><option value="1">1 – Cc</option><option value="2">2 – Cs</option>
 <option value="3">3 – Ac</option><option value="4">4 – As</option><option value="5">5 – Ns</option>
@@ -1907,7 +1907,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">hshs (base)</div>
-<input class="enc-inp" type="text" id="enc-s3-hs4" maxlength="2" pattern="\d{2}" placeholder="e.g. 80" oninput="encUpdate()">
+<input class="enc-inp" type="text" id="enc-s3-hs4" maxlength="2" pattern="\d{2}" placeholder="e.g. 80" oninput="encMarkManual('enc-s3-hs4');encUpdate()">
 </div>
 </div>
 </div>
@@ -3658,6 +3658,7 @@ if(ln===cur||(!cur&&idx===0)) o.selected=true;
 sel.appendChild(o);
 });
 }
+window.encMarkManual=encMarkManual;
 window.metarHistChange=function(icao){
 const st=metarState[icao];
 const sel=$('mch-'+icao);
@@ -3976,9 +3977,14 @@ const rhRaw=v('enc-rh');
 const minVal=v('enc-min');
 const incl9=p('enc-incl9')&&p('enc-incl9').checked;
 const nhVal=v('enc-nh');
-const clVal=v('enc-cl');
-const cmVal=v('enc-cm');
+let clVal=v('enc-cl');
+let cmVal=v('enc-cm');
 const chVal=v('enc-ch');
+// Layer 3 filled → CM=3 (Ac) unless user locked CM
+const _l3on=v('enc-s3-ns3')!==''&&v('enc-s3-c3')!==''&&v('enc-s3-hs3')!=='';
+const _cmEl=p('enc-cm');
+if(_l3on && cmVal==='' && _cmEl && _cmEl.dataset.manual!=='1'){ cmVal='3'; _cmEl.value='3'; }
+if(_l3on && cmVal!=='3' && _cmEl && _cmEl.dataset.manual!=='1' && _cmEl.dataset.auto==='1'){ cmVal='3'; _cmEl.value='3'; }
 const tmaxRaw=v('enc-tmax');
 const tminRaw=v('enc-tmin');
 const s3_5raw=v('enc-s3-5');
@@ -4433,8 +4439,9 @@ if(!isFinite(T)||!isFinite(D)) return null;
 let ft=(T-D)/2.5*1000;
 if(!isFinite(ft)||ft<0) ft=0;
 ft=Math.round(ft);
-// Auto cloud base never below 1600 ft for Sec1 h / Sec3 8NsChshs
-if(ft<1600) ft=1600;
+// First layer cloud base: clamp 1300–3500 ft
+if(ft<1300) ft=1300;
+if(ft>3500) ft=3500;
 return ft;
 }
 function encHfromFt(ft){
@@ -4501,6 +4508,94 @@ out.push({ns:ns,c:c,hs:encHsFromFt(ft)});
 if(out.length>=4) break;
 }
 return out;
+}
+/** Second Sec3 layer from TNCC METAR: FEW/SCT/BKN/OVC 035–065 → 8Ns6hshs (e.g. BKN035 → 85635). Manual override kept. */
+function encMetarSecondLayer(raw){
+const re=/\b(FEW|SCT|BKN|OVC)(\d{3})(CB|TCU)?/gi;
+let m, best=null;
+while((m=re.exec(String(raw||'')))){
+const h=parseInt(m[2],10);
+if(isNaN(h)||h<35||h>65) continue;
+const cov=m[1].toUpperCase();
+const ns={FEW:'2',SCT:'4',BKN:'5',OVC:'8'}[cov]||'5';
+const hs=String(h).padStart(2,'0').slice(-2);
+best={ns:ns,c:'6',hs:hs,label:cov+m[2]};
+break;
+}
+return best;
+}
+/** Third Sec3 layer: FEW/SCT/BKN/OVC 070–200 → 8Ns3hshs (e.g. BKN200 → 85360). */
+function encMetarHs070200(h){
+// h = METAR height code in hundreds of feet
+if(h>=200) return '60'; // operational example BKN200 → …60
+const ft=h*100;
+const hs=encHsFromFt(ft);
+return hs||'//';
+}
+function encMetarThirdLayer(raw){
+const re=/\b(FEW|SCT|BKN|OVC)(\d{3})(CB|TCU)?/gi;
+let m, best=null;
+while((m=re.exec(String(raw||'')))){
+const h=parseInt(m[2],10);
+if(isNaN(h)||h<70||h>200) continue;
+const cov=m[1].toUpperCase();
+const ns={FEW:'2',SCT:'4',BKN:'5',OVC:'8'}[cov]||'5';
+best={ns:ns,c:'3',hs:encMetarHs070200(h),label:cov+m[2]};
+break;
+}
+return best;
+}
+function encMetarHasCB(raw){
+return /\b(?:FEW|SCT|BKN|OVC)\d{3}CB\b/i.test(String(raw||''))||/\bCB\b/.test(String(raw||''));
+}
+/** USGS free lightning near Hato (TNCC). Any strike within 16 km → true. */
+async function encCheckLightning(){
+const lat=12.189, lon=-68.960, radiusKm=16;
+const ts=Math.floor(Date.now()/1000);
+const url='https://volcview.wr.usgs.gov/vv-api/lightningApi/nearPoint?lat='+lat+'&long='+lon+'&radiusKm='+radiusKm+'&unixTimestamp='+ts+'&plusMinusMinutes=45';
+try{
+const out=await fetchRetry(url,1);
+if(!out||!out.ok||!out.text) return {hit:false,count:0};
+const j=JSON.parse(out.text);
+const arr=(j&&j.lightning)||[];
+return {hit:arr.length>0, count:arr.length, src:'USGS'};
+}catch(e){
+return {hit:false,count:0,err:String(e&&e.message||e)};
+}
+}
+/** Open-Meteo high cloud over Hato → CH=1, layer4 Ci C=0 hs=81 */
+async function encFetchHighCloudHato(){
+const lat=12.189, lon=-68.960;
+const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+  '&current=cloud_cover_high&timezone=auto';
+try{
+const out=await fetchRetry(url,1);
+if(!out||!out.ok||!out.text) return null;
+const j=JSON.parse(out.text);
+const pct=(j&&j.current&&j.current.cloud_cover_high!=null)?Number(j.current.cloud_cover_high):null;
+if(pct==null||!isFinite(pct)||pct<30) return null; // threshold 30%
+let ns='1';
+if(pct>=90) ns='8';
+else if(pct>=75) ns='6';
+else if(pct>=50) ns='4';
+else if(pct>=30) ns='2';
+return {pct:pct, ns:ns, c:'0', hs:'81', ch:'1'};
+}catch(e){ return null; }
+}
+function encSetAuto(id,val){
+const el=document.getElementById(id);
+if(!el) return;
+// Do not overwrite a manual value
+if(el.dataset.manual==='1' && el.value!=='') return;
+el.value=val;
+el.dataset.auto='1';
+el.dataset.manual='0';
+}
+function encMarkManual(id){
+const el=document.getElementById(id);
+if(!el) return;
+el.dataset.manual='1';
+el.dataset.auto='0';
 }
 function encDaysumP(utcH){
 try{
@@ -4762,21 +4857,72 @@ encSetVal('enc-s3-ns1', L.ns);
 encSetVal('enc-s3-c1', '8');
 encSetVal('enc-s3-hs1', L.hs);
 }
+const L2=encMetarSecondLayer(raw||'');
+const L3=encMetarThirdLayer(raw||'');
 for(let i=2;i<=4;i++){
-encSetVal('enc-s3-ns'+i, '');
-encSetVal('enc-s3-c'+i, '');
-encSetVal('enc-s3-hs'+i, '');
+if(i===2 && L2) continue;
+if(i===3 && L3) continue;
+const n=document.getElementById('enc-s3-ns'+i);
+const c=document.getElementById('enc-s3-c'+i);
+const h=document.getElementById('enc-s3-hs'+i);
+// clear only if not manually locked
+if(n && n.dataset.manual!=='1'){ n.value=''; n.dataset.auto='0'; }
+if(c && c.dataset.manual!=='1'){ c.value=''; c.dataset.auto='0'; }
+if(h && h.dataset.manual!=='1'){ h.value=''; h.dataset.auto='0'; }
+}
+if(L2){
+encSetAuto('enc-s3-ns2', L2.ns);
+encSetAuto('enc-s3-c2', L2.c);
+encSetAuto('enc-s3-hs2', L2.hs);
+}
+if(L3){
+encSetAuto('enc-s3-ns3', L3.ns);
+encSetAuto('enc-s3-c3', L3.c);
+encSetAuto('enc-s3-hs3', L3.hs);
 }
 if(layers[0]){
 encSetVal('enc-nh', layers[0].ns);
-encSetVal('enc-cl', '2');
-encSetVal('enc-cm','0');
+encSetVal('enc-cl', encMetarHasCB(raw||'')?'9':'2');
+encSetVal('enc-cm', L3?'3':'0');
 encSetVal('enc-ch','0');
+}else if(L3){
+encSetVal('enc-cm','3');
 }
+if(encMetarHasCB(raw||'')){
+encSetVal('enc-cl','9');
+}
+// High cloud (Open-Meteo) → CH=1, layer 4 Ci hs=81 (manual lock respected)
+try{
+const hi=await encFetchHighCloudHato();
+if(hi){
+encSetAuto('enc-s3-ns4', hi.ns);
+encSetAuto('enc-s3-c4', hi.c);
+encSetAuto('enc-s3-hs4', hi.hs);
+const chEl=document.getElementById('enc-ch');
+if(chEl && chEl.dataset.manual!=='1'){ chEl.value=hi.ch; chEl.dataset.auto='1'; }
+}
+}catch(e){}
 try{encApplyCloudBase();}catch(e){}
 encOnTempChange();
 try{encApplyW12();}catch(e){}
 encOnPresChange();
+// Lightning within 16 km of Hato → ww 95, iX 1
+encCheckLightning().then(function(lt){
+try{
+if(lt&&lt.hit){
+const wwEl=document.getElementById('enc-ww');
+if(wwEl && (wwEl.value===''||wwEl.dataset.auto==='1'||wwEl.dataset.manual!=='1')){
+wwEl.value='95';
+wwEl.dataset.auto='1';
+}
+const ixEl=document.getElementById('enc-ix');
+if(ixEl) ixEl.value='1';
+const st=document.getElementById('enc-mode-status');
+if(st) st.textContent=(st.textContent||'')+' · lightning '+lt.count+' within 16 km → ww 95';
+}
+}catch(e){}
+try{encTendFromDaysum();encUpdate();if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}
+});
 encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate();if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}});
 {
 const p24el=document.getElementById('enc-ppp24');

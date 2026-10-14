@@ -620,6 +620,110 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
   .ow-tbl{font-size:13px;}
 }
 
+
+/* ── Desktop layout (≥1024px) ── */
+@media (min-width:1024px){
+  :root{ --hdr:56px; --nav:52px; }
+  #app{
+    max-width:1400px;
+    margin:0 auto;
+    border-left:1px solid var(--border);
+    border-right:1px solid var(--border);
+  }
+  .scroll{ padding:0 10px; }
+  .panel{ padding:14px 20px 28px; }
+  .nav-btn{ font-size:12px; padding:8px 14px; gap:6px; }
+  .sub-tab-btn{ padding:8px 14px; font-size:12px; }
+
+  /* OW paper form */
+  .ow-wrap{ display:flex; justify-content:center; }
+  .ow-paper{
+    width:100%;
+    max-width:1100px;
+    padding:20px 24px;
+  }
+  .ow-tbl{ font-size:14px; }
+  .ow-tbl th, .ow-tbl td{ padding:7px 12px; }
+
+  /* Summary tables */
+  .sum-tbl{ font-size:13px; width:100%; }
+  .sum-tbl th, .sum-tbl td{ padding:6px 10px; }
+
+  /* Encoder: form left, generated SYNOP sticky right */
+  #synop-sub-encode.active{
+    height:calc(100dvh - var(--hdr) - var(--nav) - 56px);
+  }
+  #synop-sub-encode > div{
+    height:100%;
+  }
+  #synop-sub-encode .enc-card{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(340px,440px);
+    grid-template-rows:auto auto 1fr;
+    height:100%;
+    max-height:100%;
+  }
+  #synop-sub-encode .enc-hdr,
+  #synop-sub-encode #enc-mode-status{
+    grid-column:1 / -1;
+  }
+  #synop-sub-encode #enc-form-scroll{
+    grid-column:1;
+    overflow-y:auto;
+    max-height:100%;
+    padding:8px 12px 16px;
+  }
+  #synop-sub-encode .enc-out-wrap{
+    grid-column:2;
+    grid-row:3;
+    position:sticky;
+    top:0;
+    align-self:stretch;
+    margin:0;
+    border-left:1px solid var(--border);
+    border-radius:0;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  #synop-sub-encode .enc-out{
+    flex:1;
+    font-size:13px;
+    line-height:1.5;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+
+  /* METAR / TAF card grids (existing classes) */
+  .metar-cards{
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  }
+  #tab-taf .taf-card,
+  #tab-stations .stn-card{
+    max-width:100%;
+  }
+
+  /* ATC map */
+  #atc-map, .atc-map-wrap, #tab-atc .map-wrap{
+    min-height:min(72vh,760px) !important;
+  }
+
+  /* Weather */
+  #tab-weather .wx-day, #tab-weather .fc-card{
+    min-width:0;
+  }
+}
+@media (min-width:1280px){
+  #app{ max-width:1600px; }
+  .ow-paper{ max-width:1240px; }
+  #synop-sub-encode .enc-card{
+    grid-template-columns:minmax(0,1fr) minmax(380px,500px);
+  }
+  .metar-cards{ grid-template-columns:repeat(3,1fr); }
+}
+@media (min-width:1500px){
+  .panel{ max-width:none; }
+}
 </style>
 </head>
 <body>
@@ -7014,21 +7118,24 @@ function owAwcUrl(){
   const ids=OW_STATIONS.filter(s=>s.icao).map(s=>s.icao).join(',');
   return 'https://aviationweather.gov/api/data/metar?ids='+ids+'&hours=24&order=id,desc&format=raw';
 }
+const _owGetCache=Object.create(null);
 async function owGet(url){
+  if(_owGetCache[url]!=null) return _owGetCache[url];
   const tries=[url, 'https://r.jina.ai/http://'+url.replace(/^https?:\/\//,'')];
   for(const u of tries){
     try{
       const o=await fetchRetry(u,1);
-      if(o&&o.ok&&o.text&&!looksLikeFetchError(o.text)) return o.text;
+      if(o&&o.ok&&o.text&&!looksLikeFetchError(o.text)){ _owGetCache[url]=o.text; return o.text; }
     }catch(e){}
     try{
       const r=await fetch(u,{cache:'no-store'});
       if(r&&r.ok){
         const t=await r.text();
-        if(t&&!looksLikeFetchError(t)) return t;
+        if(t&&!looksLikeFetchError(t)){ _owGetCache[url]=t; return t; }
       }
     }catch(e){}
   }
+  _owGetCache[url]='';
   return '';
 }
 function owParseOgimet(text){
@@ -7176,6 +7283,7 @@ async function owLoad(force){
   if(owBusy && !force) return;
   owBusy=true;
   try{
+  if(force){ for(const k in _owGetCache) delete _owGetCache[k]; }
   const keep=window.owKeep && window.owKeep.key===key ? window.owKeep.rows : null;
   const rows=keep ? keep.map(function(r){return Object.assign({}, r);}) : owBlankRows();
   if(!keep) owRender(rows, fd, false);
@@ -7189,10 +7297,14 @@ async function owLoad(force){
   await Promise.all(OW_STATIONS.map(async (stn,idx)=>{
     if(stn.sep) return;
     let parsed=[];
-    for(const w of stn.wmo){
-      const txt=await owGet(owOgimetUrl(w, win.begin, win.end));
-      parsed=owParseOgimet(txt);
-      if(parsed.length) break;
+    if(stn.wmo.length===1){
+      parsed=owParseOgimet(await owGet(owOgimetUrl(stn.wmo[0], win.begin, win.end)));
+    }else{
+      const texts=await Promise.all(stn.wmo.map(function(w){return owGet(owOgimetUrl(w, win.begin, win.end));}));
+      for(let ti=0;ti<texts.length;ti++){
+        parsed=owParseOgimet(texts[ti]);
+        if(parsed.length) break;
+      }
     }
     if(!parsed.length && /^(TNCA|TNCB|TNCC)$/.test(stn.icao)){
       parsed=owParseOgimet(await owGet('https://www.ogimet.com/ultimos_synops2.php?estado=Cura&fmt=html&Enviar=Ver'));
@@ -7253,6 +7365,7 @@ async function owLoad(force){
     if(stn.sep) return;
     if(!['MUHA','SMJP'].includes(stn.icao)) return;
     const row=rows[idx];
+    if(row.wx2 && row.tmax2!=null && row.tmax2!=='' && row.tmin2!=null && row.tmin2!=='' && row.rr2!=null && row.rr2!=='') return;
     const lines=await owFetchMetar24(stn.icao);
     const mt=owMetarTemps(lines);
     if(!row.wx2 && mt.wx) row.wx2=mt.wx;
@@ -7271,7 +7384,10 @@ async function owLoad(force){
   if(st2) st2.textContent=got?('Gevuld · N+ww · '+key):('Geen SYNOP — ⚙ CORS proxy · '+key);
   if(got) owLastKey=key;
   if(stEl) stEl.textContent=got?('Gevuld · SYNOP · '+key):('Geen SYNOP — ⚙ CORS proxy · '+key);
-  }catch(e){}
+  }catch(e){
+    const stEl2=$('ow-status');
+    if(stEl2) stEl2.textContent='Fout bij laden · '+((e&&e.message)||'retry');
+  }
   finally{ owBusy=false; }
 }
 function owWatch(){

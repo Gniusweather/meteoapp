@@ -753,6 +753,9 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
 @media (min-width:1500px){
   .panel{ max-width:none; }
 }
+
+.enc-pres-spark{display:inline-block;vertical-align:middle;margin-left:8px;height:22px;min-width:72px;}
+.enc-pres-spark svg{display:block;height:22px;width:72px;}
 </style>
 </head>
 <body>
@@ -1421,7 +1424,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <!-- Pressure -->
 <div class="enc-sec">
-<div class="enc-sec-hdr">Pressure <span id="enc-tend-hint" style="color:var(--muted);font-weight:400;letter-spacing:.5px;font-size:10px"></span></div>
+<div class="enc-sec-hdr">Pressure <span id="enc-tend-hint" style="color:var(--muted);font-weight:400;letter-spacing:.5px;font-size:10px"><span id="enc-pres-spark" class="enc-pres-spark" title="3–24h pressure"></span></span></div>
 <div class="enc-grid">
 <div class="enc-field">
 <div class="enc-lbl">Stn Pressure QFE (hPa)</div>
@@ -2694,7 +2697,7 @@ Fill only the layers you need — incomplete layers are skipped. 78988 often has
 <p class="atc-map-hint">Live traffic · ADS-B Exchange globe on ABC (TNCA / TNCB / TNCC). adsb.lol has no feeders over the islands right now.</p>
 <div class="atc-map-wrap">
 <iframe id="atc-live-frame" title="Live ADS-B map" allow="fullscreen" referrerpolicy="no-referrer-when-downgrade"
-data-src="https://globe.adsbexchange.com/?lat=12.22&lon=-69.10&zoom=9&enableLabels&trackLabels" src="https://globe.adsbexchange.com/?lat=12.22&lon=-69.10&zoom=9&enableLabels&trackLabels"></iframe>
+data-src="https://globe.adsbexchange.com/?lat=12.22&lon=-69.10&zoom=9&enableLabels&trackLabels" src="about:blank"></iframe>
 <div id="atc-live-map" style="display:none"></div>
 <div id="atc-traffic-status" class="atc-traffic-status">Live · ADS-B Exchange</div>
 </div>
@@ -2748,6 +2751,7 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
     <div class="s-title">Overzicht weersgesteldheid</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <span class="ow-status" id="ow-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <button class="s-btn" id="ow-copy-btn" onclick="owCopyTable('ow')" title="Copy full OW table">Copy</button>
       <button class="s-btn" id="ow-refresh-btn" onclick="owLoad(true)">↻</button>
     </div>
   </div>
@@ -2764,6 +2768,7 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
     <div class="s-title">OW2</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <span class="ow-status" id="ow2-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <button class="s-btn" id="ow2-copy-btn" onclick="owCopyTable('ow2')" title="Copy full OW2 table">Copy</button>
       <button class="s-btn" id="ow2-refresh-btn" onclick="owLoad(true)">↻</button>
     </div>
   </div>
@@ -2863,6 +2868,12 @@ if(ud) ud.textContent=fmtDateUTC(d)+' UTC';
 }
 tickClocks();
 setInterval(tickClocks,1000);
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){
+    try{ if(window.atcTimer){ clearInterval(atcTimer); atcTimer=null; } }catch(e){}
+  }
+});
+
 /* ── AUDIO ── */
 let mute=false, _actx=null;
 function getCtx(){if(_actx)return _actx;try{_actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return _actx;}
@@ -3765,8 +3776,17 @@ window.metarHistPick=metarHistPick;
 window.metarHistToggle=metarHistToggle;
 window.metarHistChange=function(icao){ /* legacy no-op; table uses metarHistPick */ };
 
+const _metarCache=Object.create(null); // icao -> {at, lines}
 async function fetchMetarFor(icao){
 try{
+const hit=_metarCache[icao];
+if(hit && (Date.now()-hit.at)<3*60*1000 && hit.lines && hit.lines.length){
+  const st=metarState[icao];
+  if(st) st.history=hit.lines;
+  fillMetarHistory(icao, hit.lines);
+  renderMetar(icao, hit.lines[0], false);
+  return true;
+}
 const urls=[
 AWC_METAR.replace('{IDS}',icao),
 METAR_TPL.replace('{ICAO}',icao)
@@ -3781,6 +3801,7 @@ const one=extractMetarLine(out.text, icao);
 if(one){ lines=[one]; break; }
 }
 if(lines.length){
+_metarCache[icao]={at:Date.now(), lines:lines};
 const st=metarState[icao];
 if(st) st.history=lines;
 fillMetarHistory(icao, lines);
@@ -3791,6 +3812,11 @@ return true;
 return false;
 }
 async function refreshAllMetars(){
+const tab=document.querySelector('.tab.active,[data-tab].active,.nav-item.active');
+const onMetar=document.getElementById('panel-metars')||document.querySelector('[data-panel="metars"],#metars');
+const visible=(!onMetar||onMetar.style.display!=='none')&&(document.visibilityState!=='hidden');
+// still allow manual; auto callers should check — if document hidden skip
+if(document.visibilityState==='hidden') return [];
 const results=await Promise.all(STATIONS.map(async icao=>{
 const ok=await fetchMetarFor(icao);
 if(!ok){
@@ -3998,7 +4024,34 @@ if(v<1) return String(Math.round(v*10)+990).padStart(3,'0'); // 991-999
 if(v>=989) return '989';
 return String(Math.round(v)).padStart(3,'0');
 }
-function encUpdate(){
+let _encUpT=null;
+function encUpdate(immediate){
+  if(immediate===true){ clearTimeout(_encUpT); encUpdateNow(); return; }
+  clearTimeout(_encUpT);
+  _encUpT=setTimeout(function(){ encUpdateNow(); }, 40);
+}
+function encUpdateNow(){
+// Fast skip: signature of enc-* fields only (not whole document)
+try{
+  if(!window._encFields){
+    window._encFields=[].slice.call(document.querySelectorAll('[id^="enc-"]')).filter(function(el){
+      return el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA';
+    });
+  }
+  const fds=window._encFields;
+  let sig='';
+  for(let i=0;i<fds.length;i++){
+    const el=fds[i];
+    if(!el.id) continue;
+    sig+=el.id+'=';
+    sig+=(el.type==='checkbox'||el.type==='radio')?el.checked:el.value;
+    sig+='|';
+  }
+  const box=document.getElementById('enc-out')||document.getElementById('enc-synop-out');
+  if(sig && sig===window._encLastSig && box && (box.textContent||'').length>10) return;
+  window._encLastSig=sig;
+}catch(e){}
+
 const p=n=>document.getElementById(n);
 const v=n=>p(n)?p(n).value:'';
 const om=id=>p(id)&&p(id).checked;
@@ -4210,8 +4263,8 @@ const g='7'+wawaVal.padStart(2,'0')+(wa1Val||'/')+(wa2Val||'/');
 groups.push(g);
 }
 }
-// Cloud types 8NhCLCMCH — optional omit
-if(!isSN&&!omit8){
+// Cloud types 8NhCLCMCH — omit when N=0 or user omit
+if(!isSN&&!omit8&&N!=='0'&&parseInt(N,10)!==0){
 if(nOk) nhVal=N; // Nh follows total N (e.g. 2 → 82200)
 if(clVal==='') clVal='2';
 if(cmVal==='') cmVal='0';
@@ -4221,7 +4274,7 @@ const g='8'+nhVal+clVal+cmVal+chVal;
 groups.push(g);
 bdwn.push([g,`Nh=${nhVal} CL=${clVal} CM=${cmVal} CH=${chVal}`]);
 }
-}else if(omit8){
+}else if(omit8||N==='0'||parseInt(N,10)===0){
 bdwn.push(['(8 omit)','Cloud group 8NhCLCMCH omitted']);
 }
 // Time of observation 9GGgg (exact hour + minutes)
@@ -4566,8 +4619,43 @@ const d=now?new Date(now.getTime()):new Date();
 if(d.getUTCMinutes()>=15) d.setUTCHours(d.getUTCHours()+1,0,0,0);
 return {date:d, yy:d.getUTCDate(), gg:d.getUTCHours(), mm:d.getUTCMinutes()};
 }
+function encStationTempTd(){
+// Primary: Curaçao International Airport / Hato from stations API (currentData)
+try{
+const rows=currentData||[];
+const apt=rows.find(function(r){
+const n=String(r.station||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+return (n.indexOf('curacao')>=0||n.indexOf('hato')>=0)&&(n.indexOf('airport')>=0||n.indexOf('hato')>=0);
+})||rows.find(function(r){
+const n=String(r.station||'').toLowerCase();
+return n.indexOf('curacao')>=0||n.indexOf('curaçao')>=0||n.indexOf('hato')>=0;
+});
+if(!apt) return null;
+let T=apt.temperature_c!=null?parseFloat(apt.temperature_c):NaN;
+let Td=NaN;
+if(apt.dewpoint_c!=null) Td=parseFloat(apt.dewpoint_c);
+else if(apt.dew_point_c!=null) Td=parseFloat(apt.dew_point_c);
+else if(isFinite(T)&&apt.humidity_percent!=null){
+const RH=parseFloat(apt.humidity_percent);
+if(isFinite(RH)&&RH>0&&RH<=100){
+// Magnus approximation Td from T and RH
+const a=17.27,b=237.7;
+const g=(a*T)/(b+T)+Math.log(RH/100);
+Td=(b*g)/(a-g);
+}
+}
+if(isFinite(T)&&isFinite(Td)) return {T:T, Td:Td, src:apt.station||'Curaçao station'};
+}catch(e){}
+return null;
+}
 function encCloudBaseFt(t,td){
-const T=parseFloat(t), D=parseFloat(td);
+// Prefer Curaçao station feed over METAR / form for cloud base
+const st=encStationTempTd();
+let T=st?st.T:parseFloat(t);
+let D=st?st.Td:parseFloat(td);
+if(!isFinite(T)||!isFinite(D)){
+T=parseFloat(t); D=parseFloat(td);
+}
 if(!isFinite(T)||!isFinite(D)) return null;
 let ft=(T-D)/2.5*1000;
 if(!isFinite(ft)||ft<0) ft=0;
@@ -4603,10 +4691,14 @@ const h=encHfromFt(ft);
 const hEl=document.getElementById('enc-h');
 if(hEl){ hEl.value=h; hEl.dataset.auto='1'; }
 const hint=document.getElementById('enc-h-est');
-if(hint) hint.textContent='· '+ft+' ft / '+Math.round(ft*0.3048)+' m';
+if(hint){
+const st=encStationTempTd();
+const src=st?(' · station '+st.T.toFixed(1)+'/'+st.Td.toFixed(1)+'°C'):'';
+hint.textContent='· '+ft+' ft / '+Math.round(ft*0.3048)+' m'+src;
+}
 const hs=encHsFromFt(ft);
 const hs1=document.getElementById('enc-s3-hs1');
-if(hs1 && (hs1.value===''||hs1.dataset.auto==='1')){ hs1.value=hs; hs1.dataset.auto='1'; }
+if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=hs; hs1.dataset.auto='1'; }
 return {ft:ft,h:h,hs:hs};
 }
 function encStampUtc(){
@@ -4785,7 +4877,36 @@ try{
   localStorage.setItem(key, JSON.stringify(st));
 }catch(e){}
 }
+function encPresSpark(){
+const el=document.getElementById('enc-pres-spark');
+if(!el) return;
+try{
+  const st=JSON.parse(localStorage.getItem(DAYSUM_KEY+localDateKey())||'{}')||{};
+  const hp=st.hoursP||{};
+  const gg=parseInt((document.getElementById('enc-gg')||{}).value!=null?document.getElementById('enc-gg').value:encSynopUtc().gg,10)%24;
+  const pts=[];
+  for(let i=24;i>=0;i--){
+    const h=(gg-i+48)%24;
+    const p=hp[h]!=null?hp[h]:hp[String(h)];
+    if(p!=null&&isFinite(p)) pts.push({h:h,p:parseFloat(p)});
+  }
+  if(pts.length<2){ el.innerHTML=''; return; }
+  const vals=pts.map(function(x){return x.p;});
+  const min=Math.min.apply(null,vals), max=Math.max.apply(null,vals);
+  const span=(max-min)||0.1;
+  const w=72,h=22,pad=2;
+  let d='';
+  pts.forEach(function(pt,i){
+    const x=pad+(i/(pts.length-1))*(w-2*pad);
+    const y=pad+(1-(pt.p-min)/span)*(h-2*pad);
+    d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+  });
+  el.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'"><path d="'+d+'" fill="none" stroke="#55c1ff" stroke-width="1.5"/></svg>';
+}catch(e){ el.innerHTML=''; }
+}
+
 function encTendFromDaysum(){
+if(window._encTendAt && (Date.now()-window._encTendAt)<400 && window._encTendCache) return window._encTendCache;
 const ggEl=document.getElementById('enc-gg');
 const gg=parseInt(ggEl&&ggEl.value!=null?ggEl.value:encSynopUtc().gg,10)%24;
 const h3=(gg+21)%24; // 3 hours earlier UTC
@@ -4820,6 +4941,9 @@ if(hint){
   const sign=d>0?'+':(d<0?'':'');
   hint.textContent='· 5appp OK: '+p3.toFixed(1)+' → '+pNow.toFixed(1)+' ('+sign+d.toFixed(1)+' hPa) → 5'+a+ppp;
 }
+window._encTendAt=Date.now(); window._encTendCache={a:a,ppp:ppp,d:d,pNow:pNow,p3:p3};
+const tendKey=a+ppp+String(pNow)+String(p3);
+if(tendKey!==window._encTendKey){ window._encTendKey=tendKey; try{encPresSpark();}catch(e){} }
 return {a:a,ppp:ppp,d:d,pNow:pNow,p3:p3};
 }
 function encWwFromVis(visKm, current){
@@ -4987,7 +5111,7 @@ const fill=[
 ['enc-rrr',est.rrr],['enc-rrr3',est.rrr3],['enc-r24',est.r24],
 ['enc-tmax',est.tmax],['enc-tmin',est.tmin]
 ];
-fill.forEach(function(x){
+window._encFields=null;window._encLastSig='';fill.forEach(function(x){
 encPh(x[0], x[1]);
 encSetVal(x[0], x[1]);
 });
@@ -5023,12 +5147,20 @@ const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35
 layers=[{ns:String(Math.min(8,parseInt(est.n,10)||0)),c:parseInt(est.n,10)>=5?'6':'8',hs:hmap[parseInt(est.h||'5',10)]||'10'}];
 est._clsrc=est._csrc||'KNMI/model';
 }
+// Layer 1 height ALWAYS from T-Td (min 1300 ft) — never METAR base
 const L=layers[0];
 if(L){
 encSetVal('enc-s3-ns1', L.ns);
 encSetVal('enc-s3-c1', '8');
-encSetVal('enc-s3-hs1', L.hs);
 }
+try{ encApplyCloudBase(); }catch(e){}
+try{
+const ft=encCloudBaseFt((document.getElementById('enc-t')||{}).value,(document.getElementById('enc-td')||{}).value);
+if(ft!=null){
+const hs1=document.getElementById('enc-s3-hs1');
+if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=encHsFromFt(ft); hs1.dataset.auto='1'; }
+}
+}catch(e){}
 const L2=encMetarSecondLayer(raw||'');
 const L3=encMetarThirdLayer(raw||'');
 for(let i=2;i<=4;i++){
@@ -5093,9 +5225,9 @@ const st=document.getElementById('enc-mode-status');
 if(st) st.textContent=(st.textContent||'')+' · lightning '+lt.count+' within 16 km → ww 95';
 }
 }catch(e){}
-try{encTendFromDaysum();encUpdate();if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}
+try{encTendFromDaysum();encUpdate(true);if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}
 });
-encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate();if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}});
+encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate(true);if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}});
 {
 const p24el=document.getElementById('enc-ppp24');
 const p24=p24el&&p24el.value!==''?Number(p24el.value):null;
@@ -5775,7 +5907,7 @@ L.circleMarker([a[0],a[1]],{radius:5,color:'#55c1ff',fillColor:'#55c1ff',fillOpa
 });
 atcTrafficRefresh();
 if(atcTimer) clearInterval(atcTimer);
-atcTimer=setInterval(atcTrafficRefresh, 15000);
+atcTimer=setInterval(atcTrafficRefresh, 30000);
 // Cloud/radar overlay like ADS-B Exchange
 setTimeout(function(){ try{ atcMapMode('rain'); }catch(e){} },400);
 setTimeout(function(){try{atcMap.invalidateSize();}catch(e){}},250);
@@ -7328,7 +7460,7 @@ if(bar)bar.querySelectorAll('.sub-tab-btn').forEach(b=>b.classList.toggle('activ
 document.querySelectorAll('[id^="'+panel+'-sub-"]').forEach(p=>p.classList.toggle('active',p.id===panel+'-sub-'+name));
 if(panel==='synop'&&name==='encode'){
   encInitTime();
-  encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate();}catch(e){}});
+  encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate(true);}catch(e){}});
   try{encTendFromDaysum();}catch(e){}
   try{encUpdate();}catch(e){}
 }
@@ -7426,38 +7558,43 @@ function owWmoFromCode(code){
   if(c>=71&&c<=77) return 'sneeuw';
   return '';
 }
-async function owFetchMuhaGsynres(y, mo, d){
-  // Ogimet daily summary 78224 José Martí — Max Min Prec for OW2 MUHA
-  // Columns: Max Min Avg Td Hr AppT Dir Int Pres Prec TotCl LowCl Vis
+const _gsynCache=Object.create(null);
+async function owFetchGsynres(ind, y, mo, d){
+const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
+if(_gsynCache[ck]) return _gsynCache[ck];
+
+  // Ogimet daily summary — Max Min Prec (ind = WMO block)
+  // Columns typically: Max Min Avg Td Hr AppT Dir Int Pres Prec TotCl LowCl Vis
   const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=5&ano='+y+
-    '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind=78224';
+    '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
   try{
     const text=await owGet(url);
     if(!text) return null;
     const mm=String(mo).padStart(2,'0');
     const dd=String(d).padStart(2,'0');
-    // Prefer the line that contains mm/dd
     let row='';
     const lines=String(text).split(/\n/);
     for(let i=0;i<lines.length;i++){
       if(lines[i].indexOf(mm+'/'+dd)>=0 || lines[i].indexOf(y+'/'+mm+'/'+dd)>=0){ row=lines[i]; break; }
     }
     if(!row){
-      // jina/proxy may flatten — search whole text
       const m=text.match(new RegExp(mm+'/'+dd+'[^\[]{10,300}'));
       if(m) row=m[0];
     }
     if(!row) return null;
     const nums=(row.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
-    // Max Min ... Pres(~1000) Prec
     if(nums.length<2) return null;
     let tmax=nums[0], tmin=nums[1], rr=null;
     const presIdx=nums.findIndex(function(n){return n>=980&&n<=1050;});
     if(presIdx>=0 && nums[presIdx+1]!=null) rr=nums[presIdx+1];
     else if(nums.length>=9) rr=nums[8];
-    return {tmax:tmax, tmin:tmin, rr:rr};
+    const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)}; _gsynCache[ck]=res; return res;
   }catch(e){ return null; }
 }
+async function owFetchMuhaGsynres(y, mo, d){
+  return owFetchGsynres('78224', y, mo, d);
+}
+
 async function owFetchOpenMeteo(lat, lon, y, mo, d){
   const date=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
   const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
@@ -7796,6 +7933,26 @@ function ow2BuildWxTemplate(){
   });
   host.setAttribute('data-built','1');
 }
+function owCopyTable(which){
+  which=which||'ow';
+  const host=$(which==='ow2'?'ow2-table-host':'ow-table-host');
+  if(!host) return;
+  const rows=[].slice.call(host.querySelectorAll('tr'));
+  const lines=[];
+  rows.forEach(function(tr){
+    const cells=[].slice.call(tr.querySelectorAll('th,td')).map(function(c){return (c.getAttribute('data-copy')||c.textContent||'').replace(/\s+/g,' ').trim();});
+    if(cells.length) lines.push(cells.join('\t'));
+  });
+  const text=lines.join('\n');
+  const done=function(){
+    const b=$(which==='ow2'?'ow2-copy-btn':'ow-copy-btn');
+    if(b){ const t=b.textContent; b.textContent='Copied'; setTimeout(function(){b.textContent=t;},900); }
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(function(){
+    try{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
+  });
+  else try{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
+}
 function owRowFilledOw(row){
   if(!row||row.sep) return true;
   return !!(row.wx) && row.tmax!==''&&row.tmax!=null && row.tmin!==''&&row.tmin!=null && row.rr!==''&&row.rr!=null;
@@ -7826,8 +7983,22 @@ async function owLoad(force){
   if(!host) return;
   const fd=owFormDay();
   const key=fd.y+'-'+fd.mo+'-'+fd.d;
-  if(!force && owLastKey===key && host.getAttribute('data-filled')==='1') return;
   if(owBusy && !force) return;
+  // Soft open: if day already saved and complete enough, skip network
+  if(!force){
+    const keep0=owReadKeep(key);
+    if(keep0 && owLastKey===key && host.getAttribute('data-filled')==='1'){
+      const miss=keep0.filter(function(r){return !r.sep && typeof owRowNeedsSynop==='function' && owRowNeedsSynop(r);}).length;
+      if(miss===0){
+        owRender(keep0, fd, true);
+        owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
+        if(stEl) stEl.textContent='Opgeslagen · compleet · '+key;
+        const st2=$('ow2-status');
+        if(st2) st2.textContent='Opgeslagen · compleet · '+key;
+        return;
+      }
+    }
+  }
   owBusy=true;
   try{
   if(force){ for(const k in _owGetCache) delete _owGetCache[k]; }
@@ -7913,23 +8084,33 @@ async function owLoad(force){
     if((row.tmin2==null||row.tmin2==='') && tmin!=null) row.tmin2=owRound(tmin);
     if((row.rr2==null||row.rr2==='') && rr!=null) row.rr2=(Math.round(rr*10)/10).toFixed(1);
   }));
-  // OW2 MUHA: Ogimet gsynres 78224 daily Max/Min/Prec
+  // OW + OW2: Ogimet gsynres daily Max/Min/Prec for selected stations
+  // 81225 Paramaribo, 06240 Amsterdam, 78224 Havana, 80472 Valencia
   const st2pre=$('ow2-status');
-  if(st2pre) st2pre.textContent='Laden MUHA gsynres 78224…';
+  if(st2pre) st2pre.textContent='Laden gsynres (SMJP/EHAM/MUHA/SVVA)…';
+  if(stEl) stEl.textContent='Laden gsynres…';
+  const GSYN={SMJP:'81225',EHAM:'06240',MUHA:'78224',SVVA:'80472'};
   try{
-    const mi=OW_STATIONS.findIndex(function(st){return st.icao==='MUHA';});
-    if(mi>=0){
+    await Promise.all(Object.keys(GSYN).map(async function(icao){
+      const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
+      if(mi<0) return;
       const row=rows[mi];
-      const need=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||(row.rr2==null||row.rr2==='');
-      if(need){
-        const g=await owFetchMuhaGsynres(y, mo, d);
-        if(g){
-          if((row.tmax2==null||row.tmax2==='') && isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
-          if((row.tmin2==null||row.tmin2==='') && isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
-          if((row.rr2==null||row.rr2==='') && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
-        }
+      const needOw=(row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin==='')||(row.rr==null||row.rr==='');
+      const needOw2=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||(row.rr2==null||row.rr2==='');
+      if(!needOw && !needOw2) return;
+      const g=await owFetchGsynres(GSYN[icao], y, mo, d);
+      if(!g) return;
+      if(needOw){
+        if((row.tmax==null||row.tmax==='') && isFinite(g.tmax)) row.tmax=owRound(g.tmax);
+        if((row.tmin==null||row.tmin==='') && isFinite(g.tmin)) row.tmin=owRound(g.tmin);
+        if((row.rr==null||row.rr==='') && isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
       }
-    }
+      if(needOw2){
+        if((row.tmax2==null||row.tmax2==='') && isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
+        if((row.tmin2==null||row.tmin2==='') && isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
+        if((row.rr2==null||row.rr2==='') && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
+      }
+    }));
   }catch(e){}
   // OW2 only: 24h METAR gap-fill for MUHA (Havana) and SMJP (Paramaribo).
   if(st2pre) st2pre.textContent='Laden METAR 24u (MUHA/SMJP)…';

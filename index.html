@@ -7628,14 +7628,18 @@ function owNbase(N){
   return '';
 }
 function owWwNL(c){
-  // Dutch section-1 group 7 ww (paper form). 710// → 10 = nevel.
+  // Paper form (Nederlandse SYNOP weertype) — text only, no ww numbers in output.
+  // Priority present weather: 10 nevel; 11/12 mist; 13 weerlicht; 14-16 neerslag op afstand;
+  // 17/95/97 onweer; 50-55 motregen; 60-65 regen; 80-82 regenbui.
   if(c==null||isNaN(c)||c<10) return '';
   if(c===10) return 'nevel';
-  if(c===11||c===12) return 'laaghangende mist';
+  if(c===11||c===12) return 'mist'; // paper: laaghangende mist; display mist (required)
   if(c===13) return 'weerlicht';
   if(c>=14&&c<=16) return 'neerslag op afstand';
   if(c===17||c===95||c===97) return 'onweer';
+  if(c===18) return 'windstoten';
   if(c===19) return 'windhoos';
+  // 20–29: past weather → combined with N-base as "… bewolkt na …"
   if(c===20) return 'bewolkt na motregen';
   if(c===21) return 'bewolkt na regen';
   if(c===22) return 'bewolkt na sneeuw';
@@ -7668,29 +7672,39 @@ function owWwNL(c){
   if(c===96||c===99) return 'onweer met hagel';
   return '';
 }
+function owWawaNL(c){
+  // Automatic stations Table 4680 (wawa) — paper "Nieuw"
+  if(c==null||isNaN(c)) return '';
+  if(c===12) return 'weerlicht';
+  if(c===20) return 'bewolkt na mist';
+  if(c===21) return 'bewolkt na neerslag';
+  if(c===22) return 'bewolkt na motregen';
+  if(c===23) return 'bewolkt na regen';
+  if(c===24) return 'bewolkt na sneeuw';
+  if(c===25) return 'na ijzel';
+  if(c===26) return 'bewolkt na onweer';
+  if(c===27) return 'bewolkt na driftsneeuw';
+  if(c>=30&&c<=35) return 'mist';
+  return '';
+}
 function owWeertype(N,ww){
+  // Present ww (>=10) wins over N alone. 20–29: N-base + past weather tail.
   const base=owNbase(N);
   const c=parseInt(ww,10);
   const wx=owWwNL(c);
   if(wx){
     if(c>=20&&c<=29){
       const tail=wx.replace(/^bewolkt\s+/,'');
-      return (base||'bewolkt')+' '+tail;
+      return (base||'bewolkt')+(tail?(' '+tail):'');
     }
+    // Significant present weather: text only (nevel, mist, onweer, regen, regenbui, …)
     return wx;
   }
   return base;
 }
 function ow2Weertype(N,ww){
-  const base=owNbase(N);
-  const c=parseInt(ww,10);
-  const wx=owWwNL(c);
-  if(!wx) return base;
-  if(c>=20&&c<=29){
-    const tail=wx.replace(/^bewolkt\s+/,'');
-    return (base||'bewolkt')+' '+tail;
-  }
-  return base?(base+' · '+wx):wx;
+  // Same coding rules as OW (paper form)
+  return owWeertype(N,ww);
 }
 function owWxFromMetar(raw){
   if(!raw) return '';

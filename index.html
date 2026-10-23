@@ -2871,6 +2871,11 @@ setInterval(tickClocks,1000);
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='hidden'){
     try{ if(window.atcTimer){ clearInterval(atcTimer); atcTimer=null; } }catch(e){}
+  }else{
+    try{
+      const atc=document.getElementById('atc')||document.querySelector('[data-panel="atc"]');
+      if(atc && atc.classList.contains('active')) atcEnsureFrame();
+    }catch(e){}
   }
 });
 
@@ -3079,7 +3084,7 @@ saveProxyConfig({url,type});
 const st=$('proxy-status');
 if(st){st.className='proxy-status ok';st.textContent=url?'Saved. Custom proxy will be tried first.':'Saved. Using built-in proxies only.';}
 // Refresh data with new path
-setTimeout(()=>{closeProxySettings();if(typeof refreshAllMetars==='function')refreshAllMetars();},400);
+setTimeout(()=>{closeProxySettings();if(typeof refreshAllMetars==='function')refreshAllMetars(false);},400);
 }
 function clearProxySettings(){
 saveProxyConfig({url:'',type:'raw'});
@@ -3777,23 +3782,24 @@ window.metarHistToggle=metarHistToggle;
 window.metarHistChange=function(icao){ /* legacy no-op; table uses metarHistPick */ };
 
 const _metarCache=Object.create(null); // icao -> {at, lines}
-async function fetchMetarFor(icao){
+async function fetchMetarFor(icao, force){
 try{
 const hit=_metarCache[icao];
-if(hit && (Date.now()-hit.at)<3*60*1000 && hit.lines && hit.lines.length){
+if(!force && hit && (Date.now()-hit.at)<3*60*1000 && hit.lines && hit.lines.length){
   const st=metarState[icao];
   if(st) st.history=hit.lines;
   fillMetarHistory(icao, hit.lines);
   renderMetar(icao, hit.lines[0], false);
   return true;
 }
+if(force) delete _metarCache[icao];
 const urls=[
 AWC_METAR.replace('{IDS}',icao),
 METAR_TPL.replace('{ICAO}',icao)
 ];
 let lines=[];
 for(const url of urls){
-const out=await fetchRetry(url,2);
+const out=await fetchRetry(url,1);
 if(!out||!out.ok||!out.text) continue;
 const got=extractMetarLines(out.text, icao);
 if(got.length){ lines=got; break; }
@@ -3811,14 +3817,12 @@ return true;
 }catch(e){console.error('METAR',icao,e);}
 return false;
 }
-async function refreshAllMetars(){
-const tab=document.querySelector('.tab.active,[data-tab].active,.nav-item.active');
-const onMetar=document.getElementById('panel-metars')||document.querySelector('[data-panel="metars"],#metars');
-const visible=(!onMetar||onMetar.style.display!=='none')&&(document.visibilityState!=='hidden');
-// still allow manual; auto callers should check — if document hidden skip
-if(document.visibilityState==='hidden') return [];
+async function refreshAllMetars(force){
+// Skip background refresh when tab/app hidden (unless forced)
+if(!force && document.visibilityState==='hidden') return [];
+if(force){ try{ for(const k in _metarCache) delete _metarCache[k]; }catch(e){} }
 const results=await Promise.all(STATIONS.map(async icao=>{
-const ok=await fetchMetarFor(icao);
+const ok=await fetchMetarFor(icao, !!force);
 if(!ok){
 const st=metarState[icao];
 if(st&&st.card&&!st.lastRaw){
@@ -4906,7 +4910,11 @@ try{
 }
 
 function encTendFromDaysum(){
-if(window._encTendAt && (Date.now()-window._encTendAt)<400 && window._encTendCache) return window._encTendCache;
+const pmslEl0=document.getElementById('enc-pmsl');
+const ggEl0=document.getElementById('enc-gg');
+const tendSig=(ggEl0&&ggEl0.value||'')+'|'+(pmslEl0&&pmslEl0.value||'')+'|'+(document.getElementById('enc-pstn')&&document.getElementById('enc-pstn').value||'');
+if(window._encTendSig===tendSig && window._encTendAt && (Date.now()-window._encTendAt)<400 && window._encTendCache) return window._encTendCache;
+window._encTendSig=tendSig;
 const ggEl=document.getElementById('enc-gg');
 const gg=parseInt(ggEl&&ggEl.value!=null?ggEl.value:encSynopUtc().gg,10)%24;
 const h3=(gg+21)%24; // 3 hours earlier UTC
@@ -4925,6 +4933,7 @@ if(hint){
   if(!isFinite(pNow)) hint.textContent='· 5appp: need pressure now (QNH/Pmsl)';
   else hint.textContent='· 5appp: need P at '+String(h3).padStart(2,'0')+'Z (±1h) — run day summary / wait bg save';
 }
+window._encTendCache=null; window._encTendAt=0;
 return null;
 }
 const d=Math.round((pNow-p3)*10)/10;
@@ -7688,7 +7697,39 @@ function owWawaNL(c){
   return '';
 }
 function owWeertype(N,ww){
-  // Present ww (>=10) wins over N alone. 20–29: N-base + past weather tail.
+  // OW only: 1) check ww first 2) then cloud cover N when combining past weather.
+  // Present ww (10+, not 20–29): weather text only.
+  // ww 21 → "{N} na regen"; ww 25 → "{N} na regenbui"; ww 23 → "{N} na regen" (Dutch form).
+  const base=owNbase(N);
+  const c=parseInt(ww,10);
+  if(!isNaN(c) && c>=10){
+    // Past weather group 20–29: always N-base + phrase
+    if(c>=20&&c<=29){
+      let tail='';
+      if(c===21||c===23) tail='na regen';
+      else if(c===25) tail='na regenbui';
+      else if(c===20) tail='na motregen';
+      else if(c===22) tail='na sneeuw';
+      else if(c===24) tail='na regen of motregen met ijzel';
+      else if(c===26) tail='na sneeuwbui';
+      else if(c===27) tail='na hagelbui';
+      else if(c===28) tail='na mist';
+      else if(c===29) tail='na onweer';
+      else {
+        const wx=owWwNL(c);
+        tail=(wx||'').replace(/^bewolkt\s+/,'');
+      }
+      return (base||'bewolkt')+(tail?(' '+tail):'');
+    }
+    // Significant present weather — text only (nevel, mist, motregen, regen, regenbui, onweer, …)
+    const wx=owWwNL(c);
+    if(wx) return wx;
+  }
+  // No ww: cloud cover only
+  return base;
+}
+function ow2Weertype(N,ww){
+  // OW2: previous paper mapping (not the OW-only 21/23/25 short tails)
   const base=owNbase(N);
   const c=parseInt(ww,10);
   const wx=owWwNL(c);
@@ -7697,14 +7738,9 @@ function owWeertype(N,ww){
       const tail=wx.replace(/^bewolkt\s+/,'');
       return (base||'bewolkt')+(tail?(' '+tail):'');
     }
-    // Significant present weather: text only (nevel, mist, onweer, regen, regenbui, …)
     return wx;
   }
   return base;
-}
-function ow2Weertype(N,ww){
-  // Same coding rules as OW (paper form)
-  return owWeertype(N,ww);
 }
 function owWxFromMetar(raw){
   if(!raw) return '';
@@ -7991,6 +8027,20 @@ function owWriteKeep(key, rows){
   window.owKeep={key:key, rows:copy};
   try{ localStorage.setItem('meteo_owKeep_'+key, JSON.stringify({key:key, rows:copy, at:Date.now()})); }catch(e){}
 }
+async function owMapPool(items, limit, fn){
+  const out=new Array(items.length);
+  let i=0;
+  async function worker(){
+    while(i<items.length){
+      const idx=i++;
+      out[idx]=await fn(items[idx], idx);
+    }
+  }
+  const n=Math.min(limit||6, items.length||1);
+  await Promise.all(Array.from({length:n}, function(){return worker();}));
+  return out;
+}
+
 async function owLoad(force){
   const stEl=$('ow-status');
   const host=$('ow-table-host');
@@ -8030,7 +8080,7 @@ async function owLoad(force){
   const win=owWindow();
 
   // 1) SYNOP first (12Z weertype, 18Z Tmax, 06Z Tmin, 24h rain)
-  await Promise.all(OW_STATIONS.map(async (stn,idx)=>{
+  await owMapPool(OW_STATIONS, 6, async (stn,idx)=>{
     if(stn.sep) return;
     const row0=rows[idx];
     // Only retry missing — fully filled stations are left alone
@@ -8097,7 +8147,7 @@ async function owLoad(force){
     if((row.tmax2==null||row.tmax2==='') && tmax!=null) row.tmax2=owRound(tmax);
     if((row.tmin2==null||row.tmin2==='') && tmin!=null) row.tmin2=owRound(tmin);
     if((row.rr2==null||row.rr2==='') && rr!=null) row.rr2=(Math.round(rr*10)/10).toFixed(1);
-  }));
+  });
   // OW + OW2: Ogimet gsynres daily Max/Min/Prec for selected stations
   // 81225 Paramaribo, 06240 Amsterdam, 78224 Havana, 80472 Valencia
   const st2pre=$('ow2-status');
@@ -8228,7 +8278,7 @@ if(mbtn)mbtn.addEventListener('click',()=>{mute=!mute;mbtn.textContent=mute?'�
 const rbtn=$('refresh-btn');
 if(rbtn)rbtn.addEventListener('click',()=>{
 updateVis();
-refreshAllMetars();
+refreshAllMetars(false);
 if(loadedTabs.taf)loadAllTafs();
 if(loadedTabs.synop)loadAllSynops();
 if(loadedTabs.weather)loadWeather();
@@ -8307,7 +8357,7 @@ renderMetar('TNCC',`TNCC ${t} 12020G30KT 9999 SCT022 29/25 Q1012`);
 }
 })();
 // Longer intervals = less background work on mobile
-setInterval(function(){refreshAllMetars();}, METAR_MS);
+setInterval(function(){refreshAllMetars(false);}, METAR_MS);
 setInterval(function(){updateVis();}, VIS_MS);
 try{startPressureBackground();}catch(e){}
 })();

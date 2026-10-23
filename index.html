@@ -756,6 +756,19 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
 
 .enc-pres-spark{display:inline-block;vertical-align:middle;margin-left:8px;height:22px;min-width:72px;}
 .enc-pres-spark svg{display:block;height:22px;width:72px;}
+
+/* OW controls stay usable on small screens. */
+#tab-ow .s-head,#tab-ow2 .s-head{flex-wrap:wrap;gap:8px;align-items:flex-start;}
+#tab-ow .s-head>div:last-child,#tab-ow2 .s-head>div:last-child{flex-wrap:wrap;}
+.ow-status{flex:1 1 180px;overflow-wrap:anywhere;}
+.ow-note{font-size:12px;line-height:1.5;color:var(--muted);margin:0 auto 8px;max-width:980px;}
+.ow-paper{min-width:0;width:100%;}
+.ow-tbl{min-width:560px;}
+.ow-tbl td:focus-visible,.ow2-wx-chip:focus-visible{outline:2px solid #1b7cff;outline-offset:-2px;}
+.ow-tbl tbody tr:not(.ow-sep):hover{background:#f0f6fc;}
+.ow-scroll{border-radius:4px;}
+.s-btn:disabled{opacity:.55;cursor:wait;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;}}
 </style>
 </head>
 <body>
@@ -2747,38 +2760,40 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
 </div>
 
 <div class="panel" id="tab-ow">
+  <p class="ow-note">Bijwerken vult lege velden aan. --- betekent ontbrekende data, geen nul. Alleen SYNOP en dagelijkse stationsamenvattingen; geen modelverwachtingen. Dubbelklik op een cel of focus en druk Enter om te kopiëren.</p>
   <div class="s-head">
     <div class="s-title">Overzicht weersgesteldheid</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="ow-status" id="ow-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <span class="ow-status" id="ow-status" role="status" aria-live="polite">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
       <button class="s-btn" id="ow-copy-btn" onclick="owCopyTable('ow')" title="Copy full OW table">Copy</button>
-      <button class="s-btn" id="ow-refresh-btn" onclick="owLoad(true)">↻</button>
+      <button class="s-btn" id="ow-refresh-btn" aria-label="Ontbrekende velden bijwerken" onclick="owLoad(true)">↻ Bijwerken</button>
     </div>
   </div>
   <div class="ow-wrap">
     <div class="ow-paper">
       <div class="ow-code"><span>Code:QF-OBS-OW</span><span>V 1.0</span></div>
       <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
-      <div id="ow-table-host"></div>
+      <div id="ow-table-host" aria-label="OW waarnemingen"></div>
     </div>
   </div>
 </div>
 <div class="panel" id="tab-ow2">
+  <p class="ow-note">Bijwerken vult lege velden aan. --- betekent ontbrekende data, geen nul. Alleen SYNOP en dagelijkse stationsamenvattingen; geen modelverwachtingen. Dubbelklik op een cel of focus en druk Enter om te kopiëren.</p>
   <div class="s-head">
     <div class="s-title">OW2</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="ow-status" id="ow2-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <span class="ow-status" id="ow2-status" role="status" aria-live="polite">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
       <button class="s-btn" id="ow2-copy-btn" onclick="owCopyTable('ow2')" title="Copy full OW2 table">Copy</button>
-      <button class="s-btn" id="ow2-refresh-btn" onclick="owLoad(true)">↻</button>
+      <button class="s-btn" id="ow2-refresh-btn" aria-label="Ontbrekende velden bijwerken" onclick="owLoad(true)">↻ Bijwerken</button>
     </div>
   </div>
   <div class="ow-wrap">
     <div class="ow-paper">
       <div class="ow-code"><span>Code:QF-OBS-OW2</span><span>V 1.0</span></div>
       <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
-      <div id="ow2-table-host"></div>
+      <div id="ow2-table-host" aria-label="OW2 waarnemingen"></div>
       <div class="ow2-wx-template">
-        <div class="ow2-wx-template-title">Weertype sjabloon — dubbelklik om te kopiëren</div>
+        <div class="ow2-wx-template-title">Weertype sjabloon — tik om te kopiëren</div>
         <div class="ow2-wx-chips" id="ow2-wx-chips"></div>
       </div>
     </div>
@@ -7795,7 +7810,7 @@ function owAwcUrl(){
 }
 const _owGetCache=Object.create(null);
 async function owGet(url){
-  if(_owGetCache[url]!=null) return _owGetCache[url];
+  if(_owGetCache[url]) return _owGetCache[url];
   const tries=[url, 'https://r.jina.ai/http://'+url.replace(/^https?:\/\//,'')];
   for(const u of tries){
     try{
@@ -7803,7 +7818,10 @@ async function owGet(url){
       if(o&&o.ok&&o.text&&!looksLikeFetchError(o.text)){ _owGetCache[url]=o.text; return o.text; }
     }catch(e){}
     try{
-      const r=await fetch(u,{cache:'no-store'});
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),12000);
+      let r;
+      try{ r=await fetch(u,{cache:'no-store',signal:controller.signal}); }finally{ clearTimeout(timeout); }
       if(r&&r.ok){
         const t=await r.text();
         if(t&&!looksLikeFetchError(t)){ _owGetCache[url]=t; return t; }
@@ -7904,15 +7922,23 @@ async function owFetchMetar24(icao){
   }catch(e){ return []; }
 }
 function owBlankRows(){
-  return OW_STATIONS.map(x=>x.sep?x:{...x,wx:'',tmax:'',tmin:'',rr:''});
+  return OW_STATIONS.map(x=>x.sep?{...x}:{...x,wx:'',tmax:'',tmin:'',rr:'',wx2:'',tmax2:'',tmin2:'',rr2:''});
+}
+async function owClipboard(text){
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);return;}}catch(e){}
+  const active=document.activeElement;
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px;top:0';
+  document.body.appendChild(ta);ta.select();
+  try{if(!document.execCommand('copy'))throw new Error('copy');}
+  finally{ta.remove();if(active&&active.focus)active.focus();}
 }
 function owCopyCell(ev){
   const t=ev.currentTarget;
   const v=(t.getAttribute('data-copy')||t.textContent||'').trim();
   if(!v||v==='---'||v==='--.--') return;
-  const done=function(){ t.style.background='#e7f6ea'; setTimeout(function(){ t.style.background=''; }, 400); };
-  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done).catch(function(){});
-  else { const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); done(); }
+  owClipboard(v).then(function(){t.style.background='#e7f6ea';setTimeout(function(){t.style.background='';},400);}).catch(function(){
+    const el=$('ow-status');if(el)el.textContent='Kopiëren niet beschikbaar — selecteer de tekst handmatig.';
+  });
 }
 function owRender(rows, fd, filled, hostId, wxKey){
   const host=$(hostId||'ow-table-host');
@@ -7923,8 +7949,8 @@ function owRender(rows, fd, filled, hostId, wxKey){
   const dd=String(fd.d).padStart(2,'0')+' - '+String(fd.mo).padStart(2,'0')+' - '+fd.y;
   const cell=function(cls, val, missing){
     const show=(val===''||val==null)?missing:String(val);
-    const safe=show.split('"').join('');
-    return '<td class="'+cls+'" data-copy="'+safe+'" ondblclick="owCopyCell(event)">'+show+'</td>';
+    const safe=show.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return '<td class="'+cls+'" tabindex="0" title="Dubbelklik of Enter om te kopiëren" data-copy="'+safe+'" ondblclick="owCopyCell(event)" onkeydown="if(event.key===&quot;Enter&quot;){owCopyCell(event)}">'+safe+'</td>';
   };
   let html='<div class="ow-sub"><span>Weercondities vanmorgen om 08:00 uur<br>Antilliaanse tijd:</span><span>Condities afgelopen 24 uur:</span></div>';
   html+='<div class="ow-scroll"><table class="ow-tbl"><thead>';
@@ -7963,21 +7989,16 @@ function ow2BuildWxTemplate(){
   if(!host||host.getAttribute('data-built')==='1') return;
   host.innerHTML='';
   owWxTemplateList().forEach(function(txt){
-    const sp=document.createElement('span');
+    const sp=document.createElement('button');
+    sp.type='button';
     sp.className='ow2-wx-chip';
     sp.textContent=txt;
     sp.setAttribute('data-copy', txt);
-    sp.title='Dubbelklik om te kopiëren';
-    sp.addEventListener('dblclick', function(ev){
+    sp.title='Klik om te kopiëren';
+    sp.addEventListener('click', function(ev){
       const v=txt;
       const done=function(){ sp.style.background='#d4edda'; setTimeout(function(){ sp.style.background=''; },450); };
-      if(navigator.clipboard&&navigator.clipboard.writeText){
-        navigator.clipboard.writeText(v).then(done).catch(function(){
-          try{ const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
-        });
-      }else{
-        try{ const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
-      }
+      owClipboard(v).then(done).catch(function(){const el=$('ow2-status');if(el)el.textContent='Kopiëren niet beschikbaar — selecteer de tekst handmatig.';});
     });
     host.appendChild(sp);
   });
@@ -7998,10 +8019,7 @@ function owCopyTable(which){
     const b=$(which==='ow2'?'ow2-copy-btn':'ow-copy-btn');
     if(b){ const t=b.textContent; b.textContent='Copied'; setTimeout(function(){b.textContent=t;},900); }
   };
-  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(function(){
-    try{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
-  });
-  else try{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
+  owClipboard(text).then(done).catch(function(){const el=$(which==='ow2'?'ow2-status':'ow-status');if(el)el.textContent='Kopiëren niet beschikbaar — selecteer de tabel handmatig.';});
 }
 function owRowFilledOw(row){
   if(!row||row.sep) return true;
@@ -8016,7 +8034,7 @@ function owRowNeedsSynop(row){
 }
 function owReadKeep(key){
   try{
-    const j=JSON.parse(localStorage.getItem('meteo_owKeep_'+key)||'null');
+    const j=JSON.parse(localStorage.getItem('meteo_owObserved_v2_'+key)||'null');
     if(j&&j.key===key&&Array.isArray(j.rows)) return j.rows;
   }catch(e){}
   if(window.owKeep&&window.owKeep.key===key&&Array.isArray(window.owKeep.rows)) return window.owKeep.rows;
@@ -8025,7 +8043,7 @@ function owReadKeep(key){
 function owWriteKeep(key, rows){
   const copy=(rows||[]).map(function(r){return Object.assign({}, r);});
   window.owKeep={key:key, rows:copy};
-  try{ localStorage.setItem('meteo_owKeep_'+key, JSON.stringify({key:key, rows:copy, at:Date.now()})); }catch(e){}
+  try{ localStorage.setItem('meteo_owObserved_v2_'+key, JSON.stringify({key:key, rows:copy, at:Date.now()})); }catch(e){}
 }
 async function owMapPool(items, limit, fn){
   const out=new Array(items.length);
@@ -8047,7 +8065,7 @@ async function owLoad(force){
   if(!host) return;
   const fd=owFormDay();
   const key=fd.y+'-'+fd.mo+'-'+fd.d;
-  if(owBusy && !force) return;
+  if(owBusy) return;
   // Soft open: if day already saved and complete enough, skip network
   if(!force){
     const keep0=owReadKeep(key);
@@ -8064,8 +8082,9 @@ async function owLoad(force){
     }
   }
   owBusy=true;
+  ['ow','ow2'].forEach(function(id){const b=$(id+'-refresh-btn');if(b)b.disabled=true;const h=$(id+'-table-host');if(h)h.setAttribute('aria-busy','true');});
   try{
-  if(force){ for(const k in _owGetCache) delete _owGetCache[k]; }
+  if(force){ for(const k in _owGetCache) delete _owGetCache[k]; for(const k in _gsynCache) delete _gsynCache[k]; }
   // Never wipe filled cells — restore saved day, only fill gaps
   const keep=owReadKeep(key);
   const rows=keep ? keep.map(function(r){return Object.assign({}, r);}) : owBlankRows();
@@ -8096,7 +8115,7 @@ async function owLoad(force){
       }
     }
     if(!parsed.length && /^(TNCA|TNCB|TNCC)$/.test(stn.icao)){
-      parsed=owParseOgimet(await owGet('https://www.ogimet.com/ultimos_synops2.php?estado=Cura&fmt=html&Enviar=Ver'));
+      parsed=owParseOgimet(await owGet('https://www.ogimet.com/ultimos_synops2.php?estado=Cura&fmt=html&Enviar=Ver')).filter(function(r){return stn.wmo.includes(r.wmo);});
     }
     const us=['KATL','KMIA','KLGA','TJSJ'].includes(stn.icao);
     const r12=us?owPick1152(parsed,y,mo,d):owPickHour(parsed,y,mo,d,[12]);
@@ -8147,6 +8166,9 @@ async function owLoad(force){
     if((row.tmax2==null||row.tmax2==='') && tmax!=null) row.tmax2=owRound(tmax);
     if((row.tmin2==null||row.tmin2==='') && tmin!=null) row.tmin2=owRound(tmin);
     if((row.rr2==null||row.rr2==='') && rr!=null) row.rr2=(Math.round(rr*10)/10).toFixed(1);
+    owWriteKeep(key, rows);
+    owRender(rows, fd, true);
+    owRender(rows, fd, true, 'ow2-table-host', 'wx2');
   });
   // OW + OW2: Ogimet gsynres daily Max/Min/Prec for selected stations
   // 81225 Paramaribo, 06240 Amsterdam, 78224 Havana, 80472 Valencia
@@ -8165,58 +8187,28 @@ async function owLoad(force){
       const g=await owFetchGsynres(GSYN[icao], y, mo, d);
       if(!g) return;
       if(needOw){
-        if((row.tmax==null||row.tmax==='') && isFinite(g.tmax)) row.tmax=owRound(g.tmax);
-        if((row.tmin==null||row.tmin==='') && isFinite(g.tmin)) row.tmin=owRound(g.tmin);
-        if((row.rr==null||row.rr==='') && isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
+        if((row.tmax==null||row.tmax==='') && Number.isFinite(g.tmax)) row.tmax=owRound(g.tmax);
+        if((row.tmin==null||row.tmin==='') && Number.isFinite(g.tmin)) row.tmin=owRound(g.tmin);
+        if((row.rr==null||row.rr==='') && Number.isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
       }
       if(needOw2){
-        if((row.tmax2==null||row.tmax2==='') && isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
-        if((row.tmin2==null||row.tmin2==='') && isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
-        if((row.rr2==null||row.rr2==='') && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
+        if((row.tmax2==null||row.tmax2==='') && Number.isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
+        if((row.tmin2==null||row.tmin2==='') && Number.isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
+        if((row.rr2==null||row.rr2==='') && Number.isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
       }
     }));
   }catch(e){}
-  // OW2 only: 24h METAR gap-fill for MUHA (Havana) and SMJP (Paramaribo).
-  if(st2pre) st2pre.textContent='Laden METAR 24u (MUHA/SMJP)…';
-  await Promise.all(OW_STATIONS.map(async function(stn,idx){
-    if(stn.sep) return;
-    if(!['MUHA','SMJP'].includes(stn.icao)) return;
-    const row=rows[idx];
-    if(row.wx2 && row.tmax2!=null && row.tmax2!=='' && row.tmin2!=null && row.tmin2!=='' && row.rr2!=null && row.rr2!=='') return;
-    const lines=await owFetchMetar24(stn.icao);
-    const mt=owMetarTemps(lines);
-    if(!row.wx2 && mt.wx) row.wx2=mt.wx;
-    if((row.tmax2==null||row.tmax2==='') && mt.tmax!=null) row.tmax2=owRound(mt.tmax);
-    if((row.tmin2==null||row.tmin2==='') && mt.tmin!=null) row.tmin2=owRound(mt.tmin);
-    if((row.rr2==null||row.rr2==='') && lines.length){
-      const wet=lines.some(function(l){return /\b(RA|SHRA|DZ|TS|SH)\b/.test(l.toUpperCase());});
-      if(!wet) row.rr2='0.0';
-    }
-  }));
-  // OW2 final gap-fill: Open-Meteo for any still-empty cells
-  if(st2pre) st2pre.textContent='Laden Open-Meteo…';
-  await Promise.all(OW_STATIONS.map(async function(stn,idx){
-    if(stn.sep) return;
-    const row=rows[idx];
-    const need=!row.wx2 || row.tmax2==null || row.tmax2==='' || row.tmin2==null || row.tmin2==='' || row.rr2==null || row.rr2==='';
-    if(!need) return;
-    const c=OW_COORDS[stn.icao];
-    if(!c) return;
-    const om=await owFetchOpenMeteo(c[0], c[1], y, mo, d);
-    if(!om) return;
-    if(!row.wx2 && om.wx) row.wx2=om.wx;
-    if((row.tmax2==null||row.tmax2==='') && om.tmax!=null && isFinite(om.tmax)) row.tmax2=owRound(om.tmax);
-    if((row.tmin2==null||row.tmin2==='') && om.tmin!=null && isFinite(om.tmin)) row.tmin2=owRound(om.tmin);
-    if((row.rr2==null||row.rr2==='') && om.rr!=null && isFinite(om.rr)) row.rr2=(Math.round(om.rr*10)/10).toFixed(1);
-  }));
+  // Keep missing observations empty: rolling METAR extremes and calendar-day
+  // forecasts do not describe this form's 12Z reporting period.
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
   const got2=rows.some(r=>!r.sep&&(r.wx2||r.tmax2!==''||r.tmin2!==''||r.rr2));
-  const miss=rows.filter(function(r){return !r.sep&&owRowNeedsSynop(r);}).length;
+  const miss=rows.filter(function(r){return !r.sep&&!owRowFilledOw(r);}).length;
+  const miss2=rows.filter(function(r){return !r.sep&&!owRowFilledOw2(r);}).length;
   owWriteKeep(key, rows);
   owRender(rows, fd, got);
   owRender(rows, fd, got2, 'ow2-table-host', 'wx2');
   const st2=$('ow2-status');
-  if(st2) st2.textContent=got2?(miss?('Opgeslagen · nog '+miss+' open · '+key):('Gevuld · opgeslagen · '+key)):('Geen data — ⚙ CORS · '+key);
+  if(st2) st2.textContent=got2?(miss2?('Opgeslagen · nog '+miss2+' open · '+key):('Gevuld · opgeslagen · '+key)):('Geen data — ⚙ CORS · '+key);
   if(got||got2) owLastKey=key;
   if(stEl) stEl.textContent=got?(miss?('Opgeslagen · nog '+miss+' open · '+key):('Gevuld · opgeslagen · '+key)):('Geen SYNOP — ⚙ CORS proxy · '+key);
   if(host) host.setAttribute('data-filled', (got||got2)?'1':'0');
@@ -8224,9 +8216,9 @@ async function owLoad(force){
   if(host2) host2.setAttribute('data-filled', got2?'1':'0');
   }catch(e){
     const stEl2=$('ow-status');
-    if(stEl2) stEl2.textContent='Fout bij laden · '+((e&&e.message)||'retry');
+    ['ow-status','ow2-status'].forEach(function(id){const el=$(id);if(el)el.textContent='Fout bij laden · bewaarde velden blijven beschikbaar · probeer Bijwerken';});
   }
-  finally{ owBusy=false; try{ow2BuildWxTemplate();}catch(e){} }
+  finally{ owBusy=false; ['ow','ow2'].forEach(function(id){const b=$(id+'-refresh-btn');if(b)b.disabled=false;const h=$(id+'-table-host');if(h)h.setAttribute('aria-busy','false');}); try{ow2BuildWxTemplate();}catch(e){} }
 }
 function owWatch(){
   if(owTimer) return;
@@ -8238,6 +8230,8 @@ function owWatch(){
 }
 owWatch();
 window.owCopyCell=owCopyCell;
+window.owCopyTable=owCopyTable;
+window.owLoad=owLoad;
 try{
   const _fd=owFormDay();
   owRender(owBlankRows(), _fd, false);
@@ -8258,8 +8252,9 @@ if(name==='taf')loadAllTafs();
 else if(name==='synop'){loadAllSynops();switchSubTab('synop','encode');}
 else if(name==='stations')fetchStationsData();
 else if(name==='weather')loadWeather();
-else if(name==='ow'||name==='ow2'){ owLoad(false); try{ow2BuildWxTemplate();}catch(e){} }
+
 }
+if(name==='ow'||name==='ow2'){owLoad(false);try{ow2BuildWxTemplate();}catch(e){}}
 if(name==='atc'){
 try{ atcEnsureFrame(); atcInitMap(); }catch(e){}
 setTimeout(function(){ try{ atcEnsureFrame(); if(atcMap) atcMap.invalidateSize(); }catch(e){} }, 200);
@@ -8346,15 +8341,8 @@ await Promise.all(priority.map(fetchMetarFor));
 Promise.all(rest.map(fetchMetarFor)).catch(function(){});
 updateVis().catch(function(){});
 const lu=$('last-updated');if(lu)lu.textContent=nowStamp();
-// Soft placeholders only if still empty after live attempt
-const any=STATIONS.some(icao=>metarState[icao]&&metarState[icao].lastRaw);
-if(!any){
-const d=new Date();
-const t=`${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(Math.floor(d.getUTCMinutes()/10)*10)}Z`;
-renderMetar('TNCA',`TNCA ${t} 35025G38KT 9999 FEW018CB 28/24 Q1011`);
-renderMetar('TNCB',`TNCB ${t} 34018KT 8000 -SHRA SCT020 27/24 Q1009`);
-renderMetar('TNCC',`TNCC ${t} 12020G30KT 9999 SCT022 29/25 Q1012`);
-}
+// Leave unavailable observations empty; never display synthetic reports as live data.
+
 })();
 // Longer intervals = less background work on mobile
 setInterval(function(){refreshAllMetars(false);}, METAR_MS);

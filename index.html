@@ -131,6 +131,35 @@ a{color:var(--acc);text-decoration:none;}
 .mc-val.ok{color:var(--ok);}
 .vis-track{height:3px;border-radius:2px;background:rgba(255,255,255,0.06);margin-top:5px;overflow:hidden;}
 .vis-fill{height:100%;border-radius:2px;background:var(--ok);transition:width .5s,background .3s;}
+
+.ow2-wx-template{margin-top:14px;padding:12px 10px;border-top:1px dashed #c5d0dc;background:#f7f9fc;}
+.ow2-wx-template-title{font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#3a5a7a;margin-bottom:8px;}
+.ow2-wx-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.ow2-wx-chip{font-family:Arial,Helvetica,sans-serif;font-size:12px;padding:5px 9px;border:1px solid #c5d0dc;border-radius:6px;background:#fff;color:#1a2a3a;cursor:pointer;user-select:none;}
+.ow2-wx-chip:hover{border-color:#1b7cff;background:#eef6ff;}
+.mc-hist-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--border);background:rgba(0,8,18,0.35);}
+.mc-hist-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(27,124,255,0.12);border:1px solid rgba(85,193,255,0.35);color:#9fd4ff;border-radius:8px;padding:5px 10px;font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;}
+.mc-hist-btn:hover{background:rgba(27,124,255,0.22);}
+.mc-hist-btn-count{opacity:.75;font-weight:600;}
+.mc-hist-btn-chev{font-size:12px;opacity:.9;}
+.mc-hist-select{flex:1;min-width:0;max-width:100%;background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:5px 8px;}
+.mc-hist6{margin-top:0;border-top:1px solid var(--border);background:rgba(0,8,18,0.55);}
+.mc-hist6[hidden]{display:none!important;}
+
+.mc-hist6-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px 4px;}
+.mc-hist6-title{font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#55c1ff;}
+.mc-hist6-src{font-family:var(--cond);font-size:10px;color:var(--muted);letter-spacing:.5px;}
+.mc-hist6-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 6px 8px;}
+.mc-hist6-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
+.mc-hist6-tbl th{text-align:left;padding:6px 8px;color:#7a9bbf;font-family:var(--cond);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);font-weight:600;}
+.mc-hist6-tbl td{padding:7px 8px;border-bottom:1px solid rgba(40,70,110,0.25);color:rgba(210,230,255,0.9);white-space:nowrap;vertical-align:top;}
+.mc-hist6-tbl td.t{color:#55c1ff;font-weight:600;}
+.mc-hist6-tbl td.cld{white-space:normal;max-width:160px;line-height:1.35;}
+.mc-hist6-tbl td.qnh{color:rgba(200,220,255,0.85);}
+.mc-hist6-row{cursor:pointer;}
+.mc-hist6-row:hover td{background:rgba(85,193,255,0.06);}
+.mc-hist6-row.active td,.mc-hist6-row.latest.active td{background:rgba(27,124,255,0.12);}
+.mc-hist6-empty{text-align:center;color:var(--muted)!important;padding:12px!important;}
 .mc-raw{padding:6px 13px;font-family:var(--mono);font-size:10px;color:rgba(160,195,235,0.45);background:rgba(0,0,0,0.3);border-top:1px solid var(--border);line-height:1.4;word-break:break-all;}
 .mc-name{font-family:var(--cond);font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-top:2px;line-height:1;}
 .mc-age{font-family:var(--cond);font-size:9px;color:var(--muted);margin-left:5px;font-weight:400;letter-spacing:.5px;opacity:.7;}
@@ -620,6 +649,113 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
   .ow-tbl{font-size:13px;}
 }
 
+
+/* ── Desktop layout (≥1024px) ── */
+@media (min-width:1024px){
+  :root{ --hdr:56px; --nav:52px; }
+  #app{
+    max-width:1400px;
+    margin:0 auto;
+    border-left:1px solid var(--border);
+    border-right:1px solid var(--border);
+  }
+  .scroll{ padding:0 10px; }
+  .panel{ padding:14px 20px 28px; }
+  .nav-btn{ font-size:12px; padding:8px 14px; gap:6px; }
+  .sub-tab-btn{ padding:8px 14px; font-size:12px; }
+
+  /* OW paper form */
+  .ow-wrap{ display:flex; justify-content:center; }
+  .ow-paper{
+    width:100%;
+    max-width:1100px;
+    padding:20px 24px;
+  }
+  .ow-tbl{ font-size:14px; }
+  .ow-tbl th, .ow-tbl td{ padding:7px 12px; }
+
+  /* Summary tables */
+  .sum-tbl{ font-size:13px; width:100%; }
+  .sum-tbl th, .sum-tbl td{ padding:6px 10px; }
+
+  /* Encoder: form left, generated SYNOP sticky right */
+  #synop-sub-encode.active{
+    height:calc(100dvh - var(--hdr) - var(--nav) - 56px);
+  }
+  #synop-sub-encode > div{
+    height:100%;
+  }
+  #synop-sub-encode .enc-card{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(340px,440px);
+    grid-template-rows:auto auto 1fr;
+    height:100%;
+    max-height:100%;
+  }
+  #synop-sub-encode .enc-hdr,
+  #synop-sub-encode #enc-mode-status{
+    grid-column:1 / -1;
+  }
+  #synop-sub-encode #enc-form-scroll{
+    grid-column:1;
+    overflow-y:auto;
+    max-height:100%;
+    padding:8px 12px 16px;
+  }
+  #synop-sub-encode .enc-out-wrap{
+    grid-column:2;
+    grid-row:3;
+    position:sticky;
+    top:0;
+    align-self:stretch;
+    margin:0;
+    border-left:1px solid var(--border);
+    border-radius:0;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  #synop-sub-encode .enc-out{
+    flex:1;
+    font-size:13px;
+    line-height:1.5;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+
+  /* METAR / TAF card grids (existing classes) */
+  .metar-cards{
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  }
+  #tab-taf .taf-card,
+  #tab-stations .stn-card{
+    max-width:100%;
+  }
+
+  /* ATC map */
+  #atc-map, .atc-map-wrap, #tab-atc .map-wrap{
+    min-height:min(72vh,760px) !important;
+  }
+
+  /* Weather */
+  #tab-weather .wx-day, #tab-weather .fc-card{
+    min-width:0;
+  }
+}
+@media (min-width:1280px){
+  #app{ max-width:1600px; }
+  .ow-paper{ max-width:1240px; }
+  #synop-sub-encode .enc-card{
+    grid-template-columns:minmax(0,1fr) minmax(380px,500px);
+  }
+  .metar-cards{ grid-template-columns:repeat(3,1fr); }
+}
+@media (min-width:1500px){
+  .panel{ max-width:none; }
+}
+
+.enc-pres-spark{display:inline-block;vertical-align:middle;margin-left:8px;height:22px;min-width:72px;}
+.enc-pres-spark svg{display:block;height:22px;width:72px;}
 </style>
 </head>
 <body>
@@ -695,6 +831,7 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
 <button class="nav-btn" data-tab="atc" onclick="switchTab('atc')"><span class="ic">✈</span>ATC</button>
 <button class="nav-btn" data-tab="weather" onclick="switchTab('weather')"><span class="ic">🌤</span>Weather</button>
 <button class="nav-btn" data-tab="ow" onclick="switchTab('ow')"><span class="ic">📋</span>OW</button>
+<button class="nav-btn" data-tab="ow2" onclick="switchTab('ow2')"><span class="ic">📋</span>OW2</button>
 </nav>
 <div class="scroll" id="scrollArea">
 <!-- METAR -->
@@ -1048,9 +1185,9 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 </div>
 <div class="sub-tab-bar" id="synop-sub-bar">
-<button class="sub-tab-btn" data-sub="tnca" onclick="switchSubTab('synop','tnca')">🇦🇼 Aruba</button>
-<button class="sub-tab-btn" data-sub="tncb" onclick="switchSubTab('synop','tncb')">🇧🇶 Bonaire</button>
-<button class="sub-tab-btn" data-sub="tncc" onclick="switchSubTab('synop','tncc')">🇨🇼 Curaçao</button>
+<button class="sub-tab-btn" data-sub="tnca" onclick="switchSubTab('synop','tnca')">TNCA</button>
+<button class="sub-tab-btn" data-sub="tncb" onclick="switchSubTab('synop','tncb')">TNCB</button>
+<button class="sub-tab-btn" data-sub="tncc" onclick="switchSubTab('synop','tncc')">TNCC</button>
 <button class="sub-tab-btn" data-sub="rules" onclick="switchSubTab('synop','rules')">FM-12</button>
 <button class="sub-tab-btn active" data-sub="encode" onclick="switchSubTab('synop','encode')">Encode</button>
 <button class="sub-tab-btn" data-sub="sutron" onclick="switchSubTab('synop','sutron')">Sutron</button>
@@ -1207,7 +1344,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">Nh – Low cloud amt</div>
-<select class="enc-inp" id="enc-nh" onchange="encUpdate()">
+<select class="enc-inp" id="enc-nh" data-field="nh" onchange="encMarkManual('enc-nh');encUpdate()">
 <option value="0">0 – None</option>
 <option value="1" selected>1 – 1 okta</option>
 <option value="2">2 – 2 oktas</option>
@@ -1287,7 +1424,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <!-- Pressure -->
 <div class="enc-sec">
-<div class="enc-sec-hdr">Pressure <span id="enc-tend-hint" style="color:var(--muted);font-weight:400;letter-spacing:.5px;font-size:10px"></span></div>
+<div class="enc-sec-hdr">Pressure <span id="enc-tend-hint" style="color:var(--muted);font-weight:400;letter-spacing:.5px;font-size:10px"><span id="enc-pres-spark" class="enc-pres-spark" title="3–24h pressure"></span></span></div>
 <div class="enc-grid">
 <div class="enc-field">
 <div class="enc-lbl">Stn Pressure QFE (hPa)</div>
@@ -1299,7 +1436,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">Tendency a</div>
-<select class="enc-inp" id="enc-a" onchange="encUpdate()">
+<select class="enc-inp" id="enc-a" onchange="encMarkManual('enc-a');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Rising then falling</option>
 <option value="1">1 – Rising then steady</option>
@@ -1329,7 +1466,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field wide">
 <div class="enc-lbl">Present Weather ww</div>
-<select class="enc-inp" id="enc-ww" onchange="encUpdate()">
+<select class="enc-inp" id="enc-ww" onchange="encMarkManual('enc-ww');encUpdate()">
 <option value="">— omit —</option>
 <optgroup label="00–09  No sig phenomena">
 <option value="00">00 – No sig cloud</option>
@@ -1702,7 +1839,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 <div class="enc-field" style="grid-column:1/-1;font-family:var(--cond);font-size:10px;color:var(--acc);letter-spacing:1px;font-weight:700">LAYER 1</div>
 <div class="enc-field">
 <div class="enc-lbl">Ns (oktas)</div>
-<select class="enc-inp" id="enc-s3-ns1" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-ns1" onchange="encMarkManual('enc-s3-ns1');encUpdate()">
 <option value="">— omit —</option>
 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -1711,7 +1848,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">C (genus)</div>
-<select class="enc-inp" id="enc-s3-c1" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-c1" onchange="encMarkManual('enc-s3-c1');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Ci</option><option value="1">1 – Cc</option><option value="2">2 – Cs</option>
 <option value="3">3 – Ac</option><option value="4">4 – As</option><option value="5">5 – Ns</option>
@@ -1728,7 +1865,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 <div class="enc-field" style="grid-column:1/-1;font-family:var(--cond);font-size:10px;color:var(--acc);letter-spacing:1px;font-weight:700">LAYER 2</div>
 <div class="enc-field">
 <div class="enc-lbl">Ns (oktas)</div>
-<select class="enc-inp" id="enc-s3-ns2" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-ns2" onchange="encMarkManual('enc-s3-ns2');encUpdate()">
 <option value="">— omit —</option>
 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -1737,7 +1874,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">C (genus)</div>
-<select class="enc-inp" id="enc-s3-c2" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-c2" onchange="encMarkManual('enc-s3-c2');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Ci</option><option value="1">1 – Cc</option><option value="2">2 – Cs</option>
 <option value="3">3 – Ac</option><option value="4">4 – As</option><option value="5">5 – Ns</option>
@@ -1747,14 +1884,14 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">hshs (base)</div>
-<input class="enc-inp" type="text" id="enc-s3-hs2" maxlength="2" pattern="\d{2}" placeholder="e.g. 28" oninput="encUpdate()">
+<input class="enc-inp" type="text" id="enc-s3-hs2" maxlength="2" pattern="\d{2}" placeholder="e.g. 28" oninput="encMarkManual('enc-s3-hs2');encUpdate()">
 </div>
 </div>
 <div class="enc-grid" style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)">
 <div class="enc-field" style="grid-column:1/-1;font-family:var(--cond);font-size:10px;color:var(--acc);letter-spacing:1px;font-weight:700">LAYER 3</div>
 <div class="enc-field">
 <div class="enc-lbl">Ns (oktas)</div>
-<select class="enc-inp" id="enc-s3-ns3" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-ns3" onchange="encMarkManual('enc-s3-ns3');encUpdate()">
 <option value="">— omit —</option>
 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -1763,7 +1900,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">C (genus)</div>
-<select class="enc-inp" id="enc-s3-c3" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-c3" onchange="encMarkManual('enc-s3-c3');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Ci</option><option value="1">1 – Cc</option><option value="2">2 – Cs</option>
 <option value="3">3 – Ac</option><option value="4">4 – As</option><option value="5">5 – Ns</option>
@@ -1773,14 +1910,14 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">hshs (base)</div>
-<input class="enc-inp" type="text" id="enc-s3-hs3" maxlength="2" pattern="\d{2}" placeholder="e.g. 65" oninput="encUpdate()">
+<input class="enc-inp" type="text" id="enc-s3-hs3" maxlength="2" pattern="\d{2}" placeholder="e.g. 65" oninput="encMarkManual('enc-s3-hs3');encUpdate()">
 </div>
 </div>
 <div class="enc-grid">
 <div class="enc-field" style="grid-column:1/-1;font-family:var(--cond);font-size:10px;color:var(--acc);letter-spacing:1px;font-weight:700">LAYER 4</div>
 <div class="enc-field">
 <div class="enc-lbl">Ns (oktas)</div>
-<select class="enc-inp" id="enc-s3-ns4" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-ns4" onchange="encMarkManual('enc-s3-ns4');encUpdate()">
 <option value="">— omit —</option>
 <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
 <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
@@ -1789,7 +1926,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">C (genus)</div>
-<select class="enc-inp" id="enc-s3-c4" onchange="encUpdate()">
+<select class="enc-inp" id="enc-s3-c4" onchange="encMarkManual('enc-s3-c4');encUpdate()">
 <option value="">— omit —</option>
 <option value="0">0 – Ci</option><option value="1">1 – Cc</option><option value="2">2 – Cs</option>
 <option value="3">3 – Ac</option><option value="4">4 – As</option><option value="5">5 – Ns</option>
@@ -1799,7 +1936,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 </div>
 <div class="enc-field">
 <div class="enc-lbl">hshs (base)</div>
-<input class="enc-inp" type="text" id="enc-s3-hs4" maxlength="2" pattern="\d{2}" placeholder="e.g. 80" oninput="encUpdate()">
+<input class="enc-inp" type="text" id="enc-s3-hs4" maxlength="2" pattern="\d{2}" placeholder="e.g. 80" oninput="encMarkManual('enc-s3-hs4');encUpdate()">
 </div>
 </div>
 </div>
@@ -2613,7 +2750,8 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
   <div class="s-head">
     <div class="s-title">Overzicht weersgesteldheid</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="ow-status" id="ow-status">Wacht tot 08:30 LT (12:30Z) of druk ↻</span>
+      <span class="ow-status" id="ow-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <button class="s-btn" id="ow-copy-btn" onclick="owCopyTable('ow')" title="Copy full OW table">Copy</button>
       <button class="s-btn" id="ow-refresh-btn" onclick="owLoad(true)">↻</button>
     </div>
   </div>
@@ -2622,6 +2760,27 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
       <div class="ow-code"><span>Code:QF-OBS-OW</span><span>V 1.0</span></div>
       <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
       <div id="ow-table-host"></div>
+    </div>
+  </div>
+</div>
+<div class="panel" id="tab-ow2">
+  <div class="s-head">
+    <div class="s-title">OW2</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="ow-status" id="ow2-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <button class="s-btn" id="ow2-copy-btn" onclick="owCopyTable('ow2')" title="Copy full OW2 table">Copy</button>
+      <button class="s-btn" id="ow2-refresh-btn" onclick="owLoad(true)">↻</button>
+    </div>
+  </div>
+  <div class="ow-wrap">
+    <div class="ow-paper">
+      <div class="ow-code"><span>Code:QF-OBS-OW2</span><span>V 1.0</span></div>
+      <div class="ow-title">OVERZICHT WEERSGESTELDHEID</div>
+      <div id="ow2-table-host"></div>
+      <div class="ow2-wx-template">
+        <div class="ow2-wx-template-title">Weertype sjabloon — dubbelklik om te kopiëren</div>
+        <div class="ow2-wx-chips" id="ow2-wx-chips"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2650,7 +2809,7 @@ return window.__leafletLoading;
 /* ── CONSTANTS ── */
 const STATIONS=['TNCA','TNCB','TNCC','TNCM','SVMI','SVVA'];
 const SPECI_ICAOS=['TNCA','TNCB','TNCC'];
-const AWC_METAR='https://aviationweather.gov/api/data/metar?ids={IDS}&format=raw&hours=2';
+const AWC_METAR='https://aviationweather.gov/api/data/metar?ids={IDS}&format=raw&hours=6';
 const AWC_TAF='https://aviationweather.gov/api/data/taf?ids={IDS}&format=raw';
 const ICAO_FLAGS={TNCA:'🇦🇼',TNCB:'🇧🇶',TNCC:'🇨🇼',TNCM:'🇸🇽',SVMI:'🇻🇪',SVVA:'🇻🇪'};
 const ICAO_NAMES={TNCA:'Beatrix · Aruba',TNCB:'Flamingo · Bonaire',TNCC:'Hato · Curaçao',TNCM:'Juliana · St Maarten',SVMI:'Simón Bolívar · VE',SVVA:'Michelena · VE'};
@@ -2709,6 +2868,17 @@ if(ud) ud.textContent=fmtDateUTC(d)+' UTC';
 }
 tickClocks();
 setInterval(tickClocks,1000);
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){
+    try{ if(window.atcTimer){ clearInterval(atcTimer); atcTimer=null; } }catch(e){}
+  }else{
+    try{
+      const atc=document.getElementById('atc')||document.querySelector('[data-panel="atc"]');
+      if(atc && atc.classList.contains('active')) atcEnsureFrame();
+    }catch(e){}
+  }
+});
+
 /* ── AUDIO ── */
 let mute=false, _actx=null;
 function getCtx(){if(_actx)return _actx;try{_actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return _actx;}
@@ -2914,7 +3084,7 @@ saveProxyConfig({url,type});
 const st=$('proxy-status');
 if(st){st.className='proxy-status ok';st.textContent=url?'Saved. Custom proxy will be tried first.':'Saved. Using built-in proxies only.';}
 // Refresh data with new path
-setTimeout(()=>{closeProxySettings();if(typeof refreshAllMetars==='function')refreshAllMetars();},400);
+setTimeout(()=>{closeProxySettings();if(typeof refreshAllMetars==='function')refreshAllMetars(false);},400);
 }
 function clearProxySettings(){
 saveProxyConfig({url:'',type:'raw'});
@@ -3239,7 +3409,7 @@ function buildMetarTable(){
 const cont=$('metar');if(!cont)return;
 cont.innerHTML='';
 STATIONS.forEach(icao=>{
-metarState[icao]={lastTime:null,lastRaw:null,lastCat:null,card:null};
+metarState[icao]={lastTime:null,lastRaw:null,lastCat:null,card:null,history:[]};
 const c=document.createElement('div');
 c.className='mc';c.id='mc-'+icao;
 c.innerHTML=`
@@ -3263,12 +3433,34 @@ c.innerHTML=`
 <div class="mc-cell"><span class="mc-lbl">Dew</span><span class="mc-val" id="mcd-${icao}">--</span></div>
 <div class="mc-cell"><span class="mc-lbl">QNH</span><span class="mc-val" id="mcq-${icao}">--</span></div>
 </div>
-<div class="mc-raw" id="mcr-${icao}">Awaiting data…</div>`;
+<div class="mc-raw" id="mcr-${icao}">Awaiting data…</div>
+<div class="mc-hist-bar">
+<button type="button" class="mc-hist-btn" id="mchbtn-${icao}" onclick="metarHistToggle('${icao}')" aria-expanded="false">
+<span class="mc-hist-btn-lbl">6h history</span>
+<span class="mc-hist-btn-count" id="mchcnt-${icao}">—</span>
+<span class="mc-hist-btn-chev">▾</span>
+</button>
+<select class="mc-hist-select" id="mchsel-${icao}" onchange="metarHistPick('${icao}', +this.value)" title="Select hour" disabled>
+<option value="">Latest…</option>
+</select>
+</div>
+<div class="mc-hist6" id="mch6-${icao}" hidden>
+<div class="mc-hist6-head">
+<span class="mc-hist6-title">Past 6 hours — ${icao}</span>
+<span class="mc-hist6-src">Source: NOAA (6h)</span>
+</div>
+<div class="mc-hist6-scroll">
+<table class="mc-hist6-tbl">
+<thead><tr><th>Time (Z)</th><th>Wind</th><th>Vis</th><th>Wx</th><th>Cloud</th><th>QNH</th></tr></thead>
+<tbody id="mch6b-${icao}"><tr><td colspan="6" class="mc-hist6-empty">Loading…</td></tr></tbody>
+</table>
+</div>
+</div>`;
 cont.appendChild(c);
 metarState[icao].card=c;
 });
 }
-function renderMetar(icao,raw){
+function renderMetar(icao,raw,fromHist){
 if(!raw)return false;
 const lines=String(raw).split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
 let metarLine=null;
@@ -3470,28 +3662,167 @@ return /SPECI/i.test(s)?normalizeSpeciLine(icao,s):s.replace(/^SPECI\s+/i,'');
 }
 return null;
 }
-async function fetchMetarFor(icao){
+function extractMetarLines(text, icao){
+if(!text) return [];
+const cleaned=sanitize(text).replace(/<[^>]+>/g,' ');
+const lines=cleaned.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+const out=[];
+const seen=Object.create(null);
+for(let i=0;i<lines.length;i++){
+let ln=lines[i];
+const m=ln.match(new RegExp('(?:(SPECI|METAR)\s+)?\\b'+icao+'\\b[^\\n]{0,220}?\\b\\d{6}Z\\b[^\\n]{0,180}','i'));
+if(m) ln=m[0].trim();
+if(!(ln.startsWith(icao)||/^(?:SPECI|METAR)\s+/.test(ln)||(ln.includes(icao)&&/\b\d{6}Z\b/.test(ln)))) continue;
+if((icao==='SVMI'||icao==='SVVA')&&/\bAUTO\b/i.test(ln)) continue;
+const speci=/SPECI/i.test(ln);
+ln=ln.replace(/^(?:METAR|SPECI)\s+/i,'').trim();
+if(!/\b\d{6}Z\b/.test(ln)) continue;
+if(!ln.startsWith(icao)) ln=icao+' '+ln;
+const full=speci?('SPECI '+ln):ln;
+const tm=(full.match(/\b(\d{6}Z)\b/)||[])[1]||full;
+if(seen[tm]) continue;
+seen[tm]=1;
+out.push(full);
+}
+// newest first: sort by time group desc when possible
+out.sort(function(a,b){
+const ta=(a.match(/\b(\d{2})(\d{2})(\d{2})Z\b/)||[]).slice(1).join('');
+const tb=(b.match(/\b(\d{2})(\d{2})(\d{2})Z\b/)||[]).slice(1).join('');
+return (tb||'').localeCompare(ta||'');
+});
+return out;
+}
+function metarHistLabel(ln){
+const m=ln&&ln.match(/\b(\d{2})(\d{2})(\d{2})Z\b/);
+const t=m?(m[2]+':'+m[3]+'Z'):'--:--Z';
+const sp=isSpeciText(ln)?' SPECI':'';
+return t+sp;
+}
+function metarHistTimeLabel(time){
+if(!time||!/^\d{6}Z$/.test(time)) return time||'--';
+const dd=time.slice(0,2), hh=time.slice(2,4), mm=time.slice(4,6);
+return dd+'/'+hh+':'+mm+'Z';
+}
+function fillMetarHistory(icao, lines){
+const st=metarState[icao];
+if(!st) return;
+st.history=lines||[];
+const tb=$('mch6b-'+icao);
+const sel=$('mchsel-'+icao);
+const cnt=$('mchcnt-'+icao);
+if(cnt) cnt.textContent=lines&&lines.length?(lines.length+' obs'):'0';
+if(sel){
+  sel.innerHTML='';
+  if(!lines||!lines.length){
+    sel.innerHTML='<option value="">No 6h data</option>';
+    sel.disabled=true;
+  }else{
+    sel.disabled=false;
+    lines.forEach(function(ln,idx){
+      const p=parseMetar(ln);
+      const o=document.createElement('option');
+      o.value=String(idx);
+      o.textContent=metarHistTimeLabel(p.time)+(idx===0?' · latest':'')+' · '+(p.windBase||p.wind||'').replace(/\s+/g,'');
+      if(idx===0) o.selected=true;
+      sel.appendChild(o);
+    });
+  }
+}
+if(!tb) return;
+tb.innerHTML='';
+if(!lines||!lines.length){
+tb.innerHTML='<tr><td colspan="6" class="mc-hist6-empty">No 6h history</td></tr>';
+return;
+}
+const cur=st.lastRaw||'';
+lines.forEach(function(ln,idx){
+const p=parseMetar(ln);
+const tr=document.createElement('tr');
+tr.className='mc-hist6-row'+(idx===0?' latest':'')+(ln===cur?' active':'');
+tr.dataset.idx=String(idx);
+tr.onclick=function(){ metarHistPick(icao, idx); const s=$('mchsel-'+icao); if(s) s.value=String(idx); };
+const wx=(p.wx&&p.wx!=='--')?p.wx:'--';
+const cld=(p.cld&&p.cld!=='--')?p.cld:'--';
+const wind=(p.windBase||p.wind||'--').replace(/\s+/g,'');
+tr.innerHTML='<td class="t">'+escHtml(metarHistTimeLabel(p.time))+'</td>'+
+  '<td>'+escHtml(wind)+'</td>'+
+  '<td>'+escHtml(p.vis||'--')+'</td>'+
+  '<td>'+escHtml(wx)+'</td>'+
+  '<td class="cld">'+escHtml(cld)+'</td>'+
+  '<td class="qnh">'+escHtml(p.qnh||'—')+'</td>';
+tb.appendChild(tr);
+});
+}
+function metarHistToggle(icao){
+const box=$('mch6-'+icao);
+const btn=$('mchbtn-'+icao);
+if(!box) return;
+const open=box.hasAttribute('hidden');
+if(open) box.removeAttribute('hidden'); else box.setAttribute('hidden','');
+if(btn){
+  btn.setAttribute('aria-expanded', open?'true':'false');
+  const chev=btn.querySelector('.mc-hist-btn-chev');
+  if(chev) chev.textContent=open?'▴':'▾';
+}
+}
+function metarHistPick(icao, idx){
+const st=metarState[icao];
+if(!st||!st.history||!st.history[idx]) return;
+renderMetar(icao, st.history[idx], true);
+const tb=$('mch6b-'+icao);
+if(tb){
+tb.querySelectorAll('tr').forEach(function(tr,i){
+tr.classList.toggle('active', i===idx);
+});
+}
+}
+window.encMarkManual=encMarkManual;
+window.metarHistPick=metarHistPick;
+window.metarHistToggle=metarHistToggle;
+window.metarHistChange=function(icao){ /* legacy no-op; table uses metarHistPick */ };
+
+const _metarCache=Object.create(null); // icao -> {at, lines}
+async function fetchMetarFor(icao, force){
 try{
+const hit=_metarCache[icao];
+if(!force && hit && (Date.now()-hit.at)<3*60*1000 && hit.lines && hit.lines.length){
+  const st=metarState[icao];
+  if(st) st.history=hit.lines;
+  fillMetarHistory(icao, hit.lines);
+  renderMetar(icao, hit.lines[0], false);
+  return true;
+}
+if(force) delete _metarCache[icao];
 const urls=[
 AWC_METAR.replace('{IDS}',icao),
 METAR_TPL.replace('{ICAO}',icao)
 ];
-let picked=null;
+let lines=[];
 for(const url of urls){
-const out=await fetchRetry(url,2);
-if(!out.ok) continue;
-const ln=extractMetarLine(out.text, icao);
-if(!ln) continue;
-if(isSpeciText(ln)){picked=ln;break;}
-if(!picked) picked=ln;
+const out=await fetchRetry(url,1);
+if(!out||!out.ok||!out.text) continue;
+const got=extractMetarLines(out.text, icao);
+if(got.length){ lines=got; break; }
+const one=extractMetarLine(out.text, icao);
+if(one){ lines=[one]; break; }
 }
-if(picked){renderMetar(icao,picked);return true;}
+if(lines.length){
+_metarCache[icao]={at:Date.now(), lines:lines};
+const st=metarState[icao];
+if(st) st.history=lines;
+fillMetarHistory(icao, lines);
+renderMetar(icao, lines[0], false);
+return true;
+}
 }catch(e){console.error('METAR',icao,e);}
 return false;
 }
-async function refreshAllMetars(){
+async function refreshAllMetars(force){
+// Skip background refresh when tab/app hidden (unless forced)
+if(!force && document.visibilityState==='hidden') return [];
+if(force){ try{ for(const k in _metarCache) delete _metarCache[k]; }catch(e){} }
 const results=await Promise.all(STATIONS.map(async icao=>{
-const ok=await fetchMetarFor(icao);
+const ok=await fetchMetarFor(icao, !!force);
 if(!ok){
 const st=metarState[icao];
 if(st&&st.card&&!st.lastRaw){
@@ -3533,13 +3864,34 @@ return{wind:wb==='--'?'--':wb,windBase:wb,vis,visN,wx,cld,qnh};
 }
 function sanitize(t){
 if(!t)return'';
-return String(t).split('\n').map(l=>l.trim()).filter(l=>{
+let s=String(t);
+// Jina proxy wraps the bulletin; pull Markdown Content if present
+const md=s.match(/Markdown\s*Content\s*:\s*([\s\S]+)/i);
+if(md) s=md[1];
+s=s.replace(/Title\s*:\s*URL\s*Source\s*:[^\n]*/gi,'')
+ .replace(/Published\s*Time\s*:[^\n]*/gi,'')
+ .replace(/Markdown\s*Content\s*:/gi,'');
+return s.split('\n').map(l=>l.trim()).filter(l=>{
 if(/^\s*URL\s*Source\s*:/i.test(l))return false;
 if(/^\s*Published\s*Time\s*:/i.test(l))return false;
 if(/^\s*Markdown\s*Content\s*:/i.test(l))return false;
 if(/^https?:\/\//i.test(l))return false;
+if(/^Title\s*:/i.test(l))return false;
 return l.length>0;
 }).join('\n');
+}
+function normalizeNoaaSynop(text){
+if(!text) return text;
+if(/\bAAXX\s+\d{5}\b/.test(text)) return text;
+const hm=text.match(/\b(S[IM][A-Z]{2}\d{2})\s+([A-Z]{4})\s+(\d{6})/);
+if(!hm) return text;
+const tt=hm[3];
+const yy=tt.slice(0,2);
+const gg=tt.slice(2,4);
+// iw=4 anemometer (kt) for Caribbean TAC bulletins
+const aaxx='AAXX '+yy+gg+'4';
+const rest=text.replace(hm[0],'').trim();
+return aaxx+'\n'+rest;
 }
 function parseTaf(rawText){
 if(!rawText)return null;
@@ -3676,7 +4028,34 @@ if(v<1) return String(Math.round(v*10)+990).padStart(3,'0'); // 991-999
 if(v>=989) return '989';
 return String(Math.round(v)).padStart(3,'0');
 }
-function encUpdate(){
+let _encUpT=null;
+function encUpdate(immediate){
+  if(immediate===true){ clearTimeout(_encUpT); encUpdateNow(); return; }
+  clearTimeout(_encUpT);
+  _encUpT=setTimeout(function(){ encUpdateNow(); }, 40);
+}
+function encUpdateNow(){
+// Fast skip: signature of enc-* fields only (not whole document)
+try{
+  if(!window._encFields || window._encFields.length<5){
+    window._encFields=[].slice.call(document.querySelectorAll('[id^="enc-"]')).filter(function(el){
+      return el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA';
+    });
+  }
+  const fds=window._encFields;
+  let sig='';
+  for(let i=0;i<fds.length;i++){
+    const el=fds[i];
+    if(!el.id) continue;
+    sig+=el.id+'=';
+    sig+=(el.type==='checkbox'||el.type==='radio')?el.checked:el.value;
+    sig+='|';
+  }
+  const box=document.getElementById('enc-out')||document.getElementById('enc-synop-out');
+  if(sig && sig===window._encLastSig && box && (box.textContent||'').length>10) return;
+  window._encLastSig=sig;
+}catch(e){}
+
 const p=n=>document.getElementById(n);
 const v=n=>p(n)?p(n).value:'';
 const om=id=>p(id)&&p(id).checked;
@@ -3688,18 +4067,22 @@ const isSI=ggH===3||ggH===9||ggH===15||ggH===21;
 const isSN=!isSM&&!isSI;
 const isClimate=ggH===0||ggH===12;
 const kind=isSM?'SM':isSI?'SI':'SN';
-let iw=v('enc-iw')||'4';
-if(isSM){ iw='0'; const iwe=p('enc-iw'); if(iwe) iwe.value='0'; }
+let iw='4'; const iwe=p('enc-iw'); if(iwe) iwe.value='4';
+try{encTendFromDaysum();}catch(e){}
+
+const _omitWx=!!(p('enc-omit-wx')&&p('enc-omit-wx').checked);
+const _wwEntered=((v('enc-ww')||'').trim()!==''||(v('enc-wawa')||'').trim()!=='') && !_omitWx;
 const _has7=(function(){
-const w=parseInt(v('enc-ww')||v('enc-wawa'),10);
-if(!isNaN(w)&&w>=5) return true;
+if(_wwEntered) return true;
 const past=(v('enc-w1')||'')+(v('enc-w2')||'')+(v('enc-wa1')||'')+(v('enc-wa2')||'');
-return /[5689]/.test(past);
-})() && !(p('enc-omit-wx')&&p('enc-omit-wx').checked);
+return /[5689]/.test(past) && !_omitWx;
+})();
 const irix=encIRIX(kind,ggH,_has7);
 let ir=irix.ir;
-let ix=irix.ix;
+// Rule: any entered ww → iX=1; no ww → iX=2
+let ix=_wwEntered?'1':'2';
 const irEl=p('enc-ir'); if(irEl) irEl.value=ir;
+const ixEl=p('enc-ix'); if(ixEl) ixEl.value=ix;
 const h=v('enc-h')||'5';
 const N=v('enc-n')||'0';
 const iiiii=encGetIIIII();
@@ -3750,10 +4133,35 @@ const wa2Val=v('enc-wa2');
 const rhRaw=v('enc-rh');
 const minVal=v('enc-min');
 const incl9=p('enc-incl9')&&p('enc-incl9').checked;
-const nhVal=v('enc-nh');
-const clVal=v('enc-cl');
-const cmVal=v('enc-cm');
+let nhVal=v('enc-nh');
+let clVal=v('enc-cl');
+let cmVal=v('enc-cm');
 const chVal=v('enc-ch');
+// Keep Sec1 Nh and Sec3 layer-1 Ns aligned with total cloud N (e.g. N=2 → 82200 and 82822)
+const nOk=N!==''&&N!=='/'&&N!=='0';
+const nhEl=p('enc-nh');
+const ns1El=p('enc-s3-ns1');
+const c1El=p('enc-s3-c1');
+if(nOk){
+  if(nhEl && nhEl.dataset.manual!=='1'){
+    nhEl.value=N; nhEl.dataset.auto='1'; nhVal=N;
+  }
+  if(ns1El && ns1El.dataset.manual!=='1'){
+    ns1El.value=N; ns1El.dataset.auto='1';
+  }
+  if(c1El && c1El.dataset.manual!=='1' && (c1El.value===''||c1El.dataset.auto==='1')){
+    c1El.value='8'; c1El.dataset.auto='1';
+  }
+  if((clVal===''||clVal==='2') && p('enc-cl') && p('enc-cl').dataset.manual!=='1'){
+    // default CL=2 Cu when not CB
+    if(clVal===''||p('enc-cl').dataset.auto==='1'){ p('enc-cl').value=clVal||'2'; clVal=p('enc-cl').value||'2'; }
+  }
+}
+// Layer 3 filled → CM=3 (Ac) unless user locked CM
+const _l3on=v('enc-s3-ns3')!==''&&v('enc-s3-c3')!==''&&v('enc-s3-hs3')!=='';
+const _cmEl=p('enc-cm');
+if(_l3on && cmVal==='' && _cmEl && _cmEl.dataset.manual!=='1'){ cmVal='3'; _cmEl.value='3'; }
+if(_l3on && cmVal!=='3' && _cmEl && _cmEl.dataset.manual!=='1' && _cmEl.dataset.auto==='1'){ cmVal='3'; _cmEl.value='3'; }
 const tmaxRaw=v('enc-tmax');
 const tminRaw=v('enc-tmin');
 const s3_5raw=v('enc-s3-5');
@@ -3761,7 +4169,9 @@ const r24Raw=v('enc-r24');
 // Up to 4 Sec-3 cloud layers 8NsChshs
 const s3Clouds=[];
 for(let i=1;i<=4;i++){
-const ns=v('enc-s3-ns'+i), c=v('enc-s3-c'+i), hs=v('enc-s3-hs'+i);
+let ns=v('enc-s3-ns'+i), c=(i===1?(v('enc-s3-c'+i)||'8'):v('enc-s3-c'+i)), hs=v('enc-s3-hs'+i);
+if(i===1 && (ns===''||ns==='/') && N!==''&&N!=='0'&&N!=='/') ns=N;
+if(i===1 && (c===''||c==='/')) c='8';
 if(ns!==''&&c!==''&&hs!=='') s3Clouds.push({ns,c,hs:hs.replace(/\D/g,'').padStart(2,'0').slice(-2),i});
 }
 const groups=[];
@@ -3857,12 +4267,18 @@ const g='7'+wawaVal.padStart(2,'0')+(wa1Val||'/')+(wa2Val||'/');
 groups.push(g);
 }
 }
-// Cloud types 8NhCLCMCH — optional omit
-if(!isSN&&!omit8&&nhVal!==''&&clVal!==''&&cmVal!==''&&chVal!==''){
+// Cloud types 8NhCLCMCH — omit when N=0 or user omit
+if(!isSN&&!omit8&&N!=='0'&&parseInt(N,10)!==0){
+if(nOk) nhVal=N; // Nh follows total N (e.g. 2 → 82200)
+if(clVal==='') clVal='2';
+if(cmVal==='') cmVal='0';
+if(chVal==='') chVal='0';
+if(nhVal!==''&&clVal!==''&&cmVal!==''&&chVal!==''){
 const g='8'+nhVal+clVal+cmVal+chVal;
 groups.push(g);
 bdwn.push([g,`Nh=${nhVal} CL=${clVal} CM=${cmVal} CH=${chVal}`]);
-}else if(omit8){
+}
+}else if(omit8||N==='0'||parseInt(N,10)===0){
 bdwn.push(['(8 omit)','Cloud group 8NhCLCMCH omitted']);
 }
 // Time of observation 9GGgg (exact hour + minutes)
@@ -3923,18 +4339,16 @@ s3bdwn.push([g,`Cloud layer ${cl.i}: Ns=${cl.ns} C=${cl.c} hshs=${cl.hs}`]);
 // SN: Section 3 group 8 is required. Build from S3 layers or Sec-1 N/CL + h.
 if(isSN && N!=='0' && parseInt(N,10)!==0 && !sec3.some(function(g){return g.charAt(0)==='8';})){
 const ns=v('enc-s3-ns1')||v('enc-nh')||v('enc-n')||'/';
-const c=v('enc-s3-c1')||v('enc-cl')||'/';
+const c='8';
+const cEl=p('enc-s3-c1'); if(cEl){ cEl.value='8'; }
 let hs=v('enc-s3-hs1').replace(/\D/g,'');
-let hsApprox=false;
 if(!hs){
 const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35'};
 hs=hmap[parseInt(v('enc-h'),10)]||'//';
 }else hs=hs.padStart(2,'0').slice(-2);
-const hsNum=parseInt(hs,10);
-if(!isNaN(hsNum)&&((hsNum>=50&&hsNum<=66)||(hsNum>=71&&hsNum<=81&&hsNum!==77&&hsNum!==78))) hsApprox=true;
 const g='8'+ns+c+hs;
 sec3.push(g);
-s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs'+(hsApprox?' ⚠ height code in unconfirmed WMO 1677 band — verify':'')]);
+s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs']);
 }
 let body=groups.join(' ');
 if(sec3.length){body+=' 333 '+sec3.join(' ');bdwn.push(['333','Section 3 separator']);s3bdwn.forEach(r=>bdwn.push(r));}
@@ -4160,19 +4574,25 @@ s5.value=(p24>=0?'8':'9')+tent;
 encUpdate();
 }
 function encOnPresChange(){
-const snap=encGetSnapshot();
 const pmsl=parseFloat(document.getElementById('enc-pmsl')?.value);
 const pstn=parseFloat(document.getElementById('enc-pstn')?.value);
 const cur=(!isNaN(pmsl)?pmsl:(!isNaN(pstn)?pstn:null));
+// Primary: 3-hour tendency from day-summary pressures → 5appp
+let tend=null;
+try{ tend=encTendFromDaysum(); }catch(e){}
+// Fallback only if no 3h history: last saved form snapshot
+if(!tend){
+const snap=encGetSnapshot();
 const prev=snap?(parseFloat(snap.pmsl)||parseFloat(snap.pstn)||null):null;
 const pppEl=document.getElementById('enc-ppp');
 const aEl=document.getElementById('enc-a');
-if(cur!=null&&prev!=null&&pppEl){
+if(cur!=null&&prev!=null&&pppEl&&pppEl.dataset.manual!=='1'){
 const d=Math.round((cur-prev)*10)/10;
 pppEl.value=String(Math.min(999,Math.abs(Math.round(d*10)))).padStart(3,'0');
-if(aEl&&!aEl.dataset.manual){
+if(aEl&&aEl.dataset.manual!=='1'){
 const ch=encCharFromDelta(d);
 if(ch) aEl.value=ch;
+}
 }
 }
 const p24el=document.getElementById('enc-ppp24');
@@ -4182,7 +4602,6 @@ if(ago!=null){
 const d24=Math.round((cur-ago)*10)/10;
 p24el.value=d24;
 encOnPpp24();
-return;
 }
 }
 encRefreshHints();
@@ -4204,12 +4623,51 @@ const d=now?new Date(now.getTime()):new Date();
 if(d.getUTCMinutes()>=15) d.setUTCHours(d.getUTCHours()+1,0,0,0);
 return {date:d, yy:d.getUTCDate(), gg:d.getUTCHours(), mm:d.getUTCMinutes()};
 }
+function encStationTempTd(){
+// Primary: Curaçao International Airport / Hato from stations API (currentData)
+try{
+const rows=currentData||[];
+const apt=rows.find(function(r){
+const n=String(r.station||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+return (n.indexOf('curacao')>=0||n.indexOf('hato')>=0)&&(n.indexOf('airport')>=0||n.indexOf('hato')>=0);
+})||rows.find(function(r){
+const n=String(r.station||'').toLowerCase();
+return n.indexOf('curacao')>=0||n.indexOf('curaçao')>=0||n.indexOf('hato')>=0;
+});
+if(!apt) return null;
+let T=apt.temperature_c!=null?parseFloat(apt.temperature_c):NaN;
+let Td=NaN;
+if(apt.dewpoint_c!=null) Td=parseFloat(apt.dewpoint_c);
+else if(apt.dew_point_c!=null) Td=parseFloat(apt.dew_point_c);
+else if(isFinite(T)&&apt.humidity_percent!=null){
+const RH=parseFloat(apt.humidity_percent);
+if(isFinite(RH)&&RH>0&&RH<=100){
+// Magnus approximation Td from T and RH
+const a=17.27,b=237.7;
+const g=(a*T)/(b+T)+Math.log(RH/100);
+Td=(b*g)/(a-g);
+}
+}
+if(isFinite(T)&&isFinite(Td)) return {T:T, Td:Td, src:apt.station||'Curaçao station'};
+}catch(e){}
+return null;
+}
 function encCloudBaseFt(t,td){
-const T=parseFloat(t), D=parseFloat(td);
+// Prefer Curaçao station feed over METAR / form for cloud base
+const st=encStationTempTd();
+let T=st?st.T:parseFloat(t);
+let D=st?st.Td:parseFloat(td);
+if(!isFinite(T)||!isFinite(D)){
+T=parseFloat(t); D=parseFloat(td);
+}
 if(!isFinite(T)||!isFinite(D)) return null;
-const ft=(T-D)/2.5*1000;
-if(!isFinite(ft)||ft<0) return 0;
-return Math.round(ft);
+let ft=(T-D)/2.5*1000;
+if(!isFinite(ft)||ft<0) ft=0;
+ft=Math.round(ft);
+// First layer cloud base: clamp 1300–3500 ft
+if(ft<1300) ft=1300;
+if(ft>3500) ft=3500;
+return ft;
 }
 function encHfromFt(ft){
 const m=ft*0.3048;
@@ -4237,15 +4695,15 @@ const h=encHfromFt(ft);
 const hEl=document.getElementById('enc-h');
 if(hEl){ hEl.value=h; hEl.dataset.auto='1'; }
 const hint=document.getElementById('enc-h-est');
-if(hint) hint.textContent='· '+ft+' ft / '+Math.round(ft*0.3048)+' m';
-const hsR=encHsFromFt(ft);
-const hs1=document.getElementById('enc-s3-hs1');
-if(hs1 && (hs1.value===''||hs1.dataset.auto==='1')){
-hs1.value=hsR.hs; hs1.dataset.auto='1';
-hs1.title=hsR.approx?'Estimated from T/Td — height code in an unconfirmed part of WMO Table 1677; verify before transmission.':'';
-hs1.style.outline=hsR.approx?'1px dashed #f90':'';
+if(hint){
+const st=encStationTempTd();
+const src=st?(' · station '+st.T.toFixed(1)+'/'+st.Td.toFixed(1)+'°C'):'';
+hint.textContent='· '+ft+' ft / '+Math.round(ft*0.3048)+' m'+src;
 }
-return {ft:ft,h:h,hs:hsR.hs,hsApprox:hsR.approx};
+const hs=encHsFromFt(ft);
+const hs1=document.getElementById('enc-s3-hs1');
+if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=hs; hs1.dataset.auto='1'; }
+return {ft:ft,h:h,hs:hs};
 }
 function encStampUtc(){
 const u=encSynopUtc();
@@ -4254,35 +4712,12 @@ const gg=document.getElementById('enc-gg');
 if(yy) yy.value=u.yy;
 if(gg) gg.value=u.gg;
 }
-// WMO Code Table 1677 — Height of base of cloud layer/mass (hshs), in feet.
-// Confirmed exact against official WMO source for: 00, 01-49 (hs*100ft), 67-70, 77-78, 82-88.
-// hs range 50-66, 71-81 (excl. 77,78) is not confirmed from source and is interpolated;
-// encApplyCloudBase() flags these so a human can double-check before transmission.
 function encHsFromFt(ft){
-if(!isFinite(ft)||ft==null) return {hs:'//',approx:false};
-const f=Math.max(0,ft);
-if(f<100) return {hs:'00',approx:false};
-if(f<=4950) return {hs:String(Math.min(49,Math.round(f/100))).padStart(2,'0'),approx:false};
-if(f<17000){
-const hsApprox=49+Math.round((f-4900)/((17000-4900)/(67-49)));
-return {hs:String(Math.max(50,Math.min(66,hsApprox))).padStart(2,'0'),approx:true};
-}
-if(f<=20500){
-const hs=67+Math.round((f-17000)/1000);
-return {hs:String(Math.min(70,hs)).padStart(2,'0'),approx:false};
-}
-if(f<28500){
-const hsApprox=70+Math.round((f-20000)/1000);
-return {hs:String(Math.max(71,Math.min(78,hsApprox))).padStart(2,'0'),approx: !(f>=27000&&f<29000)};
-}
-if(f<32000){
-return {hs:'80',approx:true};
-}
-if(f<38500){
-const c=82+Math.round((f-32000)/1000);
-return {hs:String(Math.min(88,c)).padStart(2,'0'),approx:false};
-}
-return {hs:'89',approx:false};
+const m=ft*0.3048;
+if(!isFinite(m)||m<0) return '//';
+if(m<30) return '00';
+if(m<=1500) return String(Math.round(m/30)).padStart(2,'0');
+return String(Math.min(89,50+Math.round((m-1500)/300))).padStart(2,'0');
 }
 function encLayersFromMetar(raw){
 const out=[];
@@ -4298,11 +4733,98 @@ else if(m[3]&&/TCU/i.test(m[3])) c='8';
 else if(ft<2000) c='6';
 else if(ft<6500) c='3';
 else c='0';
-const hsR=encHsFromFt(ft);
-out.push({ns:ns,c:c,hs:hsR.hs,hsApprox:hsR.approx});
+out.push({ns:ns,c:c,hs:encHsFromFt(ft)});
 if(out.length>=4) break;
 }
 return out;
+}
+/** Second Sec3 layer from TNCC METAR: FEW/SCT/BKN/OVC 035–065 → 8Ns6hshs (e.g. BKN035 → 85635). Manual override kept. */
+function encMetarSecondLayer(raw){
+const re=/\b(FEW|SCT|BKN|OVC)(\d{3})(CB|TCU)?/gi;
+let m, best=null;
+while((m=re.exec(String(raw||'')))){
+const h=parseInt(m[2],10);
+if(isNaN(h)||h<35||h>65) continue;
+const cov=m[1].toUpperCase();
+const ns={FEW:'2',SCT:'4',BKN:'5',OVC:'8'}[cov]||'5';
+const hs=String(h).padStart(2,'0').slice(-2);
+best={ns:ns,c:'6',hs:hs,label:cov+m[2]};
+break;
+}
+return best;
+}
+/** Third Sec3 layer: FEW/SCT/BKN/OVC 070–200 → 8Ns3hshs (e.g. BKN200 → 85360). */
+function encMetarHs070200(h){
+// h = METAR height code in hundreds of feet
+if(h>=200) return '60'; // operational example BKN200 → …60
+const ft=h*100;
+const hs=encHsFromFt(ft);
+return hs||'//';
+}
+function encMetarThirdLayer(raw){
+const re=/\b(FEW|SCT|BKN|OVC)(\d{3})(CB|TCU)?/gi;
+let m, best=null;
+while((m=re.exec(String(raw||'')))){
+const h=parseInt(m[2],10);
+if(isNaN(h)||h<70||h>200) continue;
+const cov=m[1].toUpperCase();
+const ns={FEW:'2',SCT:'4',BKN:'5',OVC:'8'}[cov]||'5';
+best={ns:ns,c:'3',hs:encMetarHs070200(h),label:cov+m[2]};
+break;
+}
+return best;
+}
+function encMetarHasCB(raw){
+return /\b(?:FEW|SCT|BKN|OVC)\d{3}CB\b/i.test(String(raw||''))||/\bCB\b/.test(String(raw||''));
+}
+/** USGS free lightning near Hato (TNCC). Any strike within 16 km → true. */
+async function encCheckLightning(){
+const lat=12.189, lon=-68.960, radiusKm=16;
+const ts=Math.floor(Date.now()/1000);
+const url='https://volcview.wr.usgs.gov/vv-api/lightningApi/nearPoint?lat='+lat+'&long='+lon+'&radiusKm='+radiusKm+'&unixTimestamp='+ts+'&plusMinusMinutes=45';
+try{
+const out=await fetchRetry(url,1);
+if(!out||!out.ok||!out.text) return {hit:false,count:0};
+const j=JSON.parse(out.text);
+const arr=(j&&j.lightning)||[];
+return {hit:arr.length>0, count:arr.length, src:'USGS'};
+}catch(e){
+return {hit:false,count:0,err:String(e&&e.message||e)};
+}
+}
+/** Open-Meteo high cloud over Hato → CH=1, layer4 Ci C=0 hs=81 */
+async function encFetchHighCloudHato(){
+const lat=12.189, lon=-68.960;
+const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+  '&current=cloud_cover_high&timezone=auto';
+try{
+const out=await fetchRetry(url,1);
+if(!out||!out.ok||!out.text) return null;
+const j=JSON.parse(out.text);
+const pct=(j&&j.current&&j.current.cloud_cover_high!=null)?Number(j.current.cloud_cover_high):null;
+if(pct==null||!isFinite(pct)||pct<30) return null; // threshold 30%
+let ns='1';
+if(pct>=90) ns='8';
+else if(pct>=75) ns='6';
+else if(pct>=50) ns='4';
+else if(pct>=30) ns='2';
+return {pct:pct, ns:ns, c:'0', hs:'81', ch:'1'};
+}catch(e){ return null; }
+}
+function encSetAuto(id,val){
+const el=document.getElementById(id);
+if(!el) return;
+// Do not overwrite a manual value
+if(el.dataset.manual==='1' && el.value!=='') return;
+el.value=val;
+el.dataset.auto='1';
+el.dataset.manual='0';
+}
+function encMarkManual(id){
+const el=document.getElementById(id);
+if(!el) return;
+el.dataset.manual='1';
+el.dataset.auto='0';
 }
 function encDaysumP(utcH){
 try{
@@ -4310,14 +4832,23 @@ const st=JSON.parse(localStorage.getItem(DAYSUM_KEY+localDateKey())||'{}')||{};
 const hp=st.hoursP||{};
 if(hp[utcH]!=null) return parseFloat(hp[utcH]);
 if(hp[String(utcH)]!=null) return parseFloat(hp[String(utcH)]);
+// Fallback: TNCB / 78990 synop same UTC hour when Curaçao missing
+const hb=st.hoursPTncb||{};
+if(hb[utcH]!=null) return parseFloat(hb[utcH]);
+if(hb[String(utcH)]!=null) return parseFloat(hb[String(utcH)]);
 }catch(e){}
 return null;
 }
 async function encEnsureDaysumP(){
 try{
+const gg=parseInt((document.getElementById('enc-gg')||{}).value!=null?document.getElementById('enc-gg').value:encSynopUtc().gg,10)%24;
+const h3=(gg+21)%24;
 const st=JSON.parse(localStorage.getItem(DAYSUM_KEY+localDateKey())||'{}')||{};
-if(st.hoursP&&Object.keys(st.hoursP).length) return;
-if(typeof loadDaySummary==='function') await loadDaySummary(true);
+const hp=st.hoursP||{};
+const has3=hp[h3]!=null||hp[String(h3)]!=null||hp[(h3+23)%24]!=null||hp[(h3+1)%24]!=null;
+const hasNow=hp[gg]!=null||hp[String(gg)]!=null;
+if(has3 && hasNow && Object.keys(hp).length>=3) return st.hoursP;
+await savePressureBackground(true);
 }catch(e){}
 }
 function encPppCode(raw){
@@ -4328,30 +4859,101 @@ const n=parseFloat(s);
 if(!isFinite(n)) return '';
 return String(Math.min(999,Math.round(Math.abs(n)*10))).padStart(3,'0');
 }
+function encPAtHour(h){
+// Prefer exact hour, else ±1h from day-summary (78988 then TNCB)
+let p=encDaysumP(h);
+if(p!=null&&isFinite(p)) return p;
+p=encDaysumP((h+23)%24);
+if(p!=null&&isFinite(p)) return p;
+p=encDaysumP((h+1)%24);
+if(p!=null&&isFinite(p)) return p;
+return null;
+}
+function encStorePNow(gg, p){
+if(!isFinite(p)) return;
+try{
+  const key=DAYSUM_KEY+localDateKey();
+  const st=JSON.parse(localStorage.getItem(key)||'{}')||{};
+  st.hoursP=st.hoursP||{};
+  const h=((parseInt(gg,10)%24)+24)%24;
+  st.hoursP[h]=Math.round(p*10)/10;
+  st.hoursP[String(h)]=st.hoursP[h];
+  localStorage.setItem(key, JSON.stringify(st));
+}catch(e){}
+}
+function encPresSpark(){
+const el=document.getElementById('enc-pres-spark');
+if(!el) return;
+try{
+  const st=JSON.parse(localStorage.getItem(DAYSUM_KEY+localDateKey())||'{}')||{};
+  const hp=st.hoursP||{};
+  const gg=parseInt((document.getElementById('enc-gg')||{}).value!=null?document.getElementById('enc-gg').value:encSynopUtc().gg,10)%24;
+  const pts=[];
+  for(let i=24;i>=0;i--){
+    const h=(gg-i+48)%24;
+    const p=hp[h]!=null?hp[h]:hp[String(h)];
+    if(p!=null&&isFinite(p)) pts.push({h:h,p:parseFloat(p)});
+  }
+  if(pts.length<2){ el.innerHTML=''; return; }
+  const vals=pts.map(function(x){return x.p;});
+  const min=Math.min.apply(null,vals), max=Math.max.apply(null,vals);
+  const span=(max-min)||0.1;
+  const w=72,h=22,pad=2;
+  let d='';
+  pts.forEach(function(pt,i){
+    const x=pad+(i/(pts.length-1))*(w-2*pad);
+    const y=pad+(1-(pt.p-min)/span)*(h-2*pad);
+    d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+  });
+  el.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'"><path d="'+d+'" fill="none" stroke="#55c1ff" stroke-width="1.5"/></svg>';
+}catch(e){ el.innerHTML=''; }
+}
+
 function encTendFromDaysum(){
+const pmslEl0=document.getElementById('enc-pmsl');
+const ggEl0=document.getElementById('enc-gg');
+const tendSig=(ggEl0&&ggEl0.value||'')+'|'+(pmslEl0&&pmslEl0.value||'')+'|'+(document.getElementById('enc-pstn')&&document.getElementById('enc-pstn').value||'');
+if(window._encTendSig===tendSig && window._encTendAt && (Date.now()-window._encTendAt)<400 && window._encTendCache) return window._encTendCache;
+window._encTendSig=tendSig;
 const ggEl=document.getElementById('enc-gg');
 const gg=parseInt(ggEl&&ggEl.value!=null?ggEl.value:encSynopUtc().gg,10)%24;
-const pEl=document.getElementById('enc-pmsl');
-let pNow=pEl&&pEl.value!==''?parseFloat(pEl.value):NaN;
-if(!isFinite(pNow)) pNow=encDaysumP(gg);
-const p3=encDaysumP((gg+21)%24);
+const h3=(gg+21)%24; // 3 hours earlier UTC
+const h6=(gg+18)%24;
+const pmslEl=document.getElementById('enc-pmsl');
+const pstnEl=document.getElementById('enc-pstn');
+let pNow=NaN;
+if(pmslEl&&pmslEl.value!=='') pNow=parseFloat(String(pmslEl.value).replace(',','.'));
+if(!isFinite(pNow)&&pstnEl&&pstnEl.value!=='') pNow=parseFloat(String(pstnEl.value).replace(',','.'));
+if(!isFinite(pNow)) pNow=encPAtHour(gg);
+if(isFinite(pNow)) encStorePNow(gg, pNow);
+let p3=encPAtHour(h3);
 if(!isFinite(pNow)||p3==null||!isFinite(p3)){
-const aEl=document.getElementById('enc-a');
-const pppEl=document.getElementById('enc-ppp');
-if(aEl) aEl.value='';
-if(pppEl) pppEl.value='';
+const hint=document.getElementById('enc-tend-hint');
+if(hint){
+  if(!isFinite(pNow)) hint.textContent='· 5appp: need pressure now (QNH/Pmsl)';
+  else hint.textContent='· 5appp: need P at '+String(h3).padStart(2,'0')+'Z (±1h) — run day summary / wait bg save';
+}
+window._encTendCache=null; window._encTendAt=0;
 return null;
 }
 const d=Math.round((pNow-p3)*10)/10;
-const p6=encDaysumP((gg+18)%24);
+const p6=encPAtHour(h6);
 const d6=(p6!=null&&isFinite(p6))?Math.round((p3-p6)*10)/10:null;
-const a=encCharFromDelta(d,d6);
+const a=encCharFromDelta(d,d6)||(d>0?'2':(d<0?'7':'4'));
 const ppp=String(Math.min(999,Math.abs(Math.round(d*10)))).padStart(3,'0');
 const aEl=document.getElementById('enc-a');
 const pppEl=document.getElementById('enc-ppp');
-if(aEl) aEl.value=a;
-if(pppEl) pppEl.value=ppp;
-return {a:a,ppp:ppp,d:d};
+if(aEl && aEl.dataset.manual!=='1'){ aEl.value=a; aEl.dataset.auto='1'; }
+if(pppEl && pppEl.dataset.manual!=='1'){ pppEl.value=ppp; pppEl.dataset.auto='1'; }
+const hint=document.getElementById('enc-tend-hint');
+if(hint){
+  const sign=d>0?'+':(d<0?'':'');
+  hint.textContent='· 5appp OK: '+p3.toFixed(1)+' → '+pNow.toFixed(1)+' ('+sign+d.toFixed(1)+' hPa) → 5'+a+ppp;
+}
+window._encTendAt=Date.now(); window._encTendCache={a:a,ppp:ppp,d:d,pNow:pNow,p3:p3};
+const tendKey=a+ppp+String(pNow)+String(p3);
+if(tendKey!==window._encTendKey){ window._encTendKey=tendKey; try{encPresSpark();}catch(e){} }
+return {a:a,ppp:ppp,d:d,pNow:pNow,p3:p3};
 }
 function encWwFromVis(visKm, current){
 const v=parseFloat(visKm);
@@ -4411,9 +5013,21 @@ if(st) st.textContent='PREFILL — Curaçao Airport + KNMI pressure…';
 const wmo=encGetIIIII();
 const coords={78988:[12.19,-68.96],78982:[12.50,-70.02],78990:[12.13,-68.27]}[wmo]||[12.19,-68.96];
 let est={dd:null,ff:null,vis:null,t:null,td:null,rh:null,pmsl:null,pstn:null,rrr:null,rrr3:null,r24:null,tmax:null,tmin:null,n:null,h:null};
-// 1) Curaçao International Airport (Stations API) — primary
+// Parallel: stations + KNMI + Open-Meteo (faster prefill)
+const omUrl='https://api.open-meteo.com/v1/forecast?latitude='+coords[0]+'&longitude='+coords[1]+
+'&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,surface_pressure,pressure_msl,visibility'+
+'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=1&wind_speed_unit=kn&timezone=UTC';
+let stationsOk=null, knTxt='', omOut=null;
 try{
-await fetchStationsData();
+const pack=await Promise.all([
+  fetchStationsData().then(function(){return true;}).catch(function(){return false;}),
+  fetchRetry(KNMI_URL,1).then(function(kn){return (kn&&kn.ok&&kn.text)?kn.text:(cacheGet('wxpage')||'');}).catch(function(){return cacheGet('wxpage')||'';}),
+  fetchJson(omUrl).catch(function(){return null;})
+]);
+stationsOk=pack[0]; knTxt=pack[1]||''; omOut=pack[2];
+}catch(e){}
+// 1) Curaçao International Airport — primary
+try{
 const apt=(currentData||[]).find(function(r){
 const n=String(r.station||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 return (n.indexOf('curacao')>=0||n.indexOf('hato')>=0)&&(n.indexOf('airport')>=0||n.indexOf('hato')>=0);
@@ -4434,14 +5048,10 @@ if(td!=null) est.td=td;
 est._src=apt.station||'TNCC airport';
 }
 }catch(e){}
-// 2) KNMI live pressure
+// 2) KNMI live pressure / vis / cloud
 try{
-let txt='';
-const kn=await fetchRetry(KNMI_URL);
-if(kn&&kn.ok&&kn.text) txt=kn.text;
-if(!txt) txt=cacheGet('wxpage')||'';
-if(txt){
-const parsed=parseKnmiBonaire(txt);
+if(knTxt){
+const parsed=parseKnmiBonaire(knTxt);
 if(parsed){
 let pval=null, vis=null, octa=null;
 Object.keys(parsed).forEach(function(k){
@@ -4466,13 +5076,9 @@ if(octa!=null&&est.n==null){ est.n=String(octa); est._csrc='KNMI'; }
 }
 }
 }catch(e){}
-// 3) Open-Meteo only fills gaps (vis, tmax/tmin, clouds)
+// 3) Open-Meteo gaps only
 try{
-const url='https://api.open-meteo.com/v1/forecast?latitude='+coords[0]+'&longitude='+coords[1]+
-'&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,surface_pressure,pressure_msl,visibility'+
-'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=1&wind_speed_unit=kn&timezone=UTC';
-const out=await fetchJson(url);
-const j=out&&out.json;
+const j=omOut&&omOut.json;
 const c=j&&j.current;
 if(c){
 if(!est._vsrc&&c.visibility!=null) est.vis=Math.round((c.visibility/1000)*10)/10;
@@ -4514,7 +5120,7 @@ const fill=[
 ['enc-rrr',est.rrr],['enc-rrr3',est.rrr3],['enc-r24',est.r24],
 ['enc-tmax',est.tmax],['enc-tmin',est.tmin]
 ];
-fill.forEach(function(x){
+window._encFields=null;window._encLastSig='';fill.forEach(function(x){
 encPh(x[0], x[1]);
 encSetVal(x[0], x[1]);
 });
@@ -4550,28 +5156,87 @@ const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35
 layers=[{ns:String(Math.min(8,parseInt(est.n,10)||0)),c:parseInt(est.n,10)>=5?'6':'8',hs:hmap[parseInt(est.h||'5',10)]||'10'}];
 est._clsrc=est._csrc||'KNMI/model';
 }
+// Layer 1 height ALWAYS from T-Td (min 1300 ft) — never METAR base
 const L=layers[0];
 if(L){
 encSetVal('enc-s3-ns1', L.ns);
-encSetVal('enc-s3-c1', L.c);
-encSetVal('enc-s3-hs1', L.hs);
+encSetVal('enc-s3-c1', '8');
 }
+try{ encApplyCloudBase(); }catch(e){}
+try{
+const ft=encCloudBaseFt((document.getElementById('enc-t')||{}).value,(document.getElementById('enc-td')||{}).value);
+if(ft!=null){
+const hs1=document.getElementById('enc-s3-hs1');
+if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=encHsFromFt(ft); hs1.dataset.auto='1'; }
+}
+}catch(e){}
+const L2=encMetarSecondLayer(raw||'');
+const L3=encMetarThirdLayer(raw||'');
 for(let i=2;i<=4;i++){
-encSetVal('enc-s3-ns'+i, '');
-encSetVal('enc-s3-c'+i, '');
-encSetVal('enc-s3-hs'+i, '');
+if(i===2 && L2) continue;
+if(i===3 && L3) continue;
+const n=document.getElementById('enc-s3-ns'+i);
+const c=document.getElementById('enc-s3-c'+i);
+const h=document.getElementById('enc-s3-hs'+i);
+// clear only if not manually locked
+if(n && n.dataset.manual!=='1'){ n.value=''; n.dataset.auto='0'; }
+if(c && c.dataset.manual!=='1'){ c.value=''; c.dataset.auto='0'; }
+if(h && h.dataset.manual!=='1'){ h.value=''; h.dataset.auto='0'; }
+}
+if(L2){
+encSetAuto('enc-s3-ns2', L2.ns);
+encSetAuto('enc-s3-c2', L2.c);
+encSetAuto('enc-s3-hs2', L2.hs);
+}
+if(L3){
+encSetAuto('enc-s3-ns3', L3.ns);
+encSetAuto('enc-s3-c3', L3.c);
+encSetAuto('enc-s3-hs3', L3.hs);
 }
 if(layers[0]){
 encSetVal('enc-nh', layers[0].ns);
-encSetVal('enc-cl', '2');
-encSetVal('enc-cm','0');
+encSetVal('enc-cl', encMetarHasCB(raw||'')?'9':'2');
+encSetVal('enc-cm', L3?'3':'0');
 encSetVal('enc-ch','0');
+}else if(L3){
+encSetVal('enc-cm','3');
 }
+if(encMetarHasCB(raw||'')){
+encSetVal('enc-cl','9');
+}
+// High cloud (Open-Meteo) → CH=1, layer 4 Ci hs=81 (manual lock respected)
+try{
+const hi=await encFetchHighCloudHato();
+if(hi){
+encSetAuto('enc-s3-ns4', hi.ns);
+encSetAuto('enc-s3-c4', hi.c);
+encSetAuto('enc-s3-hs4', hi.hs);
+const chEl=document.getElementById('enc-ch');
+if(chEl && chEl.dataset.manual!=='1'){ chEl.value=hi.ch; chEl.dataset.auto='1'; }
+}
+}catch(e){}
 try{encApplyCloudBase();}catch(e){}
 encOnTempChange();
 try{encApplyW12();}catch(e){}
 encOnPresChange();
-encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate();if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}});
+// Lightning within 16 km of Hato → ww 95, iX 1
+encCheckLightning().then(function(lt){
+try{
+if(lt&&lt.hit){
+const wwEl=document.getElementById('enc-ww');
+if(wwEl && (wwEl.value===''||wwEl.dataset.auto==='1'||wwEl.dataset.manual!=='1')){
+wwEl.value='95';
+wwEl.dataset.auto='1';
+}
+const ixEl=document.getElementById('enc-ix');
+if(ixEl) ixEl.value='1';
+const st=document.getElementById('enc-mode-status');
+if(st) st.textContent=(st.textContent||'')+' · lightning '+lt.count+' within 16 km → ww 95';
+}
+}catch(e){}
+try{encTendFromDaysum();encUpdate(true);if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}
+});
+encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate(true);if(typeof tplFillFromEnc==='function'){try{tplFillFromEnc('su');tplFillFromEnc('va');}catch(e){}}}catch(e){}});
 {
 const p24el=document.getElementById('enc-ppp24');
 const p24=p24el&&p24el.value!==''?Number(p24el.value):null;
@@ -4674,7 +5339,7 @@ if(last==='0000') encSetVal('enc-r24',0);
 const clouds=[...sec3.matchAll(/\b8(\d)(\d)(\d{2})\b/g)];
 if(clouds[0]){
 encSetVal('enc-s3-ns1',clouds[0][1]);
-encSetVal('enc-s3-c1',clouds[0][2]);
+encSetVal('enc-s3-c1','8');
 encSetVal('enc-s3-hs1',clouds[0][3]);
 }
 for(let i=2;i<=4;i++){
@@ -4833,8 +5498,13 @@ function dirCard(deg){if(typeof deg!=='number')return deg||'—';const c=['N','N
 function parseSynopBulletin(text){
 const out={header:null,bulletinTime:null,windUnits:'m/s',reports:[]};
 if(!text)return out;
+text=normalizeNoaaSynop(text);
 const hm=text.match(/\b(S[IM][A-Z]{2}\d{2})\s+([A-Z]{4})\s+(\d{6})/);
 if(hm){const tt=hm[3];out.bulletinTime=`Day ${tt.slice(0,2)} ${tt.slice(2,4)}:${tt.slice(4,6)}Z`;}
+if(!out.bulletinTime){
+const ym=text.match(/\bAAXX\s+(\d{2})(\d{2})\d/);
+if(ym) out.bulletinTime=`Day ${ym[1]} ${ym[2]}:00Z`;
+}
 const aaxxIdx=text.search(/\bAAXX\s+\d{5}\b/);if(aaxxIdx<0)return out;
 const yyM=text.slice(aaxxIdx).match(/AAXX\s+\d{2}(\d{2})(\d)/);
 if(yyM){const iw=yyM[2];out.windUnits=(iw==='3'||iw==='4')?'kn':'m/s';}
@@ -4958,12 +5628,14 @@ ${wxBlock}
 <div class="sy-raw">${escHtml(rep.raw)}</div>
 </div>`;
 }
+const KNMI_BONAIRE_HTML="<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Bonaire 78990 hourly synop</title>\n<style>\n  :root { color-scheme: dark; }\n  body { margin:0; font:15px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; background:#0e141b; color:#e7eef6; }\n  header { padding:18px 16px 8px; }\n  h1 { font-size:22px; margin:0 0 4px; }\n  h2 { font-size:16px; margin:22px 0 8px; }\n  p.sub { margin:0; color:#9fb0c3; font-size:13px; }\n  .wrap { padding:0 16px 28px; max-width:880px; }\n  .card { background:#17202b; border:1px solid #2a3848; border-radius:12px; padding:12px 14px; margin:10px 0; }\n  .raw { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px; color:#d6f5c8; word-break:break-word; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th,td { text-align:left; padding:4px 6px; border-bottom:1px solid #243140; vertical-align:top; }\n  th { color:#8ea2b8; font-weight:600; width:110px; }\n  .meta { color:#8ea2b8; font-size:12px; margin-bottom:6px; }\n  a { color:#8ec8ff; }\n  .note { color:#c9b27a; font-size:13px; }\n</style>\n</head>\n<body>\n<header>\n  <h1>Bonaire hourly synop</h1>\n  <p class=\"sub\">Flamingo Airport \u00b7 WMO 78990 \u00b7 ICAO TNCB \u00b7 pulled 9 Oct 2026</p>\n</header>\n<div class=\"wrap\">\n<p class=\"note\">Raw AAXX is from Ogimet (GTS decode of the automatic synop). KNMI\u2019s public file is already decoded and stops at 8 Oct hour 24. They are not the same product.</p>\n<h2>Latest raw report</h2>\n<div class=\"card\">\n  <div class=\"meta\">9 Oct 2026 19:00 UTC \u00b7 Ogimet</div>\n  <div class=\"raw\">AAXX 09191 78990 27572 71008 10318 20245 30099 40101 57002 87/// 333 55/// 22143 553// 22306 60005 91011 90710 91113 555 60005=</div>\n</div>\n<table>\n<tr><th>YYGGiw</th><td class='raw'>09191</td><td>Day 9, 19Z, wind unit m/s (anemometer)</td></tr>\n<tr><th>Station</th><td class='raw'>78990</td><td>78990 Flamingo Airport, Bonaire</td></tr>\n<tr><th>2snTdTdTd</th><td class='raw'>27572</td><td>Dew point 57.2\u00b0C</td></tr>\n<tr><th>sec1</th><td class='raw'>71008</td><td>Supplementary group</td></tr>\n<tr><th>1snTTT</th><td class='raw'>10318</td><td>Temperature 31.8\u00b0C</td></tr>\n<tr><th>2snTdTdTd</th><td class='raw'>20245</td><td>Dew point 24.5\u00b0C</td></tr>\n<tr><th>3P0P0P0P0</th><td class='raw'>30099</td><td>Station pressure 9.9 hPa</td></tr>\n<tr><th>4PPPP</th><td class='raw'>40101</td><td>MSL pressure 10.1 hPa</td></tr>\n<tr><th>5appp</th><td class='raw'>57002</td><td>Tendency falling, 0.2 hPa / 3 h</td></tr>\n<tr><th>8NhCLCMCH</th><td class='raw'>87///</td><td>Cloud layer group (incomplete)</td></tr>\n<tr><th>333</th><td class='raw'>333</td><td>Start of section 3</td></tr>\n<tr><th>55</th><td class='raw'>55///</td><td>Sunshine / extra group</td></tr>\n<tr><th>sec3</th><td class='raw'>22143</td><td>Supplementary group</td></tr>\n<tr><th>55</th><td class='raw'>553//</td><td>Sunshine / extra group</td></tr>\n<tr><th>sec3</th><td class='raw'>22306</td><td>Supplementary group</td></tr>\n<tr><th>6RRRt</th><td class='raw'>60005</td><td>Section 3 precip group 60005</td></tr>\n<tr><th>910ff</th><td class='raw'>91011</td><td>Max gust indicator 91011</td></tr>\n<tr><th>9xxxx</th><td class='raw'>90710</td><td>National/supplementary group 90710</td></tr>\n<tr><th>9xxxx</th><td class='raw'>91113</td><td>National/supplementary group 91113</td></tr>\n<tr><th>555</th><td class='raw'>555</td><td>Start of national section 5</td></tr>\n<tr><th>sec5</th><td class='raw'>60005</td><td>Supplementary group</td></tr>\n</table>\n<h2>Ogimet raw, 8 Oct 21Z \u2013 9 Oct 19Z</h2>\n<div class='card'><div class='meta'>9 Oct 19Z</div><div class='raw'>AAXX 09191 78990 27572 71008 10318 20245 30099 40101 57002 87/// 333 55/// 22143 553// 22306 60005 91011 90710 91113 555 60005=</div><div class='meta'>Dew point 57.2\u00b0C \u00b7 Temperature 31.8\u00b0C \u00b7 Dew point 24.5\u00b0C \u00b7 MSL pressure 10.1 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 18Z</div><div class='raw'>AAXX 09181 78990 07573 61009 10314 20245 30108 40110 56002 60002 86/// 333 10330 55/// 22108 553// 22636 60005 91011 90760 91114=</div><div class='meta'>iR 0 (precip in sec 1 and 3), iX 7, h 5, VV 73 = 23 km \u00b7 Temperature 31.4\u00b0C \u00b7 Dew point 24.5\u00b0C \u00b7 MSL pressure 11.0 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 17Z</div><div class='raw'>AAXX 09171 78990 27470 41109 10327 20247 30114 40116 58002 84/// 333 55/// 22091 553// 23149 60005 91013 90710 91113 555 60005=</div><div class='meta'>Dew point 47.0\u00b0C \u00b7 MSL pressure 110.9 hPa \u00b7 Temperature 32.7\u00b0C \u00b7 Dew point 24.7\u00b0C \u00b7 MSL pressure 11.6 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 16Z</div><div class='raw'>AAXX 09161 78990 27569 51109 10318 20247 30123 40125 58001 85/// 333 55/// 22093 553// 22776 60005 91011 90710 91112 555 60005=</div><div class='meta'>Dew point 56.9\u00b0C \u00b7 Temperature 31.8\u00b0C \u00b7 Dew point 24.7\u00b0C \u00b7 MSL pressure 12.5 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 15Z</div><div class='raw'>AAXX 09151 78990 27572 61009 10323 20247 30131 40134 50001 86/// 333 55/// 22105 553// 22713 60005 91012 90730 91112=</div><div class='meta'>Dew point 57.2\u00b0C \u00b7 Temperature 32.3\u00b0C \u00b7 Dew point 24.7\u00b0C \u00b7 MSL pressure 13.4 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 14Z</div><div class='raw'>AAXX 09141 78990 27670 71008 10304 20246 30134 40137 51002 87/// 333 55/// 22104 553// 21853 60005 91012 90710 91112 555 60005=</div><div class='meta'>Dew point 67.0\u00b0C \u00b7 Temperature 30.4\u00b0C \u00b7 Dew point 24.6\u00b0C \u00b7 MSL pressure 13.7 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 13Z</div><div class='raw'>AAXX 09131 78990 27572 81009 10305 20248 30132 40136 53002 88/// 333 55/// 22144 553// 21351 60005 91011 90710 91111 555 60005=</div><div class='meta'>Dew point 57.2\u00b0C \u00b7 Temperature 30.5\u00b0C \u00b7 Dew point 24.8\u00b0C \u00b7 MSL pressure 13.6 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 12Z</div><div class='raw'>AAXX 09121 78990 07474 41008 10297 20247 30124 40127 53002 60001 84/// 333 55/// 22163 553// 20614 60005 91010 90760 91111=</div><div class='meta'>iR 0 (precip in sec 1 and 3), iX 7, h 4, VV 74 = 24 km \u00b7 MSL pressure 100.8 hPa \u00b7 Temperature 29.7\u00b0C \u00b7 Dew point 24.7\u00b0C \u00b7 MSL pressure 12.7 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 11Z</div><div class='raw'>AAXX 09111 78990 27471 21007 10285 20244 30118 40122 53001 82/// 333 55/// 22156 553// 20056 60005 91009 90710 91110 555 60005=</div><div class='meta'>Dew point 47.1\u00b0C \u00b7 Dew point -0.7\u00b0C \u00b7 Temperature 28.5\u00b0C \u00b7 Dew point 24.4\u00b0C \u00b7 MSL pressure 12.2 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 10Z</div><div class='raw'>AAXX 09101 78990 27472 11007 10282 20240 30110 40114 53000 81/// 333 55/// 22156 553// 20000 60005 91010 90710 91110 555 60005=</div><div class='meta'>Dew point 47.2\u00b0C \u00b7 Temperature -0.7\u00b0C \u00b7 Temperature 28.2\u00b0C \u00b7 Dew point 24.0\u00b0C \u00b7 MSL pressure 11.4 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 09Z</div><div class='raw'>AAXX 09091 78990 27572 31006 10283 20244 30107 40110 56000 83/// 333 55/// 22156 553// 20000 60005 91009 90730 91111=</div><div class='meta'>Dew point 57.2\u00b0C \u00b7 Temperature 28.3\u00b0C \u00b7 Dew point 24.4\u00b0C \u00b7 MSL pressure 11.0 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 08Z</div><div class='raw'>AAXX 09081 78990 27974 01007 10282 20239 30106 40110 56001 333 55/// 22156 553// 20000 60005 91009 90710 91110 555 60005=</div><div class='meta'>Dew point 97.4\u00b0C \u00b7 iR 0 (precip in sec 1 and 3), iX 1, h 0, VV 07 = 0.7 km \u00b7 Temperature 28.2\u00b0C \u00b7 Dew point 23.9\u00b0C \u00b7 MSL pressure 11.0 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 07Z</div><div class='raw'>AAXX 09071 78990 27473 11008 10282 20242 30107 40110 56002 81/// 333 55/// 22156 553// 20000 60005 91010 90710 91111 555 60005=</div><div class='meta'>Dew point 47.3\u00b0C \u00b7 Temperature -0.8\u00b0C \u00b7 Temperature 28.2\u00b0C \u00b7 Dew point 24.2\u00b0C \u00b7 MSL pressure 11.0 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 06Z</div><div class='raw'>AAXX 09061 78990 07476 21008 10283 20237 30112 40114 58001 60002 81/// 333 20282 55/// 22156 553// 20000 60005 70000 91010 90760 91110=</div><div class='meta'>iR 0 (precip in sec 1 and 3), iX 7, h 4, VV 76 = 26 km \u00b7 Dew point -0.8\u00b0C \u00b7 Temperature 28.3\u00b0C \u00b7 Dew point 23.7\u00b0C \u00b7 MSL pressure 11.4 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 05Z</div><div class='raw'>AAXX 09051 78990 27577 21007 10284 20241 30120 40122 58000 82/// 333 55/// 22156 553// 20000 60005 91010 90710 91110 555 60005=</div><div class='meta'>Dew point 57.7\u00b0C \u00b7 Dew point -0.7\u00b0C \u00b7 Temperature 28.4\u00b0C \u00b7 Dew point 24.1\u00b0C \u00b7 MSL pressure 12.2 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 04Z</div><div class='raw'>AAXX 09041 78990 27474 10906 10283 20242 30125 40128 51001 81/// 333 55/// 22156 553// 20000 60005 91009 90710 91110 555 60005=</div><div class='meta'>Dew point 47.4\u00b0C \u00b7 Temperature 90.6\u00b0C \u00b7 Temperature 28.3\u00b0C \u00b7 Dew point 24.2\u00b0C \u00b7 MSL pressure 12.8 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 03Z</div><div class='raw'>AAXX 09031 78990 27976 00906 10285 20238 30126 40128 51002 333 55/// 22156 60005 91008 90730 91110=</div><div class='meta'>Dew point 97.6\u00b0C \u00b7 iR 0 (precip in sec 1 and 3), iX 0, h 9, VV 06 = 0.6 km \u00b7 Temperature 28.5\u00b0C \u00b7 Dew point 23.8\u00b0C \u00b7 MSL pressure 12.8 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 02Z</div><div class='raw'>AAXX 09021 78990 27978 00907 10287 20227 30123 40127 53003 333 55/// 22156 60005 91009 90710 91110 555 60005=</div><div class='meta'>Dew point 97.8\u00b0C \u00b7 iR 0 (precip in sec 1 and 3), iX 0, h 9, VV 07 = 0.7 km \u00b7 Temperature 28.7\u00b0C \u00b7 Dew point 22.7\u00b0C \u00b7 MSL pressure 12.7 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 01Z</div><div class='raw'>AAXX 09011 78990 27980 00907 10288 20228 30115 40118 53002 333 55/// 22156 60005 91010 90710 91110 555 60005=</div><div class='meta'>Dew point 98.0\u00b0C \u00b7 iR 0 (precip in sec 1 and 3), iX 0, h 9, VV 07 = 0.7 km \u00b7 Temperature 28.8\u00b0C \u00b7 Dew point 22.8\u00b0C \u00b7 MSL pressure 11.8 hPa</div></div>\n<div class='card'><div class='meta'>9 Oct 00Z</div><div class='raw'>AAXX 09001 78990 07977 00907 10287 20236 30106 40109 53002 60001 333 55/// 22156 60005 91010 90760 91111=</div><div class='meta'>iR 0 (precip in sec 1 and 3), iX 7, h 9, VV 77 = 27 km \u00b7 iR 0 (precip in sec 1 and 3), iX 0, h 9, VV 07 = 0.7 km \u00b7 Temperature 28.7\u00b0C \u00b7 Dew point 23.6\u00b0C \u00b7 MSL pressure 10.9 hPa</div></div>\n<div class='card'><div class='meta'>8 Oct 23Z</div><div class='raw'>AAXX 08231 78990 27477 10908 10289 20242 30097 40101 53001 81/// 333 55/// 22156 60005 91010 90710 91110 555 60005=</div><div class='meta'>Dew point 47.7\u00b0C \u00b7 Temperature 90.8\u00b0C \u00b7 Temperature 28.9\u00b0C \u00b7 Dew point 24.2\u00b0C \u00b7 MSL pressure 10.1 hPa</div></div>\n<div class='card'><div class='meta'>8 Oct 22Z</div><div class='raw'>AAXX 08221 78990 27976 00908 10295 20241 30091 40094 55000 333 55/// 22155 60005 91010 90710 91111 555 60005=</div><div class='meta'>Dew point 97.6\u00b0C \u00b7 iR 0 (precip in sec 1 and 3), iX 0, h 9, VV 08 = 0.8 km \u00b7 Temperature 29.5\u00b0C \u00b7 Dew point 24.1\u00b0C \u00b7 MSL pressure 9.4 hPa</div></div>\n<div class='card'><div class='meta'>8 Oct 21Z</div><div class='raw'>AAXX 08211 78990 27476 21008 10306 20243 30090 40093 56001 82/// 333 55/// 22126 553// 21268 60005 91010 90730 91111=</div><div class='meta'>Dew point 47.6\u00b0C \u00b7 Dew point -0.8\u00b0C \u00b7 Temperature 30.6\u00b0C \u00b7 Dew point 24.3\u00b0C \u00b7 MSL pressure 9.3 hPa</div></div>\n<h2>KNMI decoded hourly, 8 Oct</h2>\n<p class=\"sub\">Source <a href=\"https://cdn.knmi.nl/knmi/map/page/klimatologie/gegevens/uurgegevens/uurgeg_990.zip\">uurgeg_990.zip</a>. Hour 24 is 00Z on the next day. Values in the file are tenths.</p>\n<div class=\"card\">\n<div class=\"meta\">20261008 24 (00Z next day)</div>\n<div class=\"raw\">990,20261008,24,90,70,70,100,287,290,236,0,0,0,0,10109,77,0,73,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>90\u00b0 / 7.0 m/s, gust 10.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.7\u00b0C, dew point 23.6\u00b0C, humidity 73%</td></tr>\n<tr><th>Pressure</th><td>1010.9 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 27 km, cloud oktas 0</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 23 (23Z)</div>\n<div class=\"raw\">990,20261008,23,90,70,80,100,289,,242,0,2,0,0,10101,77,1,75,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>90\u00b0 / 8.0 m/s, gust 10.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.9\u00b0C, dew point 24.2\u00b0C, humidity 75%</td></tr>\n<tr><th>Pressure</th><td>1010.1 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 27 km, cloud oktas 1</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 22 (22Z)</div>\n<div class=\"raw\">990,20261008,22,90,80,80,110,295,,241,8,47,0,0,10094,76,0,73,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>90\u00b0 / 8.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>29.5\u00b0C, dew point 24.1\u00b0C, humidity 73%</td></tr>\n<tr><th>Pressure</th><td>1009.4 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 26 km, cloud oktas 0</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 21 (21Z)</div>\n<div class=\"raw\">990,20261008,21,100,70,80,110,306,,243,10,127,0,0,10093,76,2,69,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 8.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>30.6\u00b0C, dew point 24.3\u00b0C, humidity 69%</td></tr>\n<tr><th>Pressure</th><td>1009.3 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 26 km, cloud oktas 2</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 20 (20Z)</div>\n<div class=\"raw\">990,20261008,20,100,70,70,110,317,,246,10,223,0,0,10093,73,7,66,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 7.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>31.7\u00b0C, dew point 24.6\u00b0C, humidity 66%</td></tr>\n<tr><th>Pressure</th><td>1009.3 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 23 km, cloud oktas 7</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 19 (19Z)</div>\n<div class=\"raw\">990,20261008,19,110,70,80,110,310,,244,6,195,0,0,10095,72,6,67,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 8.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>31.0\u00b0C, dew point 24.4\u00b0C, humidity 67%</td></tr>\n<tr><th>Pressure</th><td>1009.5 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 22 km, cloud oktas 6</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 18 (18Z)</div>\n<div class=\"raw\">990,20261008,18,110,70,70,120,317,309,251,6,247,0,0,10102,72,7,68,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 7.0 m/s, gust 12.0 m/s</td></tr>\n<tr><th>Temp</th><td>31.7\u00b0C, dew point 25.1\u00b0C, humidity 68%</td></tr>\n<tr><th>Pressure</th><td>1010.2 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 22 km, cloud oktas 7</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 17 (17Z)</div>\n<div class=\"raw\">990,20261008,17,110,80,70,120,326,,247,9,317,0,0,10108,74,2,63,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 7.0 m/s, gust 12.0 m/s</td></tr>\n<tr><th>Temp</th><td>32.6\u00b0C, dew point 24.7\u00b0C, humidity 63%</td></tr>\n<tr><th>Pressure</th><td>1010.8 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 24 km, cloud oktas 2</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 16 (16Z)</div>\n<div class=\"raw\">990,20261008,16,100,80,80,120,326,,249,7,290,0,0,10115,75,6,64,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 8.0 m/s, gust 12.0 m/s</td></tr>\n<tr><th>Temp</th><td>32.6\u00b0C, dew point 24.9\u00b0C, humidity 64%</td></tr>\n<tr><th>Pressure</th><td>1011.5 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 25 km, cloud oktas 6</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 15 (15Z)</div>\n<div class=\"raw\">990,20261008,15,100,80,90,120,311,,250,8,270,0,0,10122,74,8,69,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 9.0 m/s, gust 12.0 m/s</td></tr>\n<tr><th>Temp</th><td>31.1\u00b0C, dew point 25.0\u00b0C, humidity 69%</td></tr>\n<tr><th>Pressure</th><td>1012.2 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 24 km, cloud oktas 8</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 14 (14Z)</div>\n<div class=\"raw\">990,20261008,14,100,90,90,130,315,,249,8,225,0,0,10120,75,6,68,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 9.0 m/s, gust 13.0 m/s</td></tr>\n<tr><th>Temp</th><td>31.5\u00b0C, dew point 24.9\u00b0C, humidity 68%</td></tr>\n<tr><th>Pressure</th><td>1012.0 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 25 km, cloud oktas 6</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 13 (13Z)</div>\n<div class=\"raw\">990,20261008,13,100,80,90,120,305,,248,9,154,0,0,10119,76,7,71,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 9.0 m/s, gust 12.0 m/s</td></tr>\n<tr><th>Temp</th><td>30.5\u00b0C, dew point 24.8\u00b0C, humidity 71%</td></tr>\n<tr><th>Pressure</th><td>1011.9 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 26 km, cloud oktas 7</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 12 (12Z)</div>\n<div class=\"raw\">990,20261008,12,100,70,80,110,295,283,246,5,54,0,0,10114,74,3,75,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 8.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>29.5\u00b0C, dew point 24.6\u00b0C, humidity 75%</td></tr>\n<tr><th>Pressure</th><td>1011.4 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 24 km, cloud oktas 3</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 11 (11Z)</div>\n<div class=\"raw\">990,20261008,11,100,60,60,100,284,,247,0,6,0,0,10108,73,5,80,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 6.0 m/s, gust 10.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.4\u00b0C, dew point 24.7\u00b0C, humidity 80%</td></tr>\n<tr><th>Pressure</th><td>1010.8 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 23 km, cloud oktas 5</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 10 (10Z)</div>\n<div class=\"raw\">990,20261008,10,100,60,70,90,279,,242,0,0,0,0,10103,72,2,80,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 7.0 m/s, gust 9.0 m/s</td></tr>\n<tr><th>Temp</th><td>27.9\u00b0C, dew point 24.2\u00b0C, humidity 80%</td></tr>\n<tr><th>Pressure</th><td>1010.3 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 22 km, cloud oktas 2</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 9 (09Z)</div>\n<div class=\"raw\">990,20261008,9,100,60,60,90,280,,245,0,0,0,0,10098,72,6,81,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 6.0 m/s, gust 9.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.0\u00b0C, dew point 24.5\u00b0C, humidity 81%</td></tr>\n<tr><th>Pressure</th><td>1009.8 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 22 km, cloud oktas 6</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 8 (08Z)</div>\n<div class=\"raw\">990,20261008,8,110,50,50,90,281,,242,0,0,0,0,10098,75,4,79,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 5.0 m/s, gust 9.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.1\u00b0C, dew point 24.2\u00b0C, humidity 79%</td></tr>\n<tr><th>Pressure</th><td>1009.8 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 25 km, cloud oktas 4</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 7 (07Z)</div>\n<div class=\"raw\">990,20261008,7,110,60,60,80,280,,243,0,0,0,0,10097,74,1,80,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 6.0 m/s, gust 8.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.0\u00b0C, dew point 24.3\u00b0C, humidity 80%</td></tr>\n<tr><th>Pressure</th><td>1009.7 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 24 km, cloud oktas 1</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 6 (06Z)</div>\n<div class=\"raw\">990,20261008,6,110,50,50,80,282,284,239,0,0,0,0,10101,76,2,77,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 5.0 m/s, gust 8.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.2\u00b0C, dew point 23.9\u00b0C, humidity 77%</td></tr>\n<tr><th>Pressure</th><td>1010.1 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 26 km, cloud oktas 2</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 5 (05Z)</div>\n<div class=\"raw\">990,20261008,5,100,50,50,70,283,,247,0,0,0,0,10107,71,0,80,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 5.0 m/s, gust 7.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.3\u00b0C, dew point 24.7\u00b0C, humidity 80%</td></tr>\n<tr><th>Pressure</th><td>1010.7 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 21 km, cloud oktas 0</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 4 (04Z)</div>\n<div class=\"raw\">990,20261008,4,110,50,50,70,286,,250,0,0,0,0,10112,70,6,81,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 5.0 m/s, gust 7.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.6\u00b0C, dew point 25.0\u00b0C, humidity 81%</td></tr>\n<tr><th>Pressure</th><td>1011.2 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 20 km, cloud oktas 6</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 3 (03Z)</div>\n<div class=\"raw\">990,20261008,3,110,50,50,80,286,,250,0,0,0,0,10113,69,4,80,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 5.0 m/s, gust 8.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.6\u00b0C, dew point 25.0\u00b0C, humidity 80%</td></tr>\n<tr><th>Pressure</th><td>1011.3 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 19 km, cloud oktas 4</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 2 (02Z)</div>\n<div class=\"raw\">990,20261008,2,110,60,50,90,286,,253,0,0,0,0,10108,69,8,82,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 5.0 m/s, gust 9.0 m/s</td></tr>\n<tr><th>Temp</th><td>28.6\u00b0C, dew point 25.3\u00b0C, humidity 82%</td></tr>\n<tr><th>Pressure</th><td>1010.8 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 19 km, cloud oktas 8</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261008 1 (01Z)</div>\n<div class=\"raw\">990,20261008,1,100,50,50,70,291,,254,0,0,0,0,10098,70,8,80,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 5.0 m/s, gust 7.0 m/s</td></tr>\n<tr><th>Temp</th><td>29.1\u00b0C, dew point 25.4\u00b0C, humidity 80%</td></tr>\n<tr><th>Pressure</th><td>1009.8 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 20 km, cloud oktas 8</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261007 24 (00Z next day)</div>\n<div class=\"raw\">990,20261007,24,90,60,60,80,291,293,250,0,0,0,0,10090,71,8,78,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>90\u00b0 / 6.0 m/s, gust 8.0 m/s</td></tr>\n<tr><th>Temp</th><td>29.1\u00b0C, dew point 25.0\u00b0C, humidity 78%</td></tr>\n<tr><th>Pressure</th><td>1009.0 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 21 km, cloud oktas 8</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261007 23 (23Z)</div>\n<div class=\"raw\">990,20261007,23,100,60,60,90,291,,248,0,0,0,0,10081,73,8,77,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 6.0 m/s, gust 9.0 m/s</td></tr>\n<tr><th>Temp</th><td>29.1\u00b0C, dew point 24.8\u00b0C, humidity 77%</td></tr>\n<tr><th>Pressure</th><td>1008.1 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 23 km, cloud oktas 8</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261007 22 (22Z)</div>\n<div class=\"raw\">990,20261007,22,100,60,60,90,294,,250,0,18,0,0,10075,71,8,77,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>100\u00b0 / 6.0 m/s, gust 9.0 m/s</td></tr>\n<tr><th>Temp</th><td>29.4\u00b0C, dew point 25.0\u00b0C, humidity 77%</td></tr>\n<tr><th>Pressure</th><td>1007.5 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 21 km, cloud oktas 8</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261007 21 (21Z)</div>\n<div class=\"raw\">990,20261007,21,120,60,60,110,300,,251,1,68,0,0,10076,72,8,74,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>120\u00b0 / 6.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>30.0\u00b0C, dew point 25.1\u00b0C, humidity 74%</td></tr>\n<tr><th>Pressure</th><td>1007.6 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 22 km, cloud oktas 8</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261007 20 (20Z)</div>\n<div class=\"raw\">990,20261007,20,130,60,70,110,310,,252,5,143,0,0,10084,71,5,71,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>130\u00b0 / 7.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>31.0\u00b0C, dew point 25.2\u00b0C, humidity 71%</td></tr>\n<tr><th>Pressure</th><td>1008.4 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 21 km, cloud oktas 5</td></tr>\n</table></div>\n<div class=\"card\">\n<div class=\"meta\">20261007 19 (19Z)</div>\n<div class=\"raw\">990,20261007,19,110,70,80,110,310,,252,7,247,0,0,10087,71,4,71,,,0,0,0,0,0</div>\n<table>\n<tr><th>Wind</th><td>110\u00b0 / 8.0 m/s, gust 11.0 m/s</td></tr>\n<tr><th>Temp</th><td>31.0\u00b0C, dew point 25.2\u00b0C, humidity 71%</td></tr>\n<tr><th>Pressure</th><td>1008.7 hPa MSL</td></tr>\n<tr><th>Sky</th><td>visibility 21 km, cloud oktas 4</td></tr>\n</table></div>\n<p class=\"sub\">Ogimet: <a href=\"https://www.ogimet.com/cgi-bin/gsynres?lang=en&ind=78990\">station 78990</a>. KNMI page: <a href=\"https://www.knmi.nl/nederland-nu/klimatologie/uurgegevens_Caribisch_gebied\">Caribisch gebied hourly</a>.</p>\n</div></body></html>";
 const SYNOP_SOURCES=[
 {key:'tnca-si',station:'tnca',flag:ICAO_FLAGS.TNCA,label:'SINU01 · TNCA',type:'SI',url:'https://tgftp.nws.noaa.gov/data/raw/si/sinu01.tnca..txt'},
 {key:'tnca-sm',station:'tnca',flag:ICAO_FLAGS.TNCA,label:'SMNU01 · TNCA',type:'SM',url:'https://tgftp.nws.noaa.gov/data/raw/sm/smnu01.tnca..txt'},
 {key:'tncb-si',station:'tncb',flag:ICAO_FLAGS.TNCB,label:'SI · 78990 TNCB',type:'SI',wmo:'78990',url:'ogimet'},
 {key:'tncb-sm',station:'tncb',flag:ICAO_FLAGS.TNCB,label:'SM · 78990 TNCB',type:'SM',wmo:'78990',url:'ogimet'},
-{key:'tncc-si',station:'tncc',flag:ICAO_FLAGS.TNCC,label:'SICA01 · TNCC',type:'SI',url:'https://tgftp.nws.noaa.gov/data/raw/si/sica01.tncc..txt'},
+{key:'tncb-knmi',station:'tncb',flag:ICAO_FLAGS.TNCB,label:'KNMI Bonaire',type:'KNMI',html:true},
+{key:'tncc-si',station:'tncc',flag:ICAO_FLAGS.TNCC,label:'SICA20 · TNCC',type:'SI',url:'https://tgftp.nws.noaa.gov/data/raw/si/sica20.tncc..txt'},
 {key:'tncc-sm',station:'tncc',flag:ICAO_FLAGS.TNCC,label:'SMCA01 · TNCC',type:'SM',url:'https://tgftp.nws.noaa.gov/data/raw/sm/smca01.tncc..txt'},
 ];
 const synopStationData={tnca:{},tncb:{},tncc:{}};
@@ -5005,6 +5677,10 @@ let repForQC=null;
 sources.forEach(src=>{const d=data[src.key];if(d&&d.parsed.reports.length&&!repForQC)repForQC=d.parsed.reports[0];});
 let html=repForQC?synopMetarQC(stationKey,repForQC):'';
 sources.forEach(src=>{
+if(src.html){
+html+=`<div class="synop-stn-card"><div class="synop-stn-head"><span class="synop-stn-flag">${src.flag}</span><div class="synop-stn-icao">${src.label}</div></div><div id="knmi-bonaire-host"></div></div>`;
+return;
+}
 const d=data[src.key];if(!d)return;
 const parsed=d.parsed;
 html+=`<div class="synop-stn-card">
@@ -5020,10 +5696,15 @@ ${parsed.reports.length?parsed.reports.map(renderSynopReport).join(''):'<div cla
 </div>`;
 });
 cont.innerHTML=html||'<div class="loading-msg">Awaiting data…</div>';
+const kh=$('knmi-bonaire-host');
+if(kh&&typeof KNMI_BONAIRE_HTML==='string'){
+const doc=new DOMParser().parseFromString(KNMI_BONAIRE_HTML,'text/html');
+kh.innerHTML=(doc.body&&doc.body.innerHTML)||KNMI_BONAIRE_HTML;
+}
 }
 function renderSynopStation(source,rawText){
 if(/404 Not Found|Target URL returned error/i.test(String(rawText||''))) return;
-const text=sanitize(rawText);
+const text=normalizeNoaaSynop(sanitize(rawText));
 const parsed=parseSynopBulletin(text);
 cacheSet('s_'+source.station+'_'+source.key,rawText);
 synopStationData[source.station][source.key]={parsed,rawText};
@@ -5031,13 +5712,19 @@ updateSynopStationCard(source.station);
 const e=$('synop-updated');if(e)e.textContent=nowStamp();
 }
 async function loadSynopSource(source){
+if(source.html){ updateSynopStationCard(source.station); return; }
 if(source.wmo){
 const end=new Date();
 const begin=new Date(end.getTime()-36*3600*1000);
 const fmt=d=>d.getUTCFullYear()+String(d.getUTCMonth()+1).padStart(2,'0')+String(d.getUTCDate()).padStart(2,'0')+String(d.getUTCHours()).padStart(2,'0')+String(d.getUTCMinutes()).padStart(2,'0');
 const url='https://www.ogimet.com/cgi-bin/getsynop?block='+source.wmo+'&begin='+fmt(begin)+'&end='+fmt(end)+'&header=yes';
-const out=await fetchRetry(url,2);
-if(!out.ok||!out.text) return;
+let out=await fetchRetry(url,2);
+if(!out||!out.ok||!out.text||out.text.indexOf(source.wmo)<0){
+  const prox='https://r.jina.ai/http://'+url.replace(/^https?:\/\//,'');
+  const p=await fetchRetry(prox,1);
+  if(p&&p.ok&&p.text&&p.text.indexOf(source.wmo)>=0) out=p;
+}
+if(!out||!out.ok||!out.text) return;
 const rows=String(out.text).split(/\n/).filter(function(ln){return ln.indexOf(source.wmo)>=0;});
 let pick=null;
 rows.forEach(function(ln){
@@ -5066,7 +5753,8 @@ const sm=await ovzFetchTgftpSmca();
 if(sm&&/AAXX/.test(sm)) out={ok:true,text:sm};
 }
 if(out&&out.ok&&out.text){
-if(source.station==='tncc' && /AAXX/.test(out.text) && window._lastTnccSynop!==out.text){ window._lastTnccSynop=out.text; try{playBeep();}catch(e){} }
+const hasSyn=/AAXX|78988|S[IM][A-Z]{2}\d{2}/.test(out.text);
+if(source.station==='tncc' && hasSyn && window._lastTnccSynop!==out.text){ window._lastTnccSynop=out.text; try{playBeep();}catch(e){} }
 renderSynopStation(source,out.text);
 }
 }
@@ -5191,11 +5879,18 @@ return arrow+a+' ft';
 function atcFrameUrl(lat, lon, zoom){
 return 'https://globe.adsbexchange.com/?lat='+lat+'&lon='+lon+'&zoom='+zoom+'&enableLabels&trackLabels';
 }
-async function atcInitMap(){
+function atcEnsureFrame(){
 const frame=document.getElementById('atc-live-frame');
-if(frame && (!frame.getAttribute('src') || frame.src==='about:blank' || /about:blank/.test(frame.src||''))) {
-frame.src=frame.getAttribute('data-src')||atcFrameUrl(12.22,-69.10,9);
+if(!frame) return null;
+const want=frame.getAttribute('data-src')||atcFrameUrl(12.22,-69.10,9);
+const cur=frame.getAttribute('src')||frame.src||'';
+if(!cur || cur==='about:blank' || /about:blank/.test(cur) || cur==='about:srcdoc'){
+frame.src=want;
 }
+return frame;
+}
+async function atcInitMap(){
+const frame=atcEnsureFrame();
 const el=document.getElementById('atc-live-map');
 if(!el || el.style.display==='none') return;
 try{ await ensureLeaflet(); }catch(e){ const st=document.getElementById('atc-traffic-status'); if(st) st.textContent='Map library failed to load'; return; }
@@ -5221,7 +5916,7 @@ L.circleMarker([a[0],a[1]],{radius:5,color:'#55c1ff',fillColor:'#55c1ff',fillOpa
 });
 atcTrafficRefresh();
 if(atcTimer) clearInterval(atcTimer);
-atcTimer=setInterval(atcTrafficRefresh, 15000);
+atcTimer=setInterval(atcTrafficRefresh, 30000);
 // Cloud/radar overlay like ADS-B Exchange
 setTimeout(function(){ try{ atcMapMode('rain'); }catch(e){} },400);
 setTimeout(function(){try{atcMap.invalidateSize();}catch(e){}},250);
@@ -5286,10 +5981,15 @@ const frame=document.getElementById('atc-live-frame');
 if(frame){
 if(mode==='tncc') frame.src=atcFrameUrl(12.1889,-68.9597,11);
 else if(mode==='abc'||mode==='dark') frame.src=atcFrameUrl(12.22,-69.10,9);
-else if(mode==='reload'){ const s=frame.src; frame.src='about:blank'; setTimeout(function(){frame.src=s||atcFrameUrl(12.22,-69.10,9);},80); }
+else if(mode==='reload'){
+  const base=frame.getAttribute('data-src')||atcFrameUrl(12.22,-69.10,9);
+  frame.src='about:blank';
+  setTimeout(function(){ frame.src=base; }, 120);
+}
 return;
 }
-if(!atcMap) await atcInitMap();
+// Leaflet fallback (hidden by default)
+if(!atcMap){ try{ atcInitMap(); }catch(e){} return; }
 if(!atcMap) return;
 if(mode==='tncc'){ atcMap.setView([12.1889,-68.9597],11); }
 if(mode==='dark'){
@@ -5937,28 +6637,45 @@ if(/\bm\b/i.test(s)){const n=parseFloat(s);return isFinite(n)?n/1000:null;}
 const n=parseFloat(s);
 return isFinite(n)?n:null;
 }
+async function fetchNoaaSiTncc(){
+const url='https://tgftp.nws.noaa.gov/data/raw/si/sica20.tncc..txt';
+try{
+const out=await fetchRetry(url,2);
+if(out&&out.ok&&out.text&&out.text.indexOf('78988')>=0) return out.text;
+}catch(e){}
+return '';
+}
 async function fetchTgftp78988(){
 try{
+const parts=[];
 const sm=await ovzFetchTgftpSmca();
-if(sm&&sm.indexOf('78988')>=0) return sm.replace(/\s+/g,' ').trim();
+if(sm&&sm.indexOf('78988')>=0) parts.push(sm);
+else{
 const out=await fetchRetry('https://tgftp.nws.noaa.gov/data/raw/sm/smca01.tncc..txt',2);
-if(out&&out.ok&&out.text&&out.text.indexOf('78988')>=0) return out.text.replace(/\s+/g,' ').trim();
+if(out&&out.ok&&out.text&&out.text.indexOf('78988')>=0) parts.push(out.text);
+}
+const si=await fetchNoaaSiTncc();
+if(si) parts.push(si);
+if(parts.length) return parts.join('\n');
 }catch(e){}
 return null;
 }
-async function fetchOgimet78988(begin,end){
+async function fetchOgimetBlock(block,begin,end){
+const id=String(block||'78988');
 const urls=[
-'https://www.ogimet.com/cgi-bin/getsynop?block=78988&begin='+begin+'&end='+end,
-'https://www.ogimet.com/cgi-bin/getsynop?block=78988&begin='+begin+'&end='+end+'&header=yes'
+'https://www.ogimet.com/cgi-bin/getsynop?block='+id+'&begin='+begin+'&end='+end,
+'https://www.ogimet.com/cgi-bin/getsynop?block='+id+'&begin='+begin+'&end='+end+'&header=yes'
 ];
 for(var i=0;i<urls.length;i++){
 try{
 const out=await fetchRetry(urls[i],2);
-if(out&&out.ok&&out.text&&/AAXX|78988/.test(out.text)) return out.text;
+if(out&&out.ok&&out.text&&(new RegExp('AAXX|'+id)).test(out.text)) return out.text;
 }catch(e){}
 }
 return '';
 }
+async function fetchOgimet78988(begin,end){ return fetchOgimetBlock('78988',begin,end); }
+async function fetchOgimet78990(begin,end){ return fetchOgimetBlock('78990',begin,end); }
 function splitOgimetReports(text,wmo){
 const id=wmo||'78988';
 const list=[];
@@ -6026,6 +6743,105 @@ const st=document.getElementById('enc-mode-status');
 if(st&&st.textContent) st.textContent=st.textContent.replace(/\s*· 24h P.+$/,'')+' · 24h P '+((d24>=0?'+':'')+d24)+' hPa';
 encUpdate();
 }
+function daysumReadStore(){
+  const key=DAYSUM_KEY+localDateKey();
+  let st={};
+  try{st=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){st={};}
+  st.hoursP=st.hoursP||{};
+  st.hoursPTncb=st.hoursPTncb||{};
+  st.hoursN=st.hoursN||{};
+  return {key:key, st:st};
+}
+function daysumWriteStore(key, st){
+  st.t=Date.now();
+  try{localStorage.setItem(key, JSON.stringify(st));}catch(e){}
+}
+function daysumMergePmsl(hoursP, utcH, p){
+  if(p==null||!isFinite(p)) return;
+  const h=((parseInt(utcH,10)%24)+24)%24;
+  hoursP[h]=Math.round(p*10)/10;
+  hoursP[String(h)]=hoursP[h];
+}
+async function savePressureBackground(force){
+try{
+  if(!force && document.visibilityState==='hidden') return;
+  const now=new Date();
+  const bag=daysumReadStore();
+  const key=bag.key, st=bag.st;
+  if(!force && st.pBgAt && (Date.now()-st.pBgAt)<15*60*1000 && st.hoursP && Object.keys(st.hoursP).length>=3) return st.hoursP;
+  const begin=new Date(now.getTime()-30*3600*1000);
+  let got=false;
+  try{
+    const stampB=utcStamp(begin), stampN=utcStamp(now);
+    const pair=await Promise.all([
+      fetchOgimet78988(stampB, stampN),
+      fetchOgimet78990(stampB, stampN)
+    ]);
+    const text=pair[0]||'';
+    const textB=pair[1]||'';
+    if(text && /AAXX/.test(text)){
+      splitOgimetReports(text,'78988').forEach(function(msg){
+        try{
+          const full=msg.includes('AAXX')?msg:('AAXX 00004\n'+msg);
+          const meta=parseSynopHourUTC(full);
+          const p=parseSynopBulletin(full);
+          const r=p&&p.reports&&p.reports[0];
+          if(r&&r.Pmsl!=null&&meta&&meta.date){
+            daysumMergePmsl(st.hoursP, meta.date.getUTCHours(), r.Pmsl);
+            got=true;
+          }
+        }catch(e){}
+      });
+    }
+    // TNCB 78990 pressures for 3h tendency fallback
+    if(textB && /AAXX/.test(textB)){
+      splitOgimetReports(textB,'78990').forEach(function(msg){
+        try{
+          const full=msg.includes('AAXX')?msg:('AAXX 00004\n'+msg);
+          const meta=parseSynopHourUTC(full);
+          const p=parseSynopBulletin(full);
+          const r=p&&p.reports&&p.reports[0];
+          if(r&&r.Pmsl!=null&&meta&&meta.date){
+            daysumMergePmsl(st.hoursPTncb, meta.date.getUTCHours(), r.Pmsl);
+            got=true;
+          }
+        }catch(e){}
+      });
+    }
+  }catch(e){}
+  // KNMI fallback for current UTC hour if still missing
+  const utcH=now.getUTCHours();
+  if(st.hoursP[utcH]==null && st.hoursP[String(utcH)]==null){
+    try{
+      const o=await fetchRetry(KNMI_URL, 1);
+      const raw=o&&o.ok?o.text:'';
+      const parsed=raw?parseKnmiBonaire(raw):null;
+      let p=null;
+      if(parsed){
+        const cell=parsed['Pressure (hPa)']||parsed['Pressure']||parsed['pressure'];
+        if(cell&&cell.value!=null) p=parseFloat(String(cell.value).replace(',','.'));
+        if((p==null||!isFinite(p))&&parsed.pressure!=null) p=parseFloat(parsed.pressure);
+      }
+      if(p!=null&&isFinite(p)&&p>900&&p<1100){
+        daysumMergePmsl(st.hoursP, utcH, p);
+        st.hoursPSrc=st.hoursPSrc||{};
+        st.hoursPSrc[utcH]='knmi';
+        got=true;
+      }
+    }catch(e){}
+  }
+  st.pBgAt=Date.now();
+  if(got) daysumWriteStore(key, st);
+  return st.hoursP;
+}catch(e){ return {}; }
+}
+let _pBgTimer=null;
+function startPressureBackground(){
+  if(_pBgTimer) return;
+  savePressureBackground(false);
+  _pBgTimer=setInterval(function(){ savePressureBackground(false); }, 20*60*1000);
+}
+
 async function loadDaySummary(force){
 const box=document.getElementById('daysum-table');
 if(!box) return;
@@ -6036,33 +6852,39 @@ try{store=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){store={};}
 Object.keys(localStorage).forEach(function(k){
 if(k.indexOf(DAYSUM_KEY)===0&&k!==key) localStorage.removeItem(k);
 });
-if(!force&&store.built&&store.html&&store.html.indexOf('AAXX')>=0&&Date.now()-store.t<10*60*1000){
-box.innerHTML=store.html; return;
+// Instant paint from cache
+let hadCache=false;
+if(store.built&&store.html&&store.html.indexOf('AAXX')>=0){
+  box.innerHTML=store.html;
+  hadCache=true;
+  if(!force&&Date.now()-store.t<10*60*1000) return;
 }
-box.innerHTML='<div class="loading-msg">Loading 78988 day file…</div>';
+if(!hadCache) box.innerHTML='<div class="loading-msg">Loading 78988 day file…</div>';
 const now=new Date();
 const begin=new Date(now.getTime()-36*3600*1000);
-let [tg, og]=await Promise.all([fetchTgftp78988(), fetchOgimet78988(utcStamp(begin), utcStamp(now))]);
-if(!og||!/AAXX/.test(og||'')){
-const b2=new Date(now.getTime()-48*3600*1000);
-og=await fetchOgimet78988(utcStamp(b2), utcStamp(now));
-}
+const [smTxt, siTxt]=await Promise.all([
+  fetchRetry('https://tgftp.nws.noaa.gov/data/raw/sm/smca01.tncc..txt',2).then(function(o){return (o&&o.ok&&o.text)||'';}).catch(function(){return '';}),
+  fetchRetry('https://tgftp.nws.noaa.gov/data/raw/si/sica20.tncc..txt',2).then(function(o){return (o&&o.ok&&o.text)||'';}).catch(function(){return '';})
+]);
 const todayAst=localDateKey(now);
 const byLocal={}; const hoursP={}; const hoursN={};
-splitOgimetReports(og).forEach(function(msg){
-const meta=parseSynopHourUTC(msg.includes('AAXX')?msg:('AAXX 00000 '+msg));
-if(!meta||!meta.date) return;
-const lh=localHourFromUtc(meta.date);
-if(localDateKey(meta.date)!==todayAst) return;
-byLocal[lh]=byLocal[lh]||{msg, utc:meta.date, parsed:null};
-});
-if(tg){
-const meta=parseSynopHourUTC(tg);
-if(meta&&meta.date&&localDateKey(meta.date)===todayAst){
-const lh=localHourFromUtc(meta.date);
-byLocal[lh]={msg:tg, utc:meta.date, parsed:null, src:'NOAA'};
+function takeNoaa(text, kind){
+  String(text||'').split(/=/).forEach(function(chunk){
+    const msg=chunk.indexOf('AAXX')>=0?chunk.slice(chunk.indexOf('AAXX')):chunk;
+    if(msg.indexOf('78988')<0) return;
+    const meta=parseSynopHourUTC(msg.includes('AAXX')?msg:('AAXX 00000 '+msg));
+    if(!meta||!meta.date||localDateKey(meta.date)!==todayAst) return;
+    const hh=meta.date.getUTCHours();
+    const sm=(hh===0||hh===6||hh===12||hh===18);
+    const si=(hh===3||hh===9||hh===15||hh===21);
+    if(kind==='SM'&&!sm) return;
+    if(kind==='SI'&&!si) return;
+    const lh=localHourFromUtc(meta.date);
+    byLocal[lh]={msg:msg, utc:meta.date, parsed:null, src:kind==='SM'?'NOAA SM':'NOAA SI'};
+  });
 }
-}
+takeNoaa(smTxt,'SM');
+takeNoaa(siTxt,'SI');
 let html='<table class="sum-tbl"><thead><tr><th>Local</th><th>UTC</th><th>T</th><th>Td</th><th>Vis</th><th>Wind</th><th>QNH</th><th>N</th><th>7ww</th><th>RRR</th><th>Src</th></tr></thead><tbody>';
 for(let h=1;h<=24;h++){
 const row=byLocal[h];
@@ -6107,7 +6929,7 @@ async function loadOgimetSummary(force){
 const box=document.getElementById('ogsum-table');
 if(!box) return;
 if(ogSumMode==='year'){
-renderOgYear(box); return;
+await renderOgYear(box); return;
 }
 const now=new Date();
 const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
@@ -6185,21 +7007,102 @@ y[now.getMonth()+1]={T:pickNum(monthVals.T),Tmax:pickNum(monthVals.Tmax),Tmin:pi
 localStorage.setItem(yk, JSON.stringify(y));
 }catch(e){}
 }
-function renderOgYear(box){
-const y=new Date().getFullYear();
-let store={};
-try{store=JSON.parse(localStorage.getItem(OGSUM_KEY+'year_'+y)||'{}')||{};}catch(e){}
+async function ogSumFetchMonthAvg(y, m){
+// Fetch one calendar month of 78988 and return average row for year table
+const begin=new Date(Date.UTC(y, m-1, 1, 0, 0, 0));
+const endEx=new Date(Date.UTC(y, m, 1, 0, 0, 0));
+const now=new Date();
+const end=endEx>now?now:endEx;
+if(begin>now) return null;
+let text=await fetchOgimet78988(utcStamp(begin), utcStamp(end));
+if(!text||!/AAXX/.test(text)){
+  text='';
+  for(var d0=1;d0<=31;d0+=10){
+    var a=new Date(Date.UTC(y, m-1, d0, 0, 0, 0));
+    var b=new Date(Date.UTC(y, m-1, Math.min(d0+9,31), 23, 59, 0));
+    if(b>end) b=end;
+    if(a>end) break;
+    var chunk=await fetchOgimet78988(utcStamp(a), utcStamp(b));
+    if(chunk) text+=chunk+'\n';
+  }
+}
+if(!text||!/AAXX/.test(text)) return null;
+const days={};
+splitOgimetReports(text).forEach(function(msg){
+  const meta=parseSynopHourUTC(msg.includes('AAXX')?msg:('AAXX 00000 '+msg));
+  if(!meta||!meta.date) return;
+  const loc=new Date(meta.date.getTime()-4*3600*1000);
+  if(loc.getUTCFullYear()!==y || (loc.getUTCMonth()+1)!==m) return;
+  const k=localDateKey(loc);
+  days[k]=days[k]||[];
+  try{
+    const p=parseSynopBulletin(msg.includes('AAXX')?msg:('AAXX 00004\n'+msg));
+    const r=p&&p.reports&&p.reports[0];
+    if(r) days[k].push(r);
+  }catch(e){}
+});
+const keys=Object.keys(days);
+if(!keys.length) return null;
+const monthVals={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
+keys.forEach(function(k){
+  const rs=days[k];
+  const T=pickNum(rs.map(r=>r.T));
+  const Tx=pickNum(rs.map(r=>r.Tmax!=null?r.Tmax:r.T));
+  const Tn=pickNum(rs.map(r=>r.Tmin!=null?r.Tmin:r.T));
+  const V=pickNum(rs.map(visKm));
+  const W=pickNum(rs.map(r=>r.windSp));
+  const P=pickNum(rs.map(r=>r.Pmsl));
+  const R=pickNum(rs.map(r=>r.precip&&r.precip.amount));
+  if(T!=null) monthVals.T.push(T);
+  if(Tx!=null) monthVals.Tmax.push(Tx);
+  if(Tn!=null) monthVals.Tmin.push(Tn);
+  if(V!=null) monthVals.vis.push(V);
+  if(W!=null) monthVals.wind.push(W);
+  if(P!=null) monthVals.pmsl.push(P);
+  if(R!=null) monthVals.rain.push(R);
+});
+return {
+  T:pickNum(monthVals.T), Tmax:pickNum(monthVals.Tmax), Tmin:pickNum(monthVals.Tmin),
+  vis:pickNum(monthVals.vis), wind:pickNum(monthVals.wind), pmsl:pickNum(monthVals.pmsl),
+  rain:pickNum(monthVals.rain), n:keys.length
+};
+}
+async function renderOgYear(box){
+const y=2026; // fixed climate year Jan–Dec 2026
 const names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const yk=OGSUM_KEY+'year_'+y;
+let store={};
+try{store=JSON.parse(localStorage.getItem(yk)||'{}')||{};}catch(e){}
+box.innerHTML='<div class="loading-msg">Loading 2026 year summary (Jan–Dec) from Ogimet…</div>';
+// Fetch all 12 months; future months with no bulletins stay empty
+for(let m=1;m<=12;m++){
+  if(store[m] && store[m].n) continue;
+  try{
+    const row=await ogSumFetchMonthAvg(y, m);
+    if(row){ store[m]=row; try{localStorage.setItem(yk, JSON.stringify(store));}catch(e){} }
+  }catch(e){}
+}
 let html='<table class="sum-tbl"><thead><tr><th>Month</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis</th><th>Wind</th><th>QNH</th><th>Rain</th></tr></thead><tbody>';
 let any=false;
+const acc={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
 for(let m=1;m<=12;m++){
-const r=store[m];
-if(!r){ html+='<tr><td>'+names[m]+'</td><td colspan="7" class="muted">no data yet — open Month after that month has loaded</td></tr>'; continue; }
-any=true;
-html+='<tr><td>'+names[m]+'</td><td>'+(r.T??'—')+'</td><td>'+(r.Tmax??'—')+'</td><td>'+(r.Tmin??'—')+'</td><td>'+(r.vis!=null?r.vis+' km':'—')+'</td><td>'+(r.wind??'—')+'</td><td>'+(r.pmsl??'—')+'</td><td>'+(r.rain??'—')+'</td></tr>';
+  const r=store[m];
+  if(!r){ html+='<tr><td>'+names[m]+'</td><td colspan="7" class="muted">no data</td></tr>'; continue; }
+  any=true;
+  if(r.T!=null) acc.T.push(r.T);
+  if(r.Tmax!=null) acc.Tmax.push(r.Tmax);
+  if(r.Tmin!=null) acc.Tmin.push(r.Tmin);
+  if(r.vis!=null) acc.vis.push(r.vis);
+  if(r.wind!=null) acc.wind.push(r.wind);
+  if(r.pmsl!=null) acc.pmsl.push(r.pmsl);
+  if(r.rain!=null) acc.rain.push(r.rain);
+  html+='<tr><td>'+names[m]+'</td><td>'+(r.T??'—')+'</td><td>'+(r.Tmax??'—')+'</td><td>'+(r.Tmin??'—')+'</td><td>'+(r.vis!=null?r.vis+' km':'—')+'</td><td>'+(r.wind??'—')+'</td><td>'+(r.pmsl??'—')+'</td><td>'+(r.rain??'—')+'</td></tr>';
+}
+if(any){
+  html+='<tr><td><b>Year avg</b></td><td><b>'+(pickNum(acc.T)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmax)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmin)??'—')+'</b></td><td><b>'+(pickNum(acc.vis)!=null?pickNum(acc.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(acc.wind)??'—')+'</b></td><td><b>'+(pickNum(acc.pmsl)??'—')+'</b></td><td><b>'+(pickNum(acc.rain)??'—')+'</b></td></tr>';
 }
 html+='</tbody></table>';
-box.innerHTML=html+(any?'':'<p class="wx-model-note">Year table fills as each month is loaded once from Ogimet.</p>');
+box.innerHTML=html+(any?'':'<p class="wx-model-note">No 2026 year data from Ogimet yet.</p>');
 }
 /* ── TABS ── */
 function suV(id){const e=document.getElementById(id);return e?String(e.value||'').trim():'';}
@@ -6209,10 +7112,10 @@ const n=parseInt(code4,10); if(isNaN(n)) return '';
 let v=n/10; if(v<500) v+=1000; return v.toFixed(1);
 }
 function encIRIX(kind,gg,has7){
-let ir='1';
+let ir='4';
 if(kind==='SM') ir='0';
 else if(kind==='SI') ir='2';
-else ir='4';
+else ir='4'; // SN non-synoptic hour
 return {ir:ir, ix:has7?'1':'2'};
 }
 function encKindFromGG(gg){
@@ -6472,7 +7375,8 @@ const d=new Date();
 const cl=document.getElementById('va-clock');
 const u=encSynopUtc(d);
 if(cl) cl.textContent=String(u.gg).padStart(2,'0')+':00Z   '+String(u.yy).padStart(2,'0')+'-'+String(u.date.getUTCMonth()+1).padStart(2,'0')+'-'+u.date.getUTCFullYear();
-const iw=(document.querySelector('input[name="va-iw"]:checked')||{value:'4'}).value||'4';
+document.querySelectorAll('input[name="va-iw"]').forEach(function(r){r.checked=r.value==='4';});
+const iw='4';
 let yygg=suV('va-yygg');
 if(!yygg){ const u=encSynopUtc(d); yygg=String(u.yy).padStart(2,'0')+String(u.gg).padStart(2,'0')+iw; const el=document.getElementById('va-yygg'); if(el&&!el.value) el.value=yygg; }
 const ii=suV('va-ii')||'78988';
@@ -6534,6 +7438,8 @@ dest.replaceWith(sel);
 return sel;
 }
 function tplAttachCodeSelects(){
+if(window._tplSelAttached) return;
+window._tplSelAttached=true;
 [['enc-ir','su-ir','suUpdate'],['enc-ix','su-ix','suUpdate'],['enc-h','su-h','suUpdate'],['enc-n','su-n','suUpdate'],['enc-a','su-a','suUpdate'],['enc-ww','su-ww','suUpdate'],['enc-w1','su-w1','suUpdate'],['enc-w2','su-w2','suUpdate']].forEach(function(x){tplCloneSelect(x[0],x[1],x[2]);});
 [['enc-ww','va-ww','vaUpdate'],['enc-w1','va-w1','vaUpdate'],['enc-w2','va-w2','vaUpdate'],['enc-a','va-a','vaUpdate'],['enc-n','va-ndd','vaUpdate']].forEach(function(x){
 const dest=document.getElementById(x[1]);
@@ -6562,14 +7468,25 @@ function switchSubTab(panel,name){
 const bar=document.getElementById(panel+'-sub-bar');
 if(bar)bar.querySelectorAll('.sub-tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.sub===name));
 document.querySelectorAll('[id^="'+panel+'-sub-"]').forEach(p=>p.classList.toggle('active',p.id===panel+'-sub-'+name));
-if(panel==='synop'&&name==='encode') encInitTime();
+if(panel==='synop'&&name==='encode'){
+  encInitTime();
+  encEnsureDaysumP().then(function(){try{encTendFromDaysum();encUpdate(true);}catch(e){}});
+  try{encTendFromDaysum();}catch(e){}
+  try{encUpdate();}catch(e){}
+}
 if(panel==='synop'&&name==='sutron'){tplAttachCodeSelects();tplFillFromEnc('su');suUpdate();}
 if(panel==='synop'&&name==='vaisala'){tplAttachCodeSelects();document.querySelectorAll('input[name="va-iw"]').forEach(function(r){r.checked=r.value==='4';});tplFillFromEnc('va');vaUpdate();}
 if(panel==='metar'&&name==='encode') metarEncInit();
 if(panel==='synop'&&name==='daysum') loadDaySummary(false);
 if(panel==='synop'&&name==='ogsum') loadOgimetSummary(false);
+if(panel==='synop'&&name==='tncb') updateSynopStationCard('tncb');
+if(panel==='synop'&&name==='tncb'){const kh=$('knmi-bonaire-host');if(kh&&!kh.innerHTML){const doc=new DOMParser().parseFromString(KNMI_BONAIRE_HTML,'text/html');kh.innerHTML=doc.body.innerHTML;}}
 }
 window.switchSubTab=switchSubTab;
+window.ogSumView=ogSumView;
+window.loadOgimetSummary=loadOgimetSummary;
+window.savePressureBackground=savePressureBackground;
+
 const loadedTabs={metar:true,taf:false,synop:false,stations:false,atc:false,weather:false,ow:false};
 function byId(id){return document.getElementById(id);}
 async function fetchURL(url,tries){
@@ -6607,7 +7524,7 @@ return out;
 
 
 
-/* ── WEERSGESTELDHEID (08:30 AST / 12:30Z) ── */
+/* ── WEERSGESTELDHEID (08:10 AST / 12Z) ── */
 const OW_STATIONS=[
   {name:'Aruba (Reina Beatrix)',wmo:['78982'],icao:'TNCA'},
   {name:'Bonaire (Flamingo)',wmo:['78990'],icao:'TNCB'},
@@ -6628,40 +7545,222 @@ const OW_STATIONS=[
   {name:'Santo Domingo',wmo:['78486'],icao:'MDSD'},
   {name:'Valencia',wmo:['80472'],icao:'SVVA'}
 ];
+const OW_COORDS={
+  TNCA:[12.501, -70.015], TNCB:[12.131, -68.268], TNCC:[12.189, -68.960],
+  TNCE:[17.496, -62.979], TNCM:[18.041, -63.109], EHAM:[52.308, 4.764],
+  KATL:[33.640, -84.428], SKBO:[4.701, -74.147], MUHA:[22.989, -82.409],
+  MKJP:[17.936, -76.788], KMIA:[25.796, -80.287], KLGA:[40.777, -73.872],
+  SMJP:[5.453, -55.188], TTPP:[10.596, -61.339], TJSJ:[18.439, -66.002],
+  MDSD:[18.430, -69.669], SVVA:[10.150, -67.928]
+};
+function owWmoFromCode(code){
+  // WMO weather interpretation codes (Open-Meteo) → Dutch OW text
+  const c=parseInt(code,10);
+  if(isNaN(c)) return '';
+  if(c===0) return 'onbewolkt';
+  if(c===1||c===2) return 'licht bewolkt';
+  if(c===3) return 'zwaar bewolkt';
+  if(c===45||c===48) return 'nevel';
+  if(c>=51&&c<=57) return 'motregen';
+  if(c>=61&&c<=67) return 'regen';
+  if(c>=80&&c<=82) return 'regenbui';
+  if(c>=95&&c<=99) return 'onweer';
+  if(c>=71&&c<=77) return 'sneeuw';
+  return '';
+}
+const _gsynCache=Object.create(null);
+async function owFetchGsynres(ind, y, mo, d){
+const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
+if(_gsynCache[ck]) return _gsynCache[ck];
+
+  // Ogimet daily summary — Max Min Prec (ind = WMO block)
+  // Columns typically: Max Min Avg Td Hr AppT Dir Int Pres Prec TotCl LowCl Vis
+  const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=5&ano='+y+
+    '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
+  try{
+    const text=await owGet(url);
+    if(!text) return null;
+    const mm=String(mo).padStart(2,'0');
+    const dd=String(d).padStart(2,'0');
+    let row='';
+    const lines=String(text).split(/\n/);
+    for(let i=0;i<lines.length;i++){
+      if(lines[i].indexOf(mm+'/'+dd)>=0 || lines[i].indexOf(y+'/'+mm+'/'+dd)>=0){ row=lines[i]; break; }
+    }
+    if(!row){
+      const m=text.match(new RegExp(mm+'/'+dd+'[^\[]{10,300}'));
+      if(m) row=m[0];
+    }
+    if(!row) return null;
+    const nums=(row.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
+    if(nums.length<2) return null;
+    let tmax=nums[0], tmin=nums[1], rr=null;
+    const presIdx=nums.findIndex(function(n){return n>=980&&n<=1050;});
+    if(presIdx>=0 && nums[presIdx+1]!=null) rr=nums[presIdx+1];
+    else if(nums.length>=9) rr=nums[8];
+    const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)}; _gsynCache[ck]=res; return res;
+  }catch(e){ return null; }
+}
+async function owFetchMuhaGsynres(y, mo, d){
+  return owFetchGsynres('78224', y, mo, d);
+}
+
+async function owFetchOpenMeteo(lat, lon, y, mo, d){
+  const date=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto&start_date='+date+'&end_date='+date;
+  try{
+    const out=await fetchRetry(url,1);
+    if(!out||!out.ok||!out.text) return null;
+    const j=JSON.parse(out.text);
+    const day=j&&j.daily;
+    if(!day||!day.time||!day.time.length) return null;
+    return {
+      wx: owWmoFromCode(day.weather_code&&day.weather_code[0]),
+      tmax: day.temperature_2m_max?day.temperature_2m_max[0]:null,
+      tmin: day.temperature_2m_min?day.temperature_2m_min[0]:null,
+      rr: day.precipitation_sum!=null?day.precipitation_sum[0]:null
+    };
+  }catch(e){ return null; }
+}
 function owRound(n){
   if(n==null||!isFinite(n)) return null;
   const x=Number(n);
   return (x-Math.floor(x))>=0.5?Math.ceil(x):Math.floor(x);
 }
+function owNbase(N){
+  const n=N==null||N==='/'?NaN:parseInt(N,10);
+  if(n===0) return 'onbewolkt';
+  if(n>=1&&n<=3) return 'licht bewolkt';
+  if(n>=4&&n<=5) return 'half bewolkt';
+  if(n>=6&&n<=7) return 'zwaar bewolkt';
+  if(n===8) return 'geheel bewolkt';
+  return '';
+}
+function owWwNL(c){
+  // Paper form (Nederlandse SYNOP weertype) — text only, no ww numbers in output.
+  // Priority present weather: 10 nevel; 11/12 mist; 13 weerlicht; 14-16 neerslag op afstand;
+  // 17/95/97 onweer; 50-55 motregen; 60-65 regen; 80-82 regenbui.
+  if(c==null||isNaN(c)||c<10) return '';
+  if(c===10) return 'nevel';
+  if(c===11||c===12) return 'mist'; // paper: laaghangende mist; display mist (required)
+  if(c===13) return 'weerlicht';
+  if(c>=14&&c<=16) return 'neerslag op afstand';
+  if(c===17||c===95||c===97) return 'onweer';
+  if(c===18) return 'windstoten';
+  if(c===19) return 'windhoos';
+  // 20–29: past weather → combined with N-base as "… bewolkt na …"
+  if(c===20) return 'bewolkt na motregen';
+  if(c===21) return 'bewolkt na regen';
+  if(c===22) return 'bewolkt na sneeuw';
+  if(c===23) return 'bewolkt na regen en sneeuw of na ijs';
+  if(c===24) return 'bewolkt na regen of motregen met ijzel';
+  if(c===25) return 'bewolkt na regenbui';
+  if(c===26) return 'bewolkt na sneeuwbui';
+  if(c===27) return 'bewolkt na hagelbui';
+  if(c===28) return 'bewolkt na mist';
+  if(c===29) return 'bewolkt na onweer';
+  if(c>=30&&c<=35) return 'stofstorm';
+  if(c>=36&&c<=39) return 'driftsneeuw';
+  if(c===40) return 'mist op afstand';
+  if(c===41) return 'mistbank';
+  if(c>=42&&c<=49) return 'mist';
+  if(c>=50&&c<=55) return 'motregen';
+  if(c===56||c===57) return 'motregen met ijzel';
+  if(c===58||c===59) return 'regen en motregen';
+  if(c>=60&&c<=65) return 'regen';
+  if(c===66||c===67) return 'regen met ijzel';
+  if(c===68||c===69) return 'regen en sneeuw';
+  if(c>=70&&c<=75) return 'sneeuw';
+  if(c===77) return 'motsneeuw';
+  if(c===79) return 'ijsregen';
+  if(c>=80&&c<=82) return 'regenbui';
+  if(c===83||c===84) return 'natte sneeuwbui';
+  if(c===85||c===86) return 'sneeuwbui';
+  if(c>=87&&c<=90) return 'hagelbui';
+  if(c===91||c===92) return 'regen na onweer';
+  if(c===96||c===99) return 'onweer met hagel';
+  return '';
+}
+function owWawaNL(c){
+  // Automatic stations Table 4680 (wawa) — paper "Nieuw"
+  if(c==null||isNaN(c)) return '';
+  if(c===12) return 'weerlicht';
+  if(c===20) return 'bewolkt na mist';
+  if(c===21) return 'bewolkt na neerslag';
+  if(c===22) return 'bewolkt na motregen';
+  if(c===23) return 'bewolkt na regen';
+  if(c===24) return 'bewolkt na sneeuw';
+  if(c===25) return 'na ijzel';
+  if(c===26) return 'bewolkt na onweer';
+  if(c===27) return 'bewolkt na driftsneeuw';
+  if(c>=30&&c<=35) return 'mist';
+  return '';
+}
 function owWeertype(N,ww){
-  let n=N==null||N==='/'?null:parseInt(N,10);
-  if(isNaN(n)) n=null;
-  let base='';
-  if(n===0) base='onbewolkt';
-  else if(n>=1&&n<=3) base='licht bewolkt';
-  else if(n>=4&&n<=5) base='half bewolkt';
-  else if(n>=6&&n<=7) base='zwaar bewolkt';
-  else if(n===8) base='geheel bewolkt';
+  // OW only: 1) check ww first 2) then cloud cover N when combining past weather.
+  // Present ww (10+, not 20–29): weather text only.
+  // ww 21 → "{N} na regen"; ww 25 → "{N} na regenbui"; ww 23 → "{N} na regen" (Dutch form).
+  const base=owNbase(N);
   const c=parseInt(ww,10);
-  const extra={10:'nevel',13:'weerlicht',14:'neerslag op afstand',15:'neerslag op afstand',16:'neerslag op afstand',17:'onweer',21:'bewolkt na regen',25:'bewolkt na regenbui',29:'bewolkt na onweer',50:'motregen',51:'motregen',53:'motregen',55:'motregen',60:'regen',61:'regen',63:'regen',65:'regen',80:'regenbui',81:'regenbui',95:'onweer',97:'onweer'};
-  if(!isNaN(c)&&extra[c]){
-    if((c>=20&&c<=29)||(c>=50&&c<=57)||c===10||c===14||c===15||c===16) return extra[c];
-    return (base?base+' · ':'')+extra[c];
+  if(!isNaN(c) && c>=10){
+    // Past weather group 20–29: always N-base + phrase
+    if(c>=20&&c<=29){
+      let tail='';
+      if(c===21||c===23) tail='na regen';
+      else if(c===25) tail='na regenbui';
+      else if(c===20) tail='na motregen';
+      else if(c===22) tail='na sneeuw';
+      else if(c===24) tail='na regen of motregen met ijzel';
+      else if(c===26) tail='na sneeuwbui';
+      else if(c===27) tail='na hagelbui';
+      else if(c===28) tail='na mist';
+      else if(c===29) tail='na onweer';
+      else {
+        const wx=owWwNL(c);
+        tail=(wx||'').replace(/^bewolkt\s+/,'');
+      }
+      return (base||'bewolkt')+(tail?(' '+tail):'');
+    }
+    // Significant present weather — text only (nevel, mist, motregen, regen, regenbui, onweer, …)
+    const wx=owWwNL(c);
+    if(wx) return wx;
+  }
+  // No ww: cloud cover only
+  return base;
+}
+function ow2Weertype(N,ww){
+  // OW2: previous paper mapping (not the OW-only 21/23/25 short tails)
+  const base=owNbase(N);
+  const c=parseInt(ww,10);
+  const wx=owWwNL(c);
+  if(wx){
+    if(c>=20&&c<=29){
+      const tail=wx.replace(/^bewolkt\s+/,'');
+      return (base||'bewolkt')+(tail?(' '+tail):'');
+    }
+    return wx;
   }
   return base;
 }
 function owWxFromMetar(raw){
   if(!raw) return '';
   const u=raw.toUpperCase();
-  if(/\bTS|\bVCTS/.test(u)) return 'Onweer';
-  if(/\bSHRA|\b\+RA|\bRA\b|\bDZ\b/.test(u)) return 'Regen';
-  if(/\bHZ\b|\bBR\b/.test(u)) return 'Nevel';
-  if(/\bOVC/.test(u)) return 'Geheel bewolkt';
-  if(/\bBKN/.test(u)) return 'Zwaar bewolkt';
-  if(/\bSCT/.test(u)) return 'Half bewolkt';
-  if(/\bFEW/.test(u)) return 'Licht bewolkt';
-  if(/\bSKC|\bNSC|\bCLR|\bCAVOK/.test(u)) return 'Onbewolkt';
-  return '';
+  let cloud='';
+  if(/\bOVC/.test(u)) cloud='geheel bewolkt';
+  else if(/\bBKN/.test(u)) cloud='zwaar bewolkt';
+  else if(/\bSCT/.test(u)) cloud='half bewolkt';
+  else if(/\bFEW/.test(u)) cloud='licht bewolkt';
+  else if(/\bSKC|\bNSC|\bCLR|\bCAVOK/.test(u)) cloud='onbewolkt';
+  let wx='';
+  if(/\bTS|\bVCTS|\+TS/.test(u)) wx='onweer';
+  else if(/\bSHRA|\bSH\b/.test(u)) wx='regenbui';
+  else if(/\bDZ\b/.test(u)&&/\bRA\b/.test(u)) wx='regen en motregen';
+  else if(/\bDZ\b/.test(u)) wx='motregen';
+  else if(/\b\+RA|\bRA\b/.test(u)) wx='regen';
+  else if(/\bHZ\b|\bBR\b|\bFG\b/.test(u)) wx='nevel';
+  if(cloud&&wx) return cloud+' · '+wx;
+  return wx||cloud;
 }
 function owParseR24(raw){
   if(!raw) return null;
@@ -6672,16 +7771,15 @@ function owParseR24(raw){
   if(n>=9900) return (n-9900)/10;
   return n/10;
 }
-const OW_CUTOFF_MIN=8*60+30; // 08:30 LT (Curaçao, fixed UTC-4, no DST)
 function owFormDay(){
   const d=new Date(Date.now()-4*3600e3);
   const mins=d.getUTCHours()*60+d.getUTCMinutes();
-  if(mins<OW_CUTOFF_MIN) d.setUTCDate(d.getUTCDate()-1);
+  if(mins<8*60+10) d.setUTCDate(d.getUTCDate()-1);
   return {y:d.getUTCFullYear(),mo:d.getUTCMonth()+1,d:d.getUTCDate()};
 }
-function owAfter830(){
+function owAfter810(){
   const loc=new Date(Date.now()-4*3600e3);
-  return (loc.getUTCHours()*60+loc.getUTCMinutes())>=OW_CUTOFF_MIN;
+  return (loc.getUTCHours()*60+loc.getUTCMinutes())>=8*60+10;
 }
 function owWindow(){
   const end=new Date();
@@ -6694,16 +7792,26 @@ function owOgimetUrl(wmo,begin,end){
 }
 function owAwcUrl(){
   const ids=OW_STATIONS.filter(s=>s.icao).map(s=>s.icao).join(',');
-  return 'https://aviationweather.gov/api/data/metar?ids='+ids+'&hours=24&order=id,desc&format=raw';
+  return 'https://aviationweather.gov/api/data/metar?ids='+ids+'&hours=24&format=raw';
 }
+const _owGetCache=Object.create(null);
 async function owGet(url){
-  // fetchRetry already runs the full proxy chain (direct, allorigins, corsproxy,
-  // jina) internally, so a manual jina re-wrap + raw fetch() here only doubled
-  // latency on failure without adding a real fallback. One call is enough.
-  try{
-    const o=await fetchRetry(url,1);
-    if(o&&o.ok&&o.text&&!looksLikeFetchError(o.text)) return o.text;
-  }catch(e){}
+  if(_owGetCache[url]!=null) return _owGetCache[url];
+  const tries=[url, 'https://r.jina.ai/http://'+url.replace(/^https?:\/\//,'')];
+  for(const u of tries){
+    try{
+      const o=await fetchRetry(u,1);
+      if(o&&o.ok&&o.text&&!looksLikeFetchError(o.text)){ _owGetCache[url]=o.text; return o.text; }
+    }catch(e){}
+    try{
+      const r=await fetch(u,{cache:'no-store'});
+      if(r&&r.ok){
+        const t=await r.text();
+        if(t&&!looksLikeFetchError(t)){ _owGetCache[url]=t; return t; }
+      }
+    }catch(e){}
+  }
+  _owGetCache[url]='';
   return '';
 }
 function owParseOgimet(text){
@@ -6716,12 +7824,22 @@ function owParseOgimet(text){
   return rows;
 }
 function owPickHour(rows,y,mo,d,hours){
-  const want=new Set(hours);
-  let best=null;
-  rows.forEach(r=>{
-    if(r.y===y&&r.mo===mo&&r.d===d&&want.has(r.h)) best=r;
-  });
-  return best;
+  const order=(hours||[]).map(function(h){return parseInt(h,10);});
+  for(let i=0;i<order.length;i++){
+    const h=order[i];
+    const hit=(rows||[]).find(function(r){return r.y===y&&r.mo===mo&&r.d===d&&r.h===h;});
+    if(hit) return hit;
+  }
+  return null;
+}
+function owPick1152(rows,y,mo,d){
+  const hits=(rows||[]).filter(function(r){return r.y===y&&r.mo===mo&&r.d===d&&r.h===11;});
+  if(!hits.length) return null;
+  const exact=hits.find(function(r){return r.mi===52;});
+  if(exact) return exact;
+  const near=hits.find(function(r){return r.mi>=50&&r.mi<=59;});
+  if(near) return near;
+  return hits[0];
 }
 function owFirstClimate(repText){
   // Section 3: first 1snTxTxTx and first 2snTnTnTn only.
@@ -6776,6 +7894,16 @@ function owMetarTemps(lines){
   });
   return {tmax,tmin,wx};
 }
+async function owFetchMetar24(icao){
+  const url='https://aviationweather.gov/api/data/metar?ids='+encodeURIComponent(icao)+'&format=raw&hours=24';
+  try{
+    const out=await owGet(url);
+    if(!out) return [];
+    return String(out).split(/\n+/).map(function(l){return l.trim();}).filter(function(l){
+      return l.indexOf(icao)>=0 && /\s(M?\d{2})\/(M?\d{2})\s/.test(l);
+    });
+  }catch(e){ return []; }
+}
 function owBlankRows(){
   return OW_STATIONS.map(x=>x.sep?x:{...x,wx:'',tmax:'',tmin:'',rr:''});
 }
@@ -6787,9 +7915,10 @@ function owCopyCell(ev){
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done).catch(function(){});
   else { const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); done(); }
 }
-function owRender(rows, fd, filled){
-  const host=$('ow-table-host');
+function owRender(rows, fd, filled, hostId, wxKey){
+  const host=$(hostId||'ow-table-host');
   if(!host) return;
+  wxKey=wxKey||'wx';
   const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
   const dow=days[new Date(Date.UTC(fd.y,fd.mo-1,fd.d,16)).getUTCDay()]||'';
   const dd=String(fd.d).padStart(2,'0')+' - '+String(fd.mo).padStart(2,'0')+' - '+fd.y;
@@ -6806,10 +7935,10 @@ function owRender(rows, fd, filled){
     if(r.sep){ html+='<tr class="ow-sep"><td colspan="5"></td></tr>'; return; }
     html+='<tr>';
     html+=cell('', r.name, r.name);
-    html+=cell('wx', r.wx, '---');
-    html+=cell('num', r.tmax, '---');
-    html+=cell('num', r.tmin, '---');
-    html+=cell('num', r.rr, '--.--');
+    html+=cell('wx', r[wxKey], '---');
+    html+=cell('num', r[wxKey==='wx2'?'tmax2':'tmax'], '---');
+    html+=cell('num', r[wxKey==='wx2'?'tmin2':'tmin'], '---');
+    html+=cell('num', wxKey==='wx2'?r.rr2:r.rr, '--.--');
     html+='</tr>';
   });
   html+='<tr><td class="ow-foot" colspan="5">** Seru Mahuma, '+dow+', '+dd+' · 08:00 uur LT / 12Z **</td></tr>';
@@ -6820,40 +7949,161 @@ function owRender(rows, fd, filled){
 let owLastKey='';
 let owTimer=null;
 let owBusy=false;
+function owWxTemplateList(){
+  return [
+    'onbewolkt','licht bewolkt','half bewolkt','zwaar bewolkt','geheel bewolkt',
+    'nevel','laaghangende mist','mist','mist op afstand','mistbank',
+    'neerslag op afstand','motregen','regen','regen en motregen','motregen met ijzel',
+    'regenbui','sneeuwbui','hagelbui','sneeuw','regen en sneeuw',
+    'onweer','weerlicht','stofstorm','driftsneeuw','windhoos',
+    'bewolkt na motregen','bewolkt na regen','bewolkt na regenbui','bewolkt na onweer','bewolkt na mist'
+  ];
+}
+function ow2BuildWxTemplate(){
+  const host=document.getElementById('ow2-wx-chips');
+  if(!host||host.getAttribute('data-built')==='1') return;
+  host.innerHTML='';
+  owWxTemplateList().forEach(function(txt){
+    const sp=document.createElement('span');
+    sp.className='ow2-wx-chip';
+    sp.textContent=txt;
+    sp.setAttribute('data-copy', txt);
+    sp.title='Dubbelklik om te kopiëren';
+    sp.addEventListener('dblclick', function(ev){
+      const v=txt;
+      const done=function(){ sp.style.background='#d4edda'; setTimeout(function(){ sp.style.background=''; },450); };
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(v).then(done).catch(function(){
+          try{ const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
+        });
+      }else{
+        try{ const ta=document.createElement('textarea'); ta.value=v; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
+      }
+    });
+    host.appendChild(sp);
+  });
+  host.setAttribute('data-built','1');
+}
+function owCopyTable(which){
+  which=which||'ow';
+  const host=$(which==='ow2'?'ow2-table-host':'ow-table-host');
+  if(!host) return;
+  const rows=[].slice.call(host.querySelectorAll('tr'));
+  const lines=[];
+  rows.forEach(function(tr){
+    const cells=[].slice.call(tr.querySelectorAll('th,td')).map(function(c){return (c.getAttribute('data-copy')||c.textContent||'').replace(/\s+/g,' ').trim();});
+    if(cells.length) lines.push(cells.join('\t'));
+  });
+  const text=lines.join('\n');
+  const done=function(){
+    const b=$(which==='ow2'?'ow2-copy-btn':'ow-copy-btn');
+    if(b){ const t=b.textContent; b.textContent='Copied'; setTimeout(function(){b.textContent=t;},900); }
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(function(){
+    try{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
+  });
+  else try{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }catch(e){}
+}
+function owRowFilledOw(row){
+  if(!row||row.sep) return true;
+  return !!(row.wx) && row.tmax!==''&&row.tmax!=null && row.tmin!==''&&row.tmin!=null && row.rr!==''&&row.rr!=null;
+}
+function owRowFilledOw2(row){
+  if(!row||row.sep) return true;
+  return !!(row.wx2) && row.tmax2!==''&&row.tmax2!=null && row.tmin2!==''&&row.tmin2!=null && row.rr2!==''&&row.rr2!=null;
+}
+function owRowNeedsSynop(row){
+  return !owRowFilledOw(row) || !owRowFilledOw2(row);
+}
+function owReadKeep(key){
+  try{
+    const j=JSON.parse(localStorage.getItem('meteo_owKeep_'+key)||'null');
+    if(j&&j.key===key&&Array.isArray(j.rows)) return j.rows;
+  }catch(e){}
+  if(window.owKeep&&window.owKeep.key===key&&Array.isArray(window.owKeep.rows)) return window.owKeep.rows;
+  return null;
+}
+function owWriteKeep(key, rows){
+  const copy=(rows||[]).map(function(r){return Object.assign({}, r);});
+  window.owKeep={key:key, rows:copy};
+  try{ localStorage.setItem('meteo_owKeep_'+key, JSON.stringify({key:key, rows:copy, at:Date.now()})); }catch(e){}
+}
+async function owMapPool(items, limit, fn){
+  const out=new Array(items.length);
+  let i=0;
+  async function worker(){
+    while(i<items.length){
+      const idx=i++;
+      out[idx]=await fn(items[idx], idx);
+    }
+  }
+  const n=Math.min(limit||6, items.length||1);
+  await Promise.all(Array.from({length:n}, function(){return worker();}));
+  return out;
+}
+
 async function owLoad(force){
   const stEl=$('ow-status');
   const host=$('ow-table-host');
   if(!host) return;
   const fd=owFormDay();
   const key=fd.y+'-'+fd.mo+'-'+fd.d;
-  if(!force && owLastKey===key && host.getAttribute('data-filled')==='1') return;
   if(owBusy && !force) return;
+  // Soft open: if day already saved and complete enough, skip network
+  if(!force){
+    const keep0=owReadKeep(key);
+    if(keep0 && owLastKey===key && host.getAttribute('data-filled')==='1'){
+      const miss=keep0.filter(function(r){return !r.sep && typeof owRowNeedsSynop==='function' && owRowNeedsSynop(r);}).length;
+      if(miss===0){
+        owRender(keep0, fd, true);
+        owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
+        if(stEl) stEl.textContent='Opgeslagen · compleet · '+key;
+        const st2=$('ow2-status');
+        if(st2) st2.textContent='Opgeslagen · compleet · '+key;
+        return;
+      }
+    }
+  }
   owBusy=true;
-  const rows=owBlankRows();
-  owRender(rows, fd, false);
-  if(stEl) stEl.textContent='Laden SYNOP…';
+  try{
+  if(force){ for(const k in _owGetCache) delete _owGetCache[k]; }
+  // Never wipe filled cells — restore saved day, only fill gaps
+  const keep=owReadKeep(key);
+  const rows=keep ? keep.map(function(r){return Object.assign({}, r);}) : owBlankRows();
+  owRender(rows, fd, !!(keep&&keep.some(function(r){return !r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr);})));
+  owRender(rows, fd, !!(keep&&keep.some(function(r){return !r.sep&&(r.wx2||r.tmax2!==''||r.tmin2!==''||r.rr2);})), 'ow2-table-host', 'wx2');
+  if(stEl) stEl.textContent=keep?'Bijwerken lege velden…':'Laden SYNOP…';
+  const st2i=$('ow2-status');
+  if(st2i) st2i.textContent=keep?'Bijwerken lege OW2…':'Laden…';
   const y=fd.y,mo=fd.mo,d=fd.d;
   const prev=new Date(Date.UTC(y,mo-1,d)-86400e3);
   const py=prev.getUTCFullYear(),pmo=prev.getUTCMonth()+1,pd=prev.getUTCDate();
   const win=owWindow();
 
   // 1) SYNOP first (12Z weertype, 18Z Tmax, 06Z Tmin, 24h rain)
-  await Promise.all(OW_STATIONS.map(async (stn,idx)=>{
+  await owMapPool(OW_STATIONS, 6, async (stn,idx)=>{
     if(stn.sep) return;
+    const row0=rows[idx];
+    // Only retry missing — fully filled stations are left alone
+    if(row0 && !owRowNeedsSynop(row0)) return;
     let parsed=[];
-    for(const w of stn.wmo){
-      const txt=await owGet(owOgimetUrl(w, win.begin, win.end));
-      parsed=owParseOgimet(txt);
-      if(parsed.length) break;
+    if(stn.wmo.length===1){
+      parsed=owParseOgimet(await owGet(owOgimetUrl(stn.wmo[0], win.begin, win.end)));
+    }else{
+      const texts=await Promise.all(stn.wmo.map(function(w){return owGet(owOgimetUrl(w, win.begin, win.end));}));
+      for(let ti=0;ti<texts.length;ti++){
+        parsed=owParseOgimet(texts[ti]);
+        if(parsed.length) break;
+      }
     }
     if(!parsed.length && /^(TNCA|TNCB|TNCC)$/.test(stn.icao)){
       parsed=owParseOgimet(await owGet('https://www.ogimet.com/ultimos_synops2.php?estado=Cura&fmt=html&Enviar=Ver'));
     }
     const us=['KATL','KMIA','KLGA','TJSJ'].includes(stn.icao);
-    const r12=owPickHour(parsed,y,mo,d, us?[11,12]:[12]);
-    const r18=owPickHour(parsed,py,pmo,pd, us?[17,18]:[18]);
+    const r12=us?owPick1152(parsed,y,mo,d):owPickHour(parsed,y,mo,d,[12]);
+    const r18=owPickHour(parsed,py,pmo,pd, us?[17]:[18]);
     const r00=owPickHour(parsed,y,mo,d,[0])||owPickHour(parsed,py,pmo,pd,[23]);
-    const r06=owPickHour(parsed,y,mo,d, us?[5,6]:[6]);
+    const r06=owPickHour(parsed,y,mo,d, us?[5]:[6]);
     const d12=r12?owDecode(r12.rep):null;
     const d18=r18?owDecode(r18.rep):null;
     const d00=r00?owDecode(r00.rep):null;
@@ -6861,7 +8111,9 @@ async function owLoad(force){
     const row=rows[idx];
     if(d12){
       const wx=owWeertype(d12.N,d12.ww);
-      if(wx) row.wx=wx;
+      if(wx && !row.wx) row.wx=wx;
+      const wx2=ow2Weertype(d12.N,d12.ww)||'';
+      if(wx2 && !row.wx2) row.wx2=wx2;
     }
     let tmax=null,tmin=null,rr=null;
     if(stn.icao==='SKBO'){
@@ -6889,62 +8141,108 @@ async function owLoad(force){
     else if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
     if(d12&&d12._r24!=null) rr=d12._r24;
     else if(d06&&d06._r24!=null) rr=d06._r24;
-    if(tmax!=null) row.tmax=owRound(tmax);
-    if(tmin!=null) row.tmin=owRound(tmin);
-    if(rr!=null) row.rr=(Math.round(rr*10)/10).toFixed(1);
+    if(tmax!=null && (row.tmax==null||row.tmax==='')) row.tmax=owRound(tmax);
+    if(tmin!=null && (row.tmin==null||row.tmin==='')) row.tmin=owRound(tmin);
+    if(rr!=null && (row.rr==null||row.rr==='')) row.rr=(Math.round(rr*10)/10).toFixed(1);
+    // OW2: only groups present on this fetch. No invented 0.0 rain, no stale max/min.
+    if((row.tmax2==null||row.tmax2==='') && tmax!=null) row.tmax2=owRound(tmax);
+    if((row.tmin2==null||row.tmin2==='') && tmin!=null) row.tmin2=owRound(tmin);
+    if((row.rr2==null||row.rr2==='') && rr!=null) row.rr2=(Math.round(rr*10)/10).toFixed(1);
+  });
+  // OW + OW2: Ogimet gsynres daily Max/Min/Prec for selected stations
+  // 81225 Paramaribo, 06240 Amsterdam, 78224 Havana, 80472 Valencia
+  const st2pre=$('ow2-status');
+  if(st2pre) st2pre.textContent='Laden gsynres (SMJP/EHAM/MUHA/SVVA)…';
+  if(stEl) stEl.textContent='Laden gsynres…';
+  const GSYN={SMJP:'81225',EHAM:'06240',MUHA:'78224',SVVA:'80472'};
+  try{
+    await Promise.all(Object.keys(GSYN).map(async function(icao){
+      const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
+      if(mi<0) return;
+      const row=rows[mi];
+      const needOw=(row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin==='')||(row.rr==null||row.rr==='');
+      const needOw2=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||(row.rr2==null||row.rr2==='');
+      if(!needOw && !needOw2) return;
+      const g=await owFetchGsynres(GSYN[icao], y, mo, d);
+      if(!g) return;
+      if(needOw){
+        if((row.tmax==null||row.tmax==='') && isFinite(g.tmax)) row.tmax=owRound(g.tmax);
+        if((row.tmin==null||row.tmin==='') && isFinite(g.tmin)) row.tmin=owRound(g.tmin);
+        if((row.rr==null||row.rr==='') && isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
+      }
+      if(needOw2){
+        if((row.tmax2==null||row.tmax2==='') && isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
+        if((row.tmin2==null||row.tmin2==='') && isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
+        if((row.rr2==null||row.rr2==='') && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
+      }
+    }));
+  }catch(e){}
+  // OW2 only: 24h METAR gap-fill for MUHA (Havana) and SMJP (Paramaribo).
+  if(st2pre) st2pre.textContent='Laden METAR 24u (MUHA/SMJP)…';
+  await Promise.all(OW_STATIONS.map(async function(stn,idx){
+    if(stn.sep) return;
+    if(!['MUHA','SMJP'].includes(stn.icao)) return;
+    const row=rows[idx];
+    if(row.wx2 && row.tmax2!=null && row.tmax2!=='' && row.tmin2!=null && row.tmin2!=='' && row.rr2!=null && row.rr2!=='') return;
+    const lines=await owFetchMetar24(stn.icao);
+    const mt=owMetarTemps(lines);
+    if(!row.wx2 && mt.wx) row.wx2=mt.wx;
+    if((row.tmax2==null||row.tmax2==='') && mt.tmax!=null) row.tmax2=owRound(mt.tmax);
+    if((row.tmin2==null||row.tmin2==='') && mt.tmin!=null) row.tmin2=owRound(mt.tmin);
+    if((row.rr2==null||row.rr2==='') && lines.length){
+      const wet=lines.some(function(l){return /\b(RA|SHRA|DZ|TS|SH)\b/.test(l.toUpperCase());});
+      if(!wet) row.rr2='0.0';
+    }
+  }));
+  // OW2 final gap-fill: Open-Meteo for any still-empty cells
+  if(st2pre) st2pre.textContent='Laden Open-Meteo…';
+  await Promise.all(OW_STATIONS.map(async function(stn,idx){
+    if(stn.sep) return;
+    const row=rows[idx];
+    const need=!row.wx2 || row.tmax2==null || row.tmax2==='' || row.tmin2==null || row.tmin2==='' || row.rr2==null || row.rr2==='';
+    if(!need) return;
+    const c=OW_COORDS[stn.icao];
+    if(!c) return;
+    const om=await owFetchOpenMeteo(c[0], c[1], y, mo, d);
+    if(!om) return;
+    if(!row.wx2 && om.wx) row.wx2=om.wx;
+    if((row.tmax2==null||row.tmax2==='') && om.tmax!=null && isFinite(om.tmax)) row.tmax2=owRound(om.tmax);
+    if((row.tmin2==null||row.tmin2==='') && om.tmin!=null && isFinite(om.tmin)) row.tmin2=owRound(om.tmin);
+    if((row.rr2==null||row.rr2==='') && om.rr!=null && isFinite(om.rr)) row.rr2=(Math.round(om.rr*10)/10).toFixed(1);
   }));
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
+  const got2=rows.some(r=>!r.sep&&(r.wx2||r.tmax2!==''||r.tmin2!==''||r.rr2));
+  const miss=rows.filter(function(r){return !r.sep&&owRowNeedsSynop(r);}).length;
+  owWriteKeep(key, rows);
   owRender(rows, fd, got);
-  if(got){
-    owLastKey=key;
-    try{
-      localStorage.setItem('rwc_ow_'+key, JSON.stringify({rows:rows,fd:fd,t:Date.now()}));
-      // prune OW cache entries older than 7 days
-      const cutoff=Date.now()-7*24*3600*1000;
-      for(let i=localStorage.length-1;i>=0;i--){
-        const k=localStorage.key(i);
-        if(!k||k.indexOf('rwc_ow_')!==0) continue;
-        try{ const o=JSON.parse(localStorage.getItem(k)); if(!o||!o.t||o.t<cutoff) localStorage.removeItem(k); }catch(e){ localStorage.removeItem(k); }
-      }
-    }catch(e){}
+  owRender(rows, fd, got2, 'ow2-table-host', 'wx2');
+  const st2=$('ow2-status');
+  if(st2) st2.textContent=got2?(miss?('Opgeslagen · nog '+miss+' open · '+key):('Gevuld · opgeslagen · '+key)):('Geen data — ⚙ CORS · '+key);
+  if(got||got2) owLastKey=key;
+  if(stEl) stEl.textContent=got?(miss?('Opgeslagen · nog '+miss+' open · '+key):('Gevuld · opgeslagen · '+key)):('Geen SYNOP — ⚙ CORS proxy · '+key);
+  if(host) host.setAttribute('data-filled', (got||got2)?'1':'0');
+  const host2=$('ow2-table-host');
+  if(host2) host2.setAttribute('data-filled', got2?'1':'0');
+  }catch(e){
+    const stEl2=$('ow-status');
+    if(stEl2) stEl2.textContent='Fout bij laden · '+((e&&e.message)||'retry');
   }
-  if(stEl) stEl.textContent=got?('Gevuld · SYNOP · '+key):('Geen SYNOP — ⚙ CORS proxy · '+key);
-  owBusy=false;
-}
-function owLoadFromCache(key){
-  try{
-    const s=localStorage.getItem('rwc_ow_'+key);
-    if(!s) return false;
-    const o=JSON.parse(s);
-    if(!o||!o.rows||!o.fd) return false;
-    owRender(o.rows, o.fd, true);
-    owLastKey=key;
-    const stEl=$('ow-status');
-    if(stEl) stEl.textContent='Gevuld · SYNOP (cache) · '+key;
-    return true;
-  }catch(e){ return false; }
-}
-function owCheckAndLoad(){
-  const f=owFormDay();
-  const key=f.y+'-'+f.mo+'-'+f.d;
-  if(owLastKey===key) return;
-  if(owLoadFromCache(key)) return; // instant paint from today's cached result (e.g. after a reload)
-  if(owAfter830()) owLoad(false);
+  finally{ owBusy=false; try{ow2BuildWxTemplate();}catch(e){} }
 }
 function owWatch(){
   if(owTimer) return;
-  // Fire an immediate check on startup (covers opening the app after 08:30,
-  // reloading the page after it already filled today, or leaving it open
-  // across the 08:30 threshold) instead of waiting up to 30s for the first
-  // interval tick, and without requiring the user to manually open the OW tab.
-  owCheckAndLoad();
-  owTimer=setInterval(owCheckAndLoad, 30000);
+  owTimer=setInterval(function(){
+    const f=owFormDay();
+    const key=f.y+'-'+f.mo+'-'+f.d;
+    if(owAfter810() && owLastKey!==key) owLoad(true);
+  }, 30000);
 }
 owWatch();
 window.owCopyCell=owCopyCell;
 try{
   const _fd=owFormDay();
   owRender(owBlankRows(), _fd, false);
+  owRender(owBlankRows(), _fd, false, 'ow2-table-host', 'wx2');
 }catch(e){}
 
 function switchTab(name){
@@ -6961,11 +8259,12 @@ if(name==='taf')loadAllTafs();
 else if(name==='synop'){loadAllSynops();switchSubTab('synop','encode');}
 else if(name==='stations')fetchStationsData();
 else if(name==='weather')loadWeather();
-else if(name==='ow')owCheckAndLoad();
+else if(name==='ow'||name==='ow2'){ owLoad(false); try{ow2BuildWxTemplate();}catch(e){} }
 }
 if(name==='atc'){
-try{atcInitMap();}catch(e){}
-setTimeout(function(){if(atcMap)try{atcMap.invalidateSize();}catch(e){}},250);
+try{ atcEnsureFrame(); atcInitMap(); }catch(e){}
+setTimeout(function(){ try{ atcEnsureFrame(); if(atcMap) atcMap.invalidateSize(); }catch(e){} }, 200);
+setTimeout(function(){ try{ atcEnsureFrame(); }catch(e){} }, 1500);
 }
 if(name==='stations'){
 setTimeout(()=>{
@@ -6980,7 +8279,7 @@ if(mbtn)mbtn.addEventListener('click',()=>{mute=!mute;mbtn.textContent=mute?'�
 const rbtn=$('refresh-btn');
 if(rbtn)rbtn.addEventListener('click',()=>{
 updateVis();
-refreshAllMetars();
+refreshAllMetars(false);
 if(loadedTabs.taf)loadAllTafs();
 if(loadedTabs.synop)loadAllSynops();
 if(loadedTabs.weather)loadWeather();
@@ -7059,8 +8358,9 @@ renderMetar('TNCC',`TNCC ${t} 12020G30KT 9999 SCT022 29/25 Q1012`);
 }
 })();
 // Longer intervals = less background work on mobile
-setInterval(function(){refreshAllMetars();}, METAR_MS);
+setInterval(function(){refreshAllMetars(false);}, METAR_MS);
 setInterval(function(){updateVis();}, VIS_MS);
+try{startPressureBackground();}catch(e){}
 })();
 </script>
 <script>

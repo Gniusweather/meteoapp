@@ -8162,10 +8162,17 @@ async function owLoad(force){
       const row=rows[mi];
       const needOw=(row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin==='')||(row.rr==null||row.rr==='');
       const needOw2=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||(row.rr2==null||row.rr2==='');
-      if(!needOw && !needOw2) return;
+      // OW MUHA/SVVA: prefer gsynres for max/min/rain (weertype stays from main SYNOP)
+      const forceGsynOw=(icao==='MUHA'||icao==='SVVA');
+      if(!needOw && !needOw2 && !forceGsynOw) return;
       const g=await owFetchGsynres(GSYN[icao], y, mo, d);
       if(!g) return;
-      if(needOw){
+      if(forceGsynOw){
+        // OW only — prefer gsynres 78224 (MUHA) / 80472 (SVVA) at 12Z form day
+        if(isFinite(g.tmax)) row.tmax=owRound(g.tmax);
+        if(isFinite(g.tmin)) row.tmin=owRound(g.tmin);
+        if(isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
+      }else if(needOw){
         if((row.tmax==null||row.tmax==='') && isFinite(g.tmax)) row.tmax=owRound(g.tmax);
         if((row.tmin==null||row.tmin==='') && isFinite(g.tmin)) row.tmin=owRound(g.tmin);
         if((row.rr==null||row.rr==='') && isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);

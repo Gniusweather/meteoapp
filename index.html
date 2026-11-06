@@ -1190,8 +1190,8 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 <button class="sub-tab-btn" data-sub="tncc" onclick="switchSubTab('synop','tncc')">TNCC</button>
 <button class="sub-tab-btn" data-sub="rules" onclick="switchSubTab('synop','rules')">FM-12</button>
 <button class="sub-tab-btn active" data-sub="encode" onclick="switchSubTab('synop','encode')">Encode</button>
-<button class="sub-tab-btn" data-sub="sutron" onclick="switchSubTab('synop','sutron')">Sutron</button>
-<button class="sub-tab-btn" data-sub="vaisala" onclick="switchSubTab('synop','vaisala')">Vaisala</button>
+<button class="sub-tab-btn" data-sub="sutron" onclick="switchSubTab('synop','sutron'">Encoder 2</button>
+<button class="sub-tab-btn" data-sub="vaisala" onclick="switchSubTab('synop','vaisala')">Encoder 3</button>
 <button class="sub-tab-btn" data-sub="daysum" onclick="switchSubTab('synop','daysum')">Day summary</button>
 <button class="sub-tab-btn" data-sub="ogsum" onclick="switchSubTab('synop','ogsum')">Ogimet summary</button>
 </div>
@@ -2124,7 +2124,7 @@ Fill only the layers you need — incomplete layers are skipped. 78988 often has
 </div>
 <div class="sub-panel" id="synop-sub-vaisala">
 <div class="va-wrap">
-<div class="va-bar">SYNOP Template · AviMet / Vaisala</div>
+<div class="va-bar">SYNOP Template · Encoder 3</div>
 <div class="va-src" id="va-src"></div>
 <div class="va-head">
 <div>SYNOP &nbsp; <span id="va-clock"></span></div>
@@ -2750,7 +2750,7 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
   <div class="s-head">
     <div class="s-title">Overzicht weersgesteldheid</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="ow-status" id="ow-status">Wacht tot 08:30 LT (12:30Z) of druk ↻</span>
+      <span class="ow-status" id="ow-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
       <button class="s-btn" id="ow-copy-btn" onclick="owCopyTable('ow')" title="Copy full OW table">Copy</button>
       <button class="s-btn" id="ow-refresh-btn" onclick="owLoad(true)">↻</button>
     </div>
@@ -2767,7 +2767,7 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
   <div class="s-head">
     <div class="s-title">OW2</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="ow-status" id="ow2-status">Wacht tot 08:30 LT (12:30Z) of druk ↻</span>
+      <span class="ow-status" id="ow2-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
       <button class="s-btn" id="ow2-copy-btn" onclick="owCopyTable('ow2')" title="Copy full OW2 table">Copy</button>
       <button class="s-btn" id="ow2-refresh-btn" onclick="owLoad(true)">↻</button>
     </div>
@@ -3953,7 +3953,7 @@ if(rr){const s=rr.querySelector('.taf-raw-text');if(s)s.textContent=parsed.rawFu
 tafTbody.querySelectorAll(`tr.taf-change-row[data-icao="${icao}"]`).forEach(r=>r.remove());
 parsed.changes.forEach(ch=>{
 const cr=document.createElement('tr');cr.className=`taf-change-row type-${ch.type}`;cr.dataset.icao=icao;
-cr.innerHTML=`<td>${escHtml(ch.label)}</td><td>${escHtml(ch.period||'--')}</td><td>${escHtml(ch.wind)}</td><td>${escHtml(ch.vis)}</td><td>${escHtml(ch.wx)}</td><td>${escHtml(ch.cld)}</td>`;
+cr.innerHTML=`<td>${ch.label}</td><td>${ch.period||'--'}</td><td>${ch.wind}</td><td>${ch.vis}</td><td>${ch.wx}</td><td>${ch.cld}</td>`;
 applyTafAlerts(cr.querySelectorAll('td'),ch);
 if(rr)tafTbody.insertBefore(cr,rr);else tafTbody.appendChild(cr);
 });
@@ -4024,7 +4024,7 @@ const v=parseFloat(val);
 if(isNaN(v)) return null;
 if(v===0) return '000';
 if(v<0.05) return '990'; // trace
-if(v<0.95) return String(Math.round(v*10)+990).padStart(3,'0'); // 991-999 (0.1-0.9 mm)
+if(v<1) return String(Math.round(v*10)+990).padStart(3,'0'); // 991-999
 if(v>=989) return '989';
 return String(Math.round(v)).padStart(3,'0');
 }
@@ -4150,7 +4150,7 @@ if(nOk){
     ns1El.value=N; ns1El.dataset.auto='1';
   }
   if(c1El && c1El.dataset.manual!=='1' && (c1El.value===''||c1El.dataset.auto==='1')){
-    c1El.value=(clVal&&clVal!=='/')?clVal:'/'; c1El.dataset.auto='1';
+    c1El.value='8'; c1El.dataset.auto='1';
   }
   if((clVal===''||clVal==='2') && p('enc-cl') && p('enc-cl').dataset.manual!=='1'){
     // default CL=2 Cu when not CB
@@ -4169,9 +4169,9 @@ const r24Raw=v('enc-r24');
 // Up to 4 Sec-3 cloud layers 8NsChshs
 const s3Clouds=[];
 for(let i=1;i<=4;i++){
-let ns=v('enc-s3-ns'+i), c=(i===1?(v('enc-s3-c'+i)||v('enc-cl')||'/'):v('enc-s3-c'+i)), hs=v('enc-s3-hs'+i);
+let ns=v('enc-s3-ns'+i), c=(i===1?(v('enc-s3-c'+i)||'8'):v('enc-s3-c'+i)), hs=v('enc-s3-hs'+i);
 if(i===1 && (ns===''||ns==='/') && N!==''&&N!=='0'&&N!=='/') ns=N;
-if(i===1 && (c===''||c==='/')) c=v('enc-cl')||'/';
+if(i===1 && (c===''||c==='/')) c='8';
 if(ns!==''&&c!==''&&hs!=='') s3Clouds.push({ns,c,hs:hs.replace(/\D/g,'').padStart(2,'0').slice(-2),i});
 }
 const groups=[];
@@ -4339,18 +4339,16 @@ s3bdwn.push([g,`Cloud layer ${cl.i}: Ns=${cl.ns} C=${cl.c} hshs=${cl.hs}`]);
 // SN: Section 3 group 8 is required. Build from S3 layers or Sec-1 N/CL + h.
 if(isSN && N!=='0' && parseInt(N,10)!==0 && !sec3.some(function(g){return g.charAt(0)==='8';})){
 const ns=v('enc-s3-ns1')||v('enc-nh')||v('enc-n')||'/';
-const c=v('enc-s3-c1')||v('enc-cl')||'/';
+const c='8';
+const cEl=p('enc-s3-c1'); if(cEl){ cEl.value='8'; }
 let hs=v('enc-s3-hs1').replace(/\D/g,'');
-let hsWarn='';
 if(!hs){
 const hmap={0:'00',1:'01',2:'02',3:'03',4:'05',5:'10',6:'15',7:'20',8:'25',9:'35'};
 hs=hmap[parseInt(v('enc-h'),10)]||'//';
 }else hs=hs.padStart(2,'0').slice(-2);
-const hsNum=parseInt(hs,10);
-if((hsNum>=50&&hsNum<=66)||(hsNum>=71&&hsNum<=81&&hsNum!==77&&hsNum!==78)) hsWarn=' \u26a0 height code in unconfirmed WMO 1677 band \u2014 verify';
 const g='8'+ns+c+hs;
 sec3.push(g);
-s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs'+hsWarn]);
+s3bdwn.push([g,'SN Sec 3 cloud 8NsChshs']);
 }
 let body=groups.join(' ');
 if(sec3.length){body+=' 333 '+sec3.join(' ');bdwn.push(['333','Section 3 separator']);s3bdwn.forEach(r=>bdwn.push(r));}
@@ -4702,10 +4700,10 @@ const st=encStationTempTd();
 const src=st?(' · station '+st.T.toFixed(1)+'/'+st.Td.toFixed(1)+'°C'):'';
 hint.textContent='· '+ft+' ft / '+Math.round(ft*0.3048)+' m'+src;
 }
-const hsR=encHsFromFt(ft);
+const hs=encHsFromFt(ft);
 const hs1=document.getElementById('enc-s3-hs1');
-if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=hsR.hs; hs1.dataset.auto='1'; hs1.title=hsR.approx?'Approximate: WMO 1677 band 50-66/71-81 not fully confirmed':''; hs1.style.outline=hsR.approx?'2px dashed orange':''; }
-return {ft:ft,h:h,hs:hsR.hs,hsApprox:hsR.approx};
+if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=hs; hs1.dataset.auto='1'; }
+return {ft:ft,h:h,hs:hs};
 }
 function encStampUtc(){
 const u=encSynopUtc();
@@ -4715,16 +4713,11 @@ if(yy) yy.value=u.yy;
 if(gg) gg.value=u.gg;
 }
 function encHsFromFt(ft){
-if(ft==null||!isFinite(ft)) return {hs:'//',approx:false};
-const f=Math.max(0,ft);
-if(f<100) return {hs:'00',approx:false};
-if(f<=4950) return {hs:String(Math.min(49,Math.round(f/100))).padStart(2,'0'),approx:false};
-if(f<17000){ const a=49+Math.round((f-4900)/((17000-4900)/(67-49))); return {hs:String(Math.max(50,Math.min(66,a))).padStart(2,'0'),approx:true}; }
-if(f<=20500){ const h=67+Math.round((f-17000)/1000); return {hs:String(Math.min(70,h)).padStart(2,'0'),approx:false}; }
-if(f<28500){ const a=70+Math.round((f-20000)/1000); return {hs:String(Math.max(71,Math.min(78,a))).padStart(2,'0'),approx:!(f>=27000&&f<29000)}; }
-if(f<32000) return {hs:'80',approx:true};
-if(f<38500){ const c=82+Math.round((f-32000)/1000); return {hs:String(Math.min(88,c)).padStart(2,'0'),approx:false}; }
-return {hs:'89',approx:false};
+const m=ft*0.3048;
+if(!isFinite(m)||m<0) return '//';
+if(m<30) return '00';
+if(m<=1500) return String(Math.round(m/30)).padStart(2,'0');
+return String(Math.min(89,50+Math.round((m-1500)/300))).padStart(2,'0');
 }
 function encLayersFromMetar(raw){
 const out=[];
@@ -4740,7 +4733,7 @@ else if(m[3]&&/TCU/i.test(m[3])) c='8';
 else if(ft<2000) c='6';
 else if(ft<6500) c='3';
 else c='0';
-const hsR=encHsFromFt(ft); out.push({ns:ns,c:c,hs:hsR.hs,hsApprox:hsR.approx});
+out.push({ns:ns,c:c,hs:encHsFromFt(ft)});
 if(out.length>=4) break;
 }
 return out;
@@ -4765,7 +4758,8 @@ function encMetarHs070200(h){
 // h = METAR height code in hundreds of feet
 if(h>=200) return '60'; // operational example BKN200 → …60
 const ft=h*100;
-return encHsFromFt(ft).hs||'//';
+const hs=encHsFromFt(ft);
+return hs||'//';
 }
 function encMetarThirdLayer(raw){
 const re=/\b(FEW|SCT|BKN|OVC)(\d{3})(CB|TCU)?/gi;
@@ -5166,14 +5160,14 @@ est._clsrc=est._csrc||'KNMI/model';
 const L=layers[0];
 if(L){
 encSetVal('enc-s3-ns1', L.ns);
-encSetVal('enc-s3-c1', L.c);
+encSetVal('enc-s3-c1', '8');
 }
 try{ encApplyCloudBase(); }catch(e){}
 try{
 const ft=encCloudBaseFt((document.getElementById('enc-t')||{}).value,(document.getElementById('enc-td')||{}).value);
 if(ft!=null){
 const hs1=document.getElementById('enc-s3-hs1');
-if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=encHsFromFt(ft).hs; hs1.dataset.auto='1'; }
+if(hs1 && hs1.dataset.manual!=='1'){ hs1.value=encHsFromFt(ft); hs1.dataset.auto='1'; }
 }
 }catch(e){}
 const L2=encMetarSecondLayer(raw||'');
@@ -5345,7 +5339,7 @@ if(last==='0000') encSetVal('enc-r24',0);
 const clouds=[...sec3.matchAll(/\b8(\d)(\d)(\d{2})\b/g)];
 if(clouds[0]){
 encSetVal('enc-s3-ns1',clouds[0][1]);
-encSetVal('enc-s3-c1',clouds[0][2]);
+encSetVal('enc-s3-c1','8');
 encSetVal('enc-s3-hs1',clouds[0][3]);
 }
 for(let i=2;i<=4;i++){
@@ -7009,7 +7003,7 @@ try{
 localStorage.setItem(cacheKey, JSON.stringify({t:Date.now(),html:box.innerHTML,avg:{T:pickNum(monthVals.T),Tmax:pickNum(monthVals.Tmax),Tmin:pickNum(monthVals.Tmin),wind:pickNum(monthVals.wind),pmsl:pickNum(monthVals.pmsl),rain:pickNum(monthVals.rain)}}));
 const yk=OGSUM_KEY+'year_'+now.getFullYear();
 const y=JSON.parse(localStorage.getItem(yk)||'{}');
-y[now.getMonth()+1]={T:pickNum(monthVals.T),Tmax:pickNum(monthVals.Tmax),Tmin:pickNum(monthVals.Tmin),vis:pickNum(monthVals.vis),wind:pickNum(monthVals.wind),pmsl:pickNum(monthVals.pmsl),rain:pickNum(monthVals.rain),n:keys.length,t:Date.now()};
+y[now.getMonth()+1]={T:pickNum(monthVals.T),Tmax:pickNum(monthVals.Tmax),Tmin:pickNum(monthVals.Tmin),vis:pickNum(monthVals.vis),wind:pickNum(monthVals.wind),pmsl:pickNum(monthVals.pmsl),rain:pickNum(monthVals.rain),n:keys.length};
 localStorage.setItem(yk, JSON.stringify(y));
 }catch(e){}
 }
@@ -7074,30 +7068,20 @@ return {
 };
 }
 async function renderOgYear(box){
-const y=new Date().getFullYear();
-const curM=new Date().getMonth()+1;
+const y=2026; // fixed climate year Jan–Dec 2026
 const names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const yk=OGSUM_KEY+'year_'+y;
 let store={};
 try{store=JSON.parse(localStorage.getItem(yk)||'{}')||{};}catch(e){}
-box.innerHTML='<div class="loading-msg">Loading '+y+' year summary from Ogimet…</div>';
-// Past months are final once stored; current month is refreshed when older than 3 h; future months skipped
-const todo=[];
-for(let m=1;m<=curM;m++){
-  const r=store[m];
-  const fresh=r&&r.n&&(m<curM||(r.t&&Date.now()-r.t<3*3600*1000));
-  if(!fresh) todo.push(m);
+box.innerHTML='<div class="loading-msg">Loading 2026 year summary (Jan–Dec) from Ogimet…</div>';
+// Fetch all 12 months; future months with no bulletins stay empty
+for(let m=1;m<=12;m++){
+  if(store[m] && store[m].n) continue;
+  try{
+    const row=await ogSumFetchMonthAvg(y, m);
+    if(row){ store[m]=row; try{localStorage.setItem(yk, JSON.stringify(store));}catch(e){} }
+  }catch(e){}
 }
-let idx=0;
-async function worker(){
-  while(idx<todo.length){
-    const m=todo[idx++];
-    let row=null;
-    for(let a=0;a<2&&!row;a++){ try{ row=await ogSumFetchMonthAvg(y,m); }catch(e){} }
-    if(row){ row.t=Date.now(); store[m]=row; try{localStorage.setItem(yk,JSON.stringify(store));}catch(e){} }
-  }
-}
-await Promise.all([worker(),worker(),worker()]);
 let html='<table class="sum-tbl"><thead><tr><th>Month</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis</th><th>Wind</th><th>QNH</th><th>Rain</th></tr></thead><tbody>';
 let any=false;
 const acc={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
@@ -7118,7 +7102,7 @@ if(any){
   html+='<tr><td><b>Year avg</b></td><td><b>'+(pickNum(acc.T)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmax)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmin)??'—')+'</b></td><td><b>'+(pickNum(acc.vis)!=null?pickNum(acc.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(acc.wind)??'—')+'</b></td><td><b>'+(pickNum(acc.pmsl)??'—')+'</b></td><td><b>'+(pickNum(acc.rain)??'—')+'</b></td></tr>';
 }
 html+='</tbody></table>';
-box.innerHTML=html+(any?'':'<p class="wx-model-note">No '+y+' year data from Ogimet yet.</p>');
+box.innerHTML=html+(any?'':'<p class="wx-model-note">No 2026 year data from Ogimet yet.</p>');
 }
 /* ── TABS ── */
 function suV(id){const e=document.getElementById(id);return e?String(e.value||'').trim():'';}
@@ -7540,7 +7524,7 @@ return out;
 
 
 
-/* ── WEERSGESTELDHEID (08:30 LT / 12:30Z) ── */
+/* ── WEERSGESTELDHEID (08:10 AST / 12Z) ── */
 const OW_STATIONS=[
   {name:'Aruba (Reina Beatrix)',wmo:['78982'],icao:'TNCA'},
   {name:'Bonaire (Flamingo)',wmo:['78990'],icao:'TNCB'},
@@ -7787,16 +7771,42 @@ function owParseR24(raw){
   if(n>=9900) return (n-9900)/10;
   return n/10;
 }
-const OW_CUTOFF_MIN=8*60+30;
 function owFormDay(){
   const d=new Date(Date.now()-4*3600e3);
   const mins=d.getUTCHours()*60+d.getUTCMinutes();
-  if(mins<OW_CUTOFF_MIN) d.setUTCDate(d.getUTCDate()-1);
+  if(mins<8*60+10) d.setUTCDate(d.getUTCDate()-1);
   return {y:d.getUTCFullYear(),mo:d.getUTCMonth()+1,d:d.getUTCDate()};
 }
-function owAfter830(){
+function owAfter810(){
   const loc=new Date(Date.now()-4*3600e3);
-  return (loc.getUTCHours()*60+loc.getUTCMinutes())>=OW_CUTOFF_MIN;
+  return (loc.getUTCHours()*60+loc.getUTCMinutes())>=8*60+10;
+}
+function owLocalMinutes(){
+  const loc=new Date(Date.now()-4*3600e3);
+  return loc.getUTCHours()*60+loc.getUTCMinutes();
+}
+function owAfter815(){
+  return owLocalMinutes()>=8*60+15;
+}
+function owAutoFetchWindow(){
+  // 08:15–10:30 AST auto-retry for 12Z
+  const m=owLocalMinutes();
+  return m>=8*60+15 && m<=10*60+30;
+}
+const ow12zReady=Object.create(null); // form-day key → true when 12Z considered in
+function owMark12zIfReady(rows, key){
+  if(!rows||!key) return false;
+  const need=['TNCA','TNCB','TNCC'];
+  let ok=0;
+  rows.forEach(function(r){
+    if(!r||r.sep) return;
+    if(need.indexOf(r.icao)<0) return;
+    const hasWx=!!(r.wx&&String(r.wx).trim()&&r.wx!=='---'&&r.wx!=='—');
+    const hasT=(r.tmax!=null&&r.tmax!=='')||(r.tmin!=null&&r.tmin!=='');
+    if(hasWx||hasT) ok++;
+  });
+  if(ok>=2){ ow12zReady[key]=true; return true; }
+  return !!ow12zReady[key];
 }
 function owWindow(){
   const end=new Date();
@@ -7813,14 +7823,22 @@ function owAwcUrl(){
 }
 const _owGetCache=Object.create(null);
 async function owGet(url){
-  if(_owGetCache[url]) return _owGetCache[url];
+  if(_owGetCache[url]!=null) return _owGetCache[url];
   const tries=[url, 'https://r.jina.ai/http://'+url.replace(/^https?:\/\//,'')];
   for(const u of tries){
     try{
       const o=await fetchRetry(u,1);
       if(o&&o.ok&&o.text&&!looksLikeFetchError(o.text)){ _owGetCache[url]=o.text; return o.text; }
     }catch(e){}
+    try{
+      const r=await fetch(u,{cache:'no-store'});
+      if(r&&r.ok){
+        const t=await r.text();
+        if(t&&!looksLikeFetchError(t)){ _owGetCache[url]=t; return t; }
+      }
+    }catch(e){}
   }
+  _owGetCache[url]='';
   return '';
 }
 function owParseOgimet(text){
@@ -8058,18 +8076,26 @@ async function owLoad(force){
   const fd=owFormDay();
   const key=fd.y+'-'+fd.mo+'-'+fd.d;
   if(owBusy && !force) return;
-  // Soft open: if day already saved and complete enough, skip network
+  // Soft open: saved keep for this form day + OW rows complete → skip network
   if(!force){
     const keep0=owReadKeep(key);
-    if(keep0 && owLastKey===key && host.getAttribute('data-filled')==='1'){
-      const miss=keep0.filter(function(r){return !r.sep && typeof owRowNeedsSynop==='function' && owRowNeedsSynop(r);}).length;
-      if(miss===0){
+    if(keep0 && keep0.length){
+      const missOw=keep0.filter(function(r){return !r.sep && !owRowFilledOw(r);}).length;
+      if(missOw===0){
         owRender(keep0, fd, true);
         owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
+        owLastKey=key;
+        try{ owMark12zIfReady(keep0, key); }catch(e){}
         if(stEl) stEl.textContent='Opgeslagen · compleet · '+key;
         const st2=$('ow2-status');
         if(st2) st2.textContent='Opgeslagen · compleet · '+key;
+        if(host) host.setAttribute('data-filled','1');
         return;
+      }
+      // Partial keep: show it, still fetch gaps below
+      if(host.getAttribute('data-filled')!=='1'){
+        owRender(keep0, fd, true);
+        owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
       }
     }
   }
@@ -8239,26 +8265,39 @@ async function owLoad(force){
   if(host) host.setAttribute('data-filled', (got||got2)?'1':'0');
   const host2=$('ow2-table-host');
   if(host2) host2.setAttribute('data-filled', got2?'1':'0');
+  try{
+    if(owMark12zIfReady(rows, key) && stEl){
+      stEl.textContent=(stEl.textContent||'')+' · 12Z ok';
+    }
+  }catch(e){}
   }catch(e){
     const stEl2=$('ow-status');
     if(stEl2) stEl2.textContent='Fout bij laden · '+((e&&e.message)||'retry');
-  }
-  finally{ owBusy=false; try{ow2BuildWxTemplate();}catch(e){} }
-}
-let owLastAuto=0;
-function owCheckAndLoad(){
-  const f=owFormDay();
-  const key=f.y+'-'+f.mo+'-'+f.d;
-  if(!owAfter830() || owLastKey===key || owBusy) return;
-  if(Date.now()-owLastAuto<5*60e3) return; // throttle retries when sources fail
-  owLastAuto=Date.now();
-  owLoad(false);
+  }finally{ owBusy=false; try{ow2BuildWxTemplate();}catch(e){} }
 }
 function owWatch(){
   if(owTimer) return;
-  owTimer=setInterval(owCheckAndLoad, 60000);
-  document.addEventListener('visibilitychange',function(){ if(!document.hidden) owCheckAndLoad(); });
-  setTimeout(owCheckAndLoad, 1500);
+  // Every 5 min: after 08:15 AST retry until 12Z in (or until 10:30 AST)
+  owTimer=setInterval(function(){
+    try{
+      const f=owFormDay();
+      const key=f.y+'-'+f.mo+'-'+f.d;
+      // New form day → allow auto again
+      if(owLastKey && owLastKey!==key){ /* keep flags per key */ }
+      if(!owAutoFetchWindow()) return;
+      if(ow12zReady[key]) return; // 12Z already in — no auto refresh
+      if(owBusy) return;
+      owLoad(true);
+    }catch(e){}
+  }, 5*60*1000);
+  // First check shortly after load if already in window
+  setTimeout(function(){
+    try{
+      const f=owFormDay();
+      const key=f.y+'-'+f.mo+'-'+f.d;
+      if(owAutoFetchWindow() && !ow12zReady[key] && !owBusy) owLoad(true);
+    }catch(e){}
+  }, 8000);
 }
 owWatch();
 window.owCopyCell=owCopyCell;

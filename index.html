@@ -1190,7 +1190,7 @@ TAF TNCC 261700Z 2618/2724 12018KT 9999 FEW020 TEMPO 2618/2624 3000 SHRA BKN015C
 <button class="sub-tab-btn" data-sub="tncc" onclick="switchSubTab('synop','tncc')">TNCC</button>
 <button class="sub-tab-btn" data-sub="rules" onclick="switchSubTab('synop','rules')">FM-12</button>
 <button class="sub-tab-btn active" data-sub="encode" onclick="switchSubTab('synop','encode')">Encode</button>
-<button class="sub-tab-btn" data-sub="sutron" onclick="switchSubTab('synop','sutron'">Encoder 2</button>
+<button class="sub-tab-btn" data-sub="sutron" onclick="switchSubTab('synop','sutron')">Encoder 2</button>
 <button class="sub-tab-btn" data-sub="vaisala" onclick="switchSubTab('synop','vaisala')">Encoder 3</button>
 <button class="sub-tab-btn" data-sub="daysum" onclick="switchSubTab('synop','daysum')">Day summary</button>
 <button class="sub-tab-btn" data-sub="ogsum" onclick="switchSubTab('synop','ogsum')">Ogimet summary</button>
@@ -8033,7 +8033,8 @@ function owCopyTable(which){
 }
 function owRowFilledOw(row){
   if(!row||row.sep) return true;
-  return !!(row.wx) && row.tmax!==''&&row.tmax!=null && row.tmin!==''&&row.tmin!=null && row.rr!==''&&row.rr!=null;
+  // Rain optional (often missing); need weertype + max + min for "complete"
+  return !!(row.wx) && row.tmax!==''&&row.tmax!=null && row.tmin!==''&&row.tmin!=null;
 }
 function owRowFilledOw2(row){
   if(!row||row.sep) return true;
@@ -8090,18 +8091,21 @@ async function owLoad(force){
         const st2=$('ow2-status');
         if(st2) st2.textContent='Opgeslagen · compleet · '+key;
         if(host) host.setAttribute('data-filled','1');
+        const host2s=$('ow2-table-host');
+        if(host2s) host2s.setAttribute('data-filled','1');
         return;
       }
       // Partial keep: show it, still fetch gaps below
-      if(host.getAttribute('data-filled')!=='1'){
-        owRender(keep0, fd, true);
-        owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
-      }
+      owRender(keep0, fd, true);
+      owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
     }
   }
   owBusy=true;
   try{
-  if(force){ for(const k in _owGetCache) delete _owGetCache[k]; }
+  if(force){
+    try{ for(const k in _owGetCache) delete _owGetCache[k]; }catch(e){}
+    try{ for(const k in _gsynCache) delete _gsynCache[k]; }catch(e){}
+  }
   // Never wipe filled cells — restore saved day, only fill gaps
   const keep=owReadKeep(key);
   const rows=keep ? keep.map(function(r){return Object.assign({}, r);}) : owBlankRows();
@@ -8146,9 +8150,9 @@ async function owLoad(force){
     const row=rows[idx];
     if(d12){
       const wx=owWeertype(d12.N,d12.ww);
-      if(wx && !row.wx) row.wx=wx;
+      if(wx && (!row.wx || force)) row.wx=wx;
       const wx2=ow2Weertype(d12.N,d12.ww)||'';
-      if(wx2 && !row.wx2) row.wx2=wx2;
+      if(wx2 && (!row.wx2 || force)) row.wx2=wx2;
     }
     let tmax=null,tmin=null,rr=null;
     if(stn.icao==='SKBO'){

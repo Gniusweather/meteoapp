@@ -7588,13 +7588,20 @@ if(_gsynCache[ck]) return _gsynCache[ck];
       if(lines[i].indexOf(mm+'/'+dd)>=0 || lines[i].indexOf(y+'/'+mm+'/'+dd)>=0){ row=lines[i]; break; }
     }
     if(!row){
-      const m=text.match(new RegExp(mm+'/'+dd+'[^\[]{10,300}'));
+      const m=text.match(new RegExp('\\[?'+mm+'/'+dd+'\\]?[^0-9]{0,40}(-?\\d+\\.\\d+)[^0-9]+(-?\\d+\\.\\d+)'));
       if(m) row=m[0];
+    }
+    if(!row){
+      // Flattened Ogimet page: [mm/dd] max min ...
+      const m2=text.match(new RegExp(mm+'/'+dd+'[^\\d]{0,20}(-?\\d+\\.\\d+)[^\\d]+(-?\\d+\\.\\d+)'));
+      if(m2) row=m2[0];
     }
     if(!row) return null;
     const nums=(row.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
     if(nums.length<2) return null;
     let tmax=nums[0], tmin=nums[1], rr=null;
+    // Prefer pair near start (Max Min); skip if first looks like year
+    if(tmax>100 && nums.length>=3){ tmax=nums[1]; tmin=nums[2]; }
     const presIdx=nums.findIndex(function(n){return n>=980&&n<=1050;});
     if(presIdx>=0 && nums[presIdx+1]!=null) rr=nums[presIdx+1];
     else if(nums.length>=9) rr=nums[8];
@@ -7823,31 +7830,54 @@ function owAwcUrl(){
 }
 const _owGetCache=Object.create(null);
 async function owGet(url){
-  if(_owGetCache[url]!=null) return _owGetCache[url];
-  const tries=[url, 'https://r.jina.ai/http://'+url.replace(/^https?:\/\//,'')];
-  for(const u of tries){
+  if(_owGetCache[url]!=null && _owGetCache[url]!=='') return _owGetCache[url];
+  const bare=url.replace(/^https?:\/\//,'');
+  const tries=[
+    url,
+    'https://r.jina.ai/http://'+bare,
+    'https://r.jina.ai/https://'+bare,
+    'https://corsproxy.io/?'+encodeURIComponent(url)
+  ];
+  for(let ti=0;ti<tries.length;ti++){
+    const u=tries[ti];
     try{
       const o=await fetchRetry(u,1);
-      if(o&&o.ok&&o.text&&!looksLikeFetchError(o.text)){ _owGetCache[url]=o.text; return o.text; }
+      if(o&&o.ok&&o.text&&o.text.length>40&&!looksLikeFetchError(o.text)){
+        _owGetCache[url]=o.text; return o.text;
+      }
     }catch(e){}
     try{
       const r=await fetch(u,{cache:'no-store'});
       if(r&&r.ok){
         const t=await r.text();
-        if(t&&!looksLikeFetchError(t)){ _owGetCache[url]=t; return t; }
+        if(t&&t.length>40&&!looksLikeFetchError(t)){ _owGetCache[url]=t; return t; }
       }
     }catch(e){}
   }
-  _owGetCache[url]='';
+  // Do not cache hard empty forever — allow retry next force
   return '';
 }
 function owParseOgimet(text){
   const rows=[];
   if(!text) return rows;
   String(text).split(/\n/).forEach(line=>{
-    const m=line.match(/(\d{5}),(\d{4}),(\d{2}),(\d{2}),(\d{2}),(\d{2}),(.*)$/);
-    if(m) rows.push({wmo:m[1],y:+m[2],mo:+m[3],d:+m[4],h:+m[5],mi:+m[6],rep:m[7]});
+    let m=line.match(/(\d{5}),(\d{4}),(\d{2}),(\d{2}),(\d{2}),(\d{2}),(.*)$/);
+    if(!m) m=line.match(/(\d{5})\s+(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})\s+(.*)$/);
+    if(!m) m=line.match(/\b(\d{5})\b.*?\b(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})\b[\s,]+(.*)$/);
+    if(m) rows.push({wmo:m[1],y:+m[2],mo:+m[3],d:+m[4],h:+m[5],mi:+m[6],rep:(m[7]||'').trim()});
   });
+  // AAXX blocks embedded without CSV header
+  if(!rows.length && /AAXX/.test(text)){
+    const blocks=String(text).split(/(?=AAXX\s)/);
+    blocks.forEach(function(b){
+      if(!/AAXX/.test(b)) return;
+      const hm=b.match(/AAXX\s+(\d{2})(\d{2})/);
+      const wm=b.match(/\b(\d{5})\b/);
+      if(!hm||!wm) return;
+      const now=new Date();
+      rows.push({wmo:wm[1],y:now.getUTCFullYear(),mo:now.getUTCMonth()+1,d:parseInt(hm[1],10),h:parseInt(hm[2],10),mi:0,rep:b.replace(/\s+/g,' ').trim()});
+    });
+  }
   return rows;
 }
 function owPickHour(rows,y,mo,d,hours){
@@ -7860,13 +7890,20 @@ function owPickHour(rows,y,mo,d,hours){
   return null;
 }
 function owPick1152(rows,y,mo,d){
-  const hits=(rows||[]).filter(function(r){return r.y===y&&r.mo===mo&&r.d===d&&r.h===11;});
-  if(!hits.length) return null;
-  const exact=hits.find(function(r){return r.mi===52;});
+  // US main: 11:50–11:59 first (e.g. 11:52), then any 12Z
+  const day=(rows||[]).filter(function(r){return r.y===y&&r.mo===mo&&r.d===d;});
+  const h11=day.filter(function(r){return r.h===11;});
+  const exact=h11.find(function(r){return r.mi===52;});
   if(exact) return exact;
-  const near=hits.find(function(r){return r.mi>=50&&r.mi<=59;});
+  const near=h11.find(function(r){return r.mi>=50&&r.mi<=59;});
   if(near) return near;
-  return hits[0];
+  if(h11.length) return h11[0];
+  const h12=day.filter(function(r){return r.h===12;});
+  if(h12.length){
+    const m0=h12.find(function(r){return r.mi===0;});
+    return m0||h12[0];
+  }
+  return null;
 }
 function owFirstClimate(repText){
   // Section 3: first 1snTxTxTx and first 2snTnTnTn only.
@@ -8082,7 +8119,13 @@ async function owLoad(force){
     const keep0=owReadKeep(key);
     if(keep0 && keep0.length){
       const missOw=keep0.filter(function(r){return !r.sep && !owRowFilledOw(r);}).length;
-      if(missOw===0){
+      // Never soft-skip while MUHA (or SVVA) still missing max/min
+      const needGsyn=keep0.some(function(r){
+        if(!r||r.sep) return false;
+        if(['MUHA','SVVA','KATL','KMIA','KLGA','TJSJ','SMJP','EHAM'].indexOf(r.icao)<0) return false;
+        return (r.tmax==null||r.tmax==='')||(r.tmin==null||r.tmin==='')||!r.wx;
+      });
+      if(missOw===0 && !needGsyn){
         owRender(keep0, fd, true);
         owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
         owLastKey=key;
@@ -8105,6 +8148,7 @@ async function owLoad(force){
   if(force){
     try{ for(const k in _owGetCache) delete _owGetCache[k]; }catch(e){}
     try{ for(const k in _gsynCache) delete _gsynCache[k]; }catch(e){}
+    try{ delete ow12zReady[key]; }catch(e){}
   }
   // Never wipe filled cells — restore saved day, only fill gaps
   const keep=owReadKeep(key);
@@ -8127,12 +8171,22 @@ async function owLoad(force){
     if(row0 && !owRowNeedsSynop(row0)) return;
     let parsed=[];
     if(stn.wmo.length===1){
-      parsed=owParseOgimet(await owGet(owOgimetUrl(stn.wmo[0], win.begin, win.end)));
+      const u0=owOgimetUrl(stn.wmo[0], win.begin, win.end);
+      parsed=owParseOgimet(await owGet(u0));
+      if(!parsed.length){ try{ delete _owGetCache[u0]; }catch(e){} parsed=owParseOgimet(await owGet(u0)); }
     }else{
       const texts=await Promise.all(stn.wmo.map(function(w){return owGet(owOgimetUrl(w, win.begin, win.end));}));
       for(let ti=0;ti<texts.length;ti++){
         parsed=owParseOgimet(texts[ti]);
         if(parsed.length) break;
+      }
+      if(!parsed.length){
+        for(let wi=0;wi<stn.wmo.length;wi++){
+          const ux=owOgimetUrl(stn.wmo[wi], win.begin, win.end);
+          try{ delete _owGetCache[ux]; }catch(e){}
+          parsed=owParseOgimet(await owGet(ux));
+          if(parsed.length) break;
+        }
       }
     }
     if(!parsed.length && /^(TNCA|TNCB|TNCC)$/.test(stn.icao)){
@@ -8191,9 +8245,12 @@ async function owLoad(force){
   // OW + OW2: Ogimet gsynres daily Max/Min/Prec for selected stations
   // 81225 Paramaribo, 06240 Amsterdam, 78224 Havana, 80472 Valencia
   const st2pre=$('ow2-status');
-  if(st2pre) st2pre.textContent='Laden gsynres (SMJP/EHAM/MUHA/SVVA)…';
-  if(stEl) stEl.textContent='Laden gsynres…';
-  const GSYN={SMJP:'81225',EHAM:'06240',MUHA:'78224',SVVA:'80472'};
+  if(st2pre) st2pre.textContent='Laden gsynres (MUHA/SVVA/US/…)…';
+  if(stEl) stEl.textContent='Laden gsynres (max/min/rain)…';
+  const GSYN={
+    SMJP:'81225',EHAM:'06240',MUHA:'78224',SVVA:'80472',
+    KATL:'72219',KMIA:'72202',KLGA:'72503',TJSJ:'78526'
+  };
   try{
     await Promise.all(Object.keys(GSYN).map(async function(icao){
       const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
@@ -8201,13 +8258,12 @@ async function owLoad(force){
       const row=rows[mi];
       const needOw=(row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin==='')||(row.rr==null||row.rr==='');
       const needOw2=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||(row.rr2==null||row.rr2==='');
-      // OW MUHA/SVVA: prefer gsynres for max/min/rain (weertype stays from main SYNOP)
+      // OW MUHA/SVVA: prefer gsynres for max/min/rain; US: fill empty only
       const forceGsynOw=(icao==='MUHA'||icao==='SVVA');
       if(!needOw && !needOw2 && !forceGsynOw) return;
       const g=await owFetchGsynres(GSYN[icao], y, mo, d);
       if(!g) return;
       if(forceGsynOw){
-        // OW only — prefer gsynres 78224 (MUHA) / 80472 (SVVA) at 12Z form day
         if(isFinite(g.tmax)) row.tmax=owRound(g.tmax);
         if(isFinite(g.tmin)) row.tmin=owRound(g.tmin);
         if(isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
@@ -8222,6 +8278,19 @@ async function owLoad(force){
         if((row.rr2==null||row.rr2==='') && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
       }
     }));
+  }catch(e){}
+  // OW MUHA harden: always fetch gsynres 78224 for max/min/rain (even if SYNOP missing)
+  try{
+    const mi=OW_STATIONS.findIndex(function(st){return st.icao==='MUHA';});
+    if(mi>=0){
+      const row=rows[mi];
+      const g=await owFetchGsynres('78224', y, mo, d);
+      if(g){
+        if(isFinite(g.tmax)) row.tmax=owRound(g.tmax);
+        if(isFinite(g.tmin)) row.tmin=owRound(g.tmin);
+        if(isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
+      }
+    }
   }catch(e){}
   // OW2 only: 24h METAR gap-fill for MUHA (Havana) and SMJP (Paramaribo).
   if(st2pre) st2pre.textContent='Laden METAR 24u (MUHA/SMJP)…';
@@ -8270,8 +8339,12 @@ async function owLoad(force){
   const host2=$('ow2-table-host');
   if(host2) host2.setAttribute('data-filled', got2?'1':'0');
   try{
+    const missLeft=rows.filter(function(r){return !r.sep && !owRowFilledOw(r);}).length;
     if(owMark12zIfReady(rows, key) && stEl){
       stEl.textContent=(stEl.textContent||'')+' · 12Z ok';
+    }
+    if(stEl && missLeft>0 && !(stEl.textContent||'').match(/open|Fout/)){
+      stEl.textContent=(stEl.textContent||'')+' · nog '+missLeft+' open';
     }
   }catch(e){}
   }catch(e){

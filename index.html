@@ -7597,15 +7597,25 @@ if(_gsynCache[ck]) return _gsynCache[ck];
       const m2=text.match(new RegExp(mm+'/'+dd+'[^\\d]{0,20}(-?\\d+\\.\\d+)[^\\d]+(-?\\d+\\.\\d+)'));
       if(m2) row=m2[0];
     }
+    if(!row){
+      // Last resort: any mm/dd then two temps in full text
+      const m3=String(text).match(new RegExp(mm+'/'+dd+'[\\s\\S]{0,80}?-?(\\d+\\.\\d+)[\\s\\S]{0,40}?-?(\\d+\\.\\d+)'));
+      if(m3) row=m3[0];
+    }
     if(!row) return null;
     const nums=(row.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
     if(nums.length<2) return null;
     let tmax=nums[0], tmin=nums[1], rr=null;
-    // Prefer pair near start (Max Min); skip if first looks like year
-    if(tmax>100 && nums.length>=3){ tmax=nums[1]; tmin=nums[2]; }
+    if(tmax>80 && nums.length>=3){ tmax=nums[1]; tmin=nums[2]; }
+    // Sanity: Caribbean-like temps
+    if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
     const presIdx=nums.findIndex(function(n){return n>=980&&n<=1050;});
     if(presIdx>=0 && nums[presIdx+1]!=null) rr=nums[presIdx+1];
-    else if(nums.length>=9) rr=nums[8];
+    else {
+      for(let ni=2;ni<nums.length;ni++){
+        if(nums[ni]>=0 && nums[ni]<300 && (ni===8 || (nums[ni]<=80 && ni>3))){ rr=nums[ni]; if(ni>=7) break; }
+      }
+    }
     const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)}; _gsynCache[ck]=res; return res;
   }catch(e){ return null; }
 }
@@ -8190,7 +8200,12 @@ async function owLoad(force, emptyOnly){
   }
   // Never wipe filled cells — restore saved day, only fill gaps
   const keep=owReadKeep(key);
-  const rows=keep ? keep.map(function(r){return Object.assign({}, r);}) : owBlankRows();
+  // Merge keep by ICAO into canonical station order (prevents MUHA/SVVA slot shift)
+  const rows=owBlankRows().map(function(blank){
+    if(blank.sep) return blank;
+    const prev=(keep||[]).find(function(r){return r && !r.sep && r.icao===blank.icao;});
+    return prev ? Object.assign({}, blank, prev, {name:blank.name, wmo:blank.wmo, icao:blank.icao}) : blank;
+  });
   owRender(rows, fd, !!(keep&&keep.some(function(r){return !r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr);})));
   owRender(rows, fd, !!(keep&&keep.some(function(r){return !r.sep&&(r.wx2||r.tmax2!==''||r.tmin2!==''||r.rr2);})), 'ow2-table-host', 'wx2');
   if(stEl) stEl.textContent=keep?'Bijwerken lege velden…':'Laden SYNOP…';
@@ -8353,12 +8368,15 @@ async function owLoad(force, emptyOnly){
       if(g){
         if(isFinite(g.tmax)) row.tmax=owRound(g.tmax);
         if(isFinite(g.tmin)) row.tmin=owRound(g.tmin);
-        if(isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
-        if((row.tmax2==null||row.tmax2==='') && isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
-        if((row.tmin2==null||row.tmin2==='') && isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
-        if((row.rr2==null||row.rr2==='') && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
+        if(g.rr!=null && isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
+        if(isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
+        if(isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
+        if(g.rr!=null && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
+        try{ localStorage.setItem('meteo_gsynLast_'+icao, JSON.stringify({tmax:g.tmax,tmin:g.tmin,rr:g.rr,at:Date.now()})); }catch(e){}
       }
     }
+    // Ensure display after late gsynres fill
+    try{ owRender(rows, fd, true); owRender(rows, fd, true, 'ow2-table-host', 'wx2'); }catch(e){}
   }catch(e){}
   // OW2: after 08:30 AST, 24h METAR gap-fill for any still-empty station
   if(typeof owLocalMinutes==='function' && owLocalMinutes()>=8*60+30){

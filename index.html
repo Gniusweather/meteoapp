@@ -7571,52 +7571,37 @@ function owWmoFromCode(code){
 }
 const _gsynCache=Object.create(null);
 async function owFetchGsynres(ind, y, mo, d){
-const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
-if(_gsynCache[ck]) return _gsynCache[ck];
-
-  // Ogimet daily summary — Max Min Prec (ind = WMO block)
-  // Columns typically: Max Min Avg Td Hr AppT Dir Int Pres Prec TotCl LowCl Vis
-  const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=5&ano='+y+
+  const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
+  if(_gsynCache[ck]) return _gsynCache[ck];
+  // Ogimet daily summary Max Min Prec — strip HTML so caption dates do not win
+  const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=10&ano='+y+
     '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
   try{
     const text=await owGet(url);
-    if(!text) return null;
+    if(!text||text.length<80) return null;
     const mm=String(mo).padStart(2,'0');
     const dd=String(d).padStart(2,'0');
-    let row='';
-    const lines=String(text).split(/\n/);
-    for(let i=0;i<lines.length;i++){
-      if(lines[i].indexOf(mm+'/'+dd)>=0 || lines[i].indexOf(y+'/'+mm+'/'+dd)>=0){ row=lines[i]; break; }
+    const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
+    // Data row: mm/dd Max Min ...
+    let m=plain.match(new RegExp(mm+'/'+dd+'\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)'));
+    if(!m){
+      m=plain.match(new RegExp(mm+'/'+dd+'[^0-9]{0,15}(-?\d+\.\d+)[^0-9]{0,15}(-?\d+\.\d+)'));
     }
-    if(!row){
-      const m=text.match(new RegExp('\\[?'+mm+'/'+dd+'\\]?[^0-9]{0,40}(-?\\d+\\.\\d+)[^0-9]+(-?\\d+\\.\\d+)'));
-      if(m) row=m[0];
-    }
-    if(!row){
-      // Flattened Ogimet page: [mm/dd] max min ...
-      const m2=text.match(new RegExp(mm+'/'+dd+'[^\\d]{0,20}(-?\\d+\\.\\d+)[^\\d]+(-?\\d+\\.\\d+)'));
-      if(m2) row=m2[0];
-    }
-    if(!row){
-      // Last resort: any mm/dd then two temps in full text
-      const m3=String(text).match(new RegExp(mm+'/'+dd+'[\\s\\S]{0,80}?-?(\\d+\\.\\d+)[\\s\\S]{0,40}?-?(\\d+\\.\\d+)'));
-      if(m3) row=m3[0];
-    }
-    if(!row) return null;
-    const nums=(row.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
-    if(nums.length<2) return null;
-    let tmax=nums[0], tmin=nums[1], rr=null;
-    if(tmax>80 && nums.length>=3){ tmax=nums[1]; tmin=nums[2]; }
-    // Sanity: Caribbean-like temps
+    if(!m) return null;
+    let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]), rr=null;
+    if(!isFinite(tmax)||!isFinite(tmin)) return null;
     if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
-    const presIdx=nums.findIndex(function(n){return n>=980&&n<=1050;});
-    if(presIdx>=0 && nums[presIdx+1]!=null) rr=nums[presIdx+1];
-    else {
-      for(let ni=2;ni<nums.length;ni++){
-        if(nums[ni]>=0 && nums[ni]<300 && (ni===8 || (nums[ni]<=80 && ni>3))){ rr=nums[ni]; if(ni>=7) break; }
-      }
-    }
-    const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)}; _gsynCache[ck]=res; return res;
+    // After max/min: Avg Td Hr AppT Dir Int Pres Prec — find pressure then next number as prec
+    // Prec column only (not via pressure): after Max Min → Avg Td Hr AppT Int Pres Prec
+    const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
+    const nums=(after.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
+    // Prefer 7th decimal after max/min (index 6) = Prec when Dir is text
+    if(nums.length>6 && nums[6]>=0 && nums[6]<500) rr=nums[6];
+    else if(nums.length>7 && nums[7]>=0 && nums[7]<500) rr=nums[7];
+    else if(nums.length>5 && nums[5]>=0 && nums[5]<100 && nums[5]<50) rr=nums[5];
+    const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
+    _gsynCache[ck]=res;
+    return res;
   }catch(e){ return null; }
 }
 async function owFetchMuhaGsynres(y, mo, d){
@@ -8375,8 +8360,12 @@ async function owLoad(force, emptyOnly){
         try{ localStorage.setItem('meteo_gsynLast_'+icao, JSON.stringify({tmax:g.tmax,tmin:g.tmin,rr:g.rr,at:Date.now()})); }catch(e){}
       }
     }
-    // Ensure display after late gsynres fill
-    try{ owRender(rows, fd, true); owRender(rows, fd, true, 'ow2-table-host', 'wx2'); }catch(e){}
+    // Ensure display + keep after late gsynres fill
+    try{
+      owWriteKeep(key, rows);
+      owRender(rows, fd, true);
+      owRender(rows, fd, true, 'ow2-table-host', 'wx2');
+    }catch(e){}
   }catch(e){}
   // OW2: after 08:30 AST, 24h METAR gap-fill for any still-empty station
   if(typeof owLocalMinutes==='function' && owLocalMinutes()>=8*60+30){

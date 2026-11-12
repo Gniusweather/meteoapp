@@ -7592,13 +7592,17 @@ async function owFetchGsynres(ind, y, mo, d){
     if(!isFinite(tmax)||!isFinite(tmin)) return null;
     if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
     // After max/min: Avg Td Hr AppT Dir Int Pres Prec — find pressure then next number as prec
-    // Prec column only (not via pressure): after Max Min → Avg Td Hr AppT Int Pres Prec
+    // Prec column only: need a full-looking row (enough decimals after max/min)
     const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
     const nums=(after.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
-    // Prefer 7th decimal after max/min (index 6) = Prec when Dir is text
-    if(nums.length>6 && nums[6]>=0 && nums[6]<500) rr=nums[6];
-    else if(nums.length>7 && nums[7]>=0 && nums[7]<500) rr=nums[7];
-    else if(nums.length>5 && nums[5]>=0 && nums[5]<100 && nums[5]<50) rr=nums[5];
+    if(nums.length>=7){
+      const cand=nums[6];
+      if(cand>=0 && cand<500) rr=cand;
+    }else if(nums.length>=8){
+      const cand=nums[7];
+      if(cand>=0 && cand<500) rr=cand;
+    }
+    // Incomplete rows (e.g. SVVA short) → leave rr null, do not guess
     const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
     _gsynCache[ck]=res;
     return res;
@@ -8155,7 +8159,9 @@ async function owLoad(force, emptyOnly){
         if(['MUHA','SVVA','KATL','KMIA','KLGA','TJSJ','SMJP','EHAM'].indexOf(r.icao)<0) return false;
         return (r.tmax==null||r.tmax==='')||(r.tmin==null||r.tmin==='')||!r.wx;
       });
-      if(missOw===0 && !needGsyn){
+      // Before 10:30 AST still run empty-only path so late 12Z/gsynres can fill
+      const morning=typeof owAutoFetchWindow==='function' && owAutoFetchWindow();
+      if(missOw===0 && !needGsyn && !morning){
         owRender(keep0, fd, true);
         owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
         owLastKey=key;
@@ -8167,6 +8173,12 @@ async function owLoad(force, emptyOnly){
         const host2s=$('ow2-table-host');
         if(host2s) host2s.setAttribute('data-filled','1');
         return;
+      }
+      if(missOw===0 && !needGsyn && morning){
+        // Show keep, continue with emptyOnly-style gap fill below
+        owRender(keep0, fd, true);
+        owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
+        emptyOnly=true;
       }
       // Partial keep: show it, still fetch gaps below
       owRender(keep0, fd, true);
@@ -8305,7 +8317,7 @@ async function owLoad(force, emptyOnly){
         const row=rows[mi];
         const needOw=(row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin==='')||(row.rr==null||row.rr==='');
         const needOw2=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||(row.rr2==null||row.rr2==='');
-        const forceGsynOw=(icao==='MUHA'||icao==='SVVA') && ((row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin===''));
+        const forceGsynOw=false; // MUHA/SVVA filled only in harden block (avoid double fetch)
         if(!needOw && !needOw2 && !forceGsynOw) return;
         if(emptyOnly && !needOw && !needOw2) return;
         let g=await owFetchGsynres(GSYN[icao], y, mo, d);
@@ -8386,7 +8398,8 @@ async function owLoad(force, emptyOnly){
       }
     });
   }
-  // OW2 final gap-fill: Open-Meteo for any still-empty cells
+  // OW2 final gap-fill: Open-Meteo only after 08:30 AST
+  if(typeof owLocalMinutes==='function' && owLocalMinutes()>=8*60+30){
   if(st2pre) st2pre.textContent='Laden Open-Meteo…';
   await owMapPool(OW_STATIONS, 4, async function(stn,idx){
     if(stn.sep) return;
@@ -8402,6 +8415,7 @@ async function owLoad(force, emptyOnly){
     if((row.tmin2==null||row.tmin2==='') && om.tmin!=null && isFinite(om.tmin)) row.tmin2=owRound(om.tmin);
     if((row.rr2==null||row.rr2==='') && om.rr!=null && isFinite(om.rr)) row.rr2=(Math.round(om.rr*10)/10).toFixed(1);
   });
+  } // end Open-Meteo after 08:30
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
   const got2=rows.some(r=>!r.sep&&(r.wx2||r.tmax2!==''||r.tmin2!==''||r.rr2));
   const miss=rows.filter(function(r){return !r.sep&&owRowNeedsSynop(r);}).length;

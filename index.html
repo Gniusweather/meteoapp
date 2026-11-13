@@ -8254,9 +8254,11 @@ async function owLoad(force, emptyOnly){
         owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
         emptyOnly=true;
       }
-      // Partial keep: show it, still fetch gaps below
+      // C: gaps remain → empty-only network fill for all incomplete stations
       owRender(keep0, fd, true);
       owRender(keep0, fd, true, 'ow2-table-host', 'wx2');
+      emptyOnly=true;
+      if(stEl) stEl.textContent='Lege stations bijwerken…';
     }
   }
   owBusy=true;
@@ -8540,7 +8542,19 @@ if(name==='taf')loadAllTafs();
 else if(name==='synop'){loadAllSynops();switchSubTab('synop','encode');}
 else if(name==='stations')fetchStationsData();
 else if(name==='weather')loadWeather();
-else if(name==='ow'||name==='ow2'){ owLoad(false); try{ow2BuildWxTemplate();}catch(e){} }
+}
+// A: every OW/OW2 open after 08:15 AST → empty-only gap fill (all stations)
+if(name==='ow'||name==='ow2'){
+  try{ow2BuildWxTemplate();}catch(e){}
+  const after815=typeof owLocalMinutes==='function' ? owLocalMinutes()>=8*60+15 : true;
+  if(after815){
+    owLoad(true, true);
+  }else if(!loadedTabs['_owSoftOnce']){
+    loadedTabs['_owSoftOnce']=true;
+    owLoad(false);
+  }else{
+    owLoad(true, true);
+  }
 }
 if(name==='atc'){
 try{ atcEnsureFrame(); atcInitMap(); }catch(e){}

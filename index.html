@@ -7570,6 +7570,80 @@ function owWmoFromCode(code){
   return '';
 }
 const _gsynCache=Object.create(null);
+
+async function owFetchGsynresForce(ind, y, mo, d){
+  // Bypass cache — always try network for MUHA/SVVA
+  const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
+  try{ delete _gsynCache[ck]; }catch(e){}
+  const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=10&ano='+y+
+    '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
+  const bare=url.replace(/^https?:\/\//,'');
+  const tries=[url, 'https://r.jina.ai/http://'+bare, 'https://r.jina.ai/https://'+bare];
+  let text='';
+  for(let ti=0;ti<tries.length;ti++){
+    try{
+      try{ delete _owGetCache[tries[ti]]; delete _owGetCache[url]; }catch(e){}
+      const o=await fetchRetry(tries[ti], 1);
+      if(o&&o.ok&&o.text&&o.text.length>80&&!looksLikeFetchError(o.text)){ text=o.text; break; }
+    }catch(e){}
+    try{
+      const r=await fetch(tries[ti], {cache:'no-store'});
+      if(r&&r.ok){
+        const t=await r.text();
+        if(t&&t.length>80&&!looksLikeFetchError(t)){ text=t; break; }
+      }
+    }catch(e){}
+  }
+  if(!text) return null;
+  const mm=String(mo).padStart(2,'0');
+  const dd=String(d).padStart(2,'0');
+  const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
+  let m=plain.match(new RegExp(mm+'/'+dd+'\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)'));
+  if(!m) m=plain.match(new RegExp(mm+'/'+dd+'[^0-9]{0,15}(-?\\d+\\.\\d+)[^0-9]{0,15}(-?\\d+\\.\\d+)'));
+  if(!m) return null;
+  let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]), rr=null;
+  if(!isFinite(tmax)||!isFinite(tmin)) return null;
+  if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
+  const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
+  const nums=(after.match(/-?\\d+\\.\\d+/g)||[]).map(parseFloat);
+  if(nums.length>=7 && nums[6]>=0 && nums[6]<500) rr=nums[6];
+  const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
+  _gsynCache[ck]=res;
+  return res;
+}
+async function owApplyMuhaSvvaGsyn(rows, y, mo, d, fd, key){
+  const hard=[['MUHA','78224'],['SVVA','80472']];
+  let any=false;
+  for(let hi=0;hi<hard.length;hi++){
+    const icao=hard[hi][0], ind=hard[hi][1];
+    const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
+    if(mi<0) continue;
+    const row=rows[mi];
+    if(!row||row.sep) continue;
+    let g=await owFetchGsynresForce(ind, y, mo, d);
+    if(!g){
+      try{ const lg=JSON.parse(localStorage.getItem('meteo_gsynLast_'+icao)||'null'); if(lg&&isFinite(lg.tmax)) g=lg; }catch(e){}
+    }
+    if(!g) continue;
+    any=true;
+    if(isFinite(g.tmax)){ row.tmax=owRound(g.tmax); row.tmax2=owRound(g.tmax); }
+    if(isFinite(g.tmin)){ row.tmin=owRound(g.tmin); row.tmin2=owRound(g.tmin); }
+    if(g.rr!=null && isFinite(g.rr)){
+      const rr=(Math.round(g.rr*10)/10).toFixed(1);
+      row.rr=rr; row.rr2=rr;
+    }
+    try{ localStorage.setItem('meteo_gsynLast_'+icao, JSON.stringify({tmax:g.tmax,tmin:g.tmin,rr:g.rr,at:Date.now()})); }catch(e){}
+  }
+  if(any){
+    try{
+      owWriteKeep(key, rows);
+      owRender(rows, fd, true);
+      owRender(rows, fd, true, 'ow2-table-host', 'wx2');
+    }catch(e){}
+  }
+  return any;
+}
+
 async function owFetchGsynres(ind, y, mo, d){
   const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
   if(_gsynCache[ck]) return _gsynCache[ck];
@@ -8214,6 +8288,9 @@ async function owLoad(force, emptyOnly){
   const win=owWindow();
 
   // 1) SYNOP first (12Z weertype, 18Z Tmax, 06Z Tmin, 24h rain)
+    // MUHA + SVVA first: gsynres max/min/rain (do not wait for full SYNOP loop)
+  if(stEl) stEl.textContent='Laden gsynres MUHA/SVVA…';
+  try{ await owApplyMuhaSvvaGsyn(rows, y, mo, d, fd, key); }catch(e){}
   await owMapPool(OW_STATIONS, 6, async (stn,idx)=>{
     if(stn.sep) return;
     const row0=rows[idx];
@@ -8350,35 +8427,8 @@ async function owLoad(force, emptyOnly){
       }));
     }
   }catch(e){}
-  // OW MUHA/SVVA harden: always gsynres for max/min/rain
-  try{
-    const hard=[['MUHA','78224'],['SVVA','80472']];
-    for(let hi=0;hi<hard.length;hi++){
-      const icao=hard[hi][0], ind=hard[hi][1];
-      const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
-      if(mi<0) continue;
-      const row=rows[mi];
-      let g=await owFetchGsynres(ind, y, mo, d);
-      if(!g){
-        try{ const lg=JSON.parse(localStorage.getItem('meteo_gsynLast_'+icao)||'null'); if(lg) g=lg; }catch(e){}
-      }
-      if(g){
-        if(isFinite(g.tmax)) row.tmax=owRound(g.tmax);
-        if(isFinite(g.tmin)) row.tmin=owRound(g.tmin);
-        if(g.rr!=null && isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
-        if(isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
-        if(isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
-        if(g.rr!=null && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
-        try{ localStorage.setItem('meteo_gsynLast_'+icao, JSON.stringify({tmax:g.tmax,tmin:g.tmin,rr:g.rr,at:Date.now()})); }catch(e){}
-      }
-    }
-    // Ensure display + keep after late gsynres fill
-    try{
-      owWriteKeep(key, rows);
-      owRender(rows, fd, true);
-      owRender(rows, fd, true, 'ow2-table-host', 'wx2');
-    }catch(e){}
-  }catch(e){}
+  // Late MUHA/SVVA ensure (again after SYNOP/gsyn batch)
+  try{ await owApplyMuhaSvvaGsyn(rows, y, mo, d, fd, key); }catch(e){}
   // OW2: after 08:30 AST, 24h METAR gap-fill for any still-empty station
   if(typeof owLocalMinutes==='function' && owLocalMinutes()>=8*60+30){
     if(st2pre) st2pre.textContent='Laden METAR 24u (OW2)…';

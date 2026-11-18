@@ -2872,11 +2872,16 @@ setInterval(tickClocks,1000);
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='hidden'){
     try{ if(window.atcTimer){ clearInterval(atcTimer); atcTimer=null; } }catch(e){}
+    try{ if(window.owTimer){ clearInterval(owTimer); owTimer=null; } }catch(e){}
   }else{
     try{
-      const atc=document.getElementById('atc')||document.querySelector('[data-panel="atc"]');
-      if(atc && atc.classList.contains('active')) atcEnsureFrame();
+      const atcOn=document.getElementById('tab-atc');
+      if(atcOn && atcOn.classList.contains('active')){
+        atcEnsureFrame();
+        if(!window.atcTimer) window.atcTimer=setInterval(function(){ atcTrafficRefresh(); }, 30000);
+      }
     }catch(e){}
+    try{ if(typeof owWatch==='function') owWatch(); }catch(e){}
   }
 });
 
@@ -5121,6 +5126,17 @@ const fill=[
 ['enc-rrr',est.rrr],['enc-rrr3',est.rrr3],['enc-r24',est.r24],
 ['enc-tmax',est.tmax],['enc-tmin',est.tmin]
 ];
+try{
+  const bag=daysumReadStore();
+  const tt=daysumTmaxTmin24(bag.st);
+  if((est.tmax==null||est.tmax==='') && tt.tmax!=null) est.tmax=tt.tmax;
+  if((est.tmin==null||est.tmin==='') && tt.tmin!=null) est.tmin=tt.tmin;
+  fill=fill.map(function(x){
+    if(x[0]==='enc-tmax' && (x[1]==null||x[1]==='') && tt.tmax!=null) return ['enc-tmax', tt.tmax];
+    if(x[0]==='enc-tmin' && (x[1]==null||x[1]==='') && tt.tmin!=null) return ['enc-tmin', tt.tmin];
+    return x;
+  });
+}catch(e){}
 window._encFields=null;window._encLastSig='';fill.forEach(function(x){
 encPh(x[0], x[1]);
 encSetVal(x[0], x[1]);
@@ -5929,6 +5945,9 @@ if(Array.isArray(j.aircraft)) return j.aircraft;
 return [];
 }
 async function atcTrafficRefresh(){
+const tab=document.getElementById('tab-atc');
+if(!tab||!tab.classList.contains('active')) return;
+if(document.visibilityState==='hidden') return;
 const st=document.getElementById('atc-traffic-status');
 if(!atcMap) await atcInitMap();
 if(!atcMap||!atcAcLayer) return;
@@ -6751,7 +6770,27 @@ function daysumReadStore(){
   st.hoursP=st.hoursP||{};
   st.hoursPTncb=st.hoursPTncb||{};
   st.hoursN=st.hoursN||{};
+  st.hoursT=st.hoursT||{};
+  st.climateT=st.climateT||{};
   return {key:key, st:st};
+}
+function daysumMergeT(map, hour, t){
+  if(t==null||!isFinite(t)) return;
+  map[String(((hour%24)+24)%24)]=t;
+}
+function daysumTmaxTmin24(st){
+  const vals=[];
+  const ht=(st&&st.hoursT)||{};
+  Object.keys(ht).forEach(function(h){ const v=parseFloat(ht[h]); if(isFinite(v)) vals.push(v); });
+  const cl=(st&&st.climateT)||{};
+  let tmax=cl.tmax!=null&&isFinite(cl.tmax)?cl.tmax:null;
+  let tmin=cl.tmin!=null&&isFinite(cl.tmin)?cl.tmin:null;
+  if(vals.length){
+    const mx=Math.max.apply(null,vals), mn=Math.min.apply(null,vals);
+    if(tmax==null||mx>tmax) tmax=mx;
+    if(tmin==null||mn<tmin) tmin=mn;
+  }
+  return {tmax:tmax, tmin:tmin};
 }
 function daysumWriteStore(key, st){
   st.t=Date.now();
@@ -6787,9 +6826,12 @@ try{
           const meta=parseSynopHourUTC(full);
           const p=parseSynopBulletin(full);
           const r=p&&p.reports&&p.reports[0];
-          if(r&&r.Pmsl!=null&&meta&&meta.date){
-            daysumMergePmsl(st.hoursP, meta.date.getUTCHours(), r.Pmsl);
-            got=true;
+          if(r&&meta&&meta.date){
+            const uh=meta.date.getUTCHours();
+            if(r.Pmsl!=null){ daysumMergePmsl(st.hoursP, uh, r.Pmsl); got=true; }
+            if(r.T!=null&&isFinite(r.T)){ daysumMergeT(st.hoursT, uh, r.T); got=true; }
+            if(r.Tmax!=null&&isFinite(r.Tmax)){ st.climateT.tmax=r.Tmax; got=true; }
+            if(r.Tmin!=null&&isFinite(r.Tmin)){ st.climateT.tmin=r.Tmin; got=true; }
           }
         }catch(e){}
       });
@@ -7578,6 +7620,7 @@ async function owFetchGsynresForce(ind, y, mo, d){
   const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=10&ano='+y+
     '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
   const bare=url.replace(/^https?:\/\//,'');
+  // Direct first; proxies only if direct fails
   const tries=[url, 'https://r.jina.ai/http://'+bare, 'https://r.jina.ai/https://'+bare];
   let text='';
   for(let ti=0;ti<tries.length;ti++){
@@ -7593,6 +7636,7 @@ async function owFetchGsynresForce(ind, y, mo, d){
         if(t&&t.length>80&&!looksLikeFetchError(t)){ text=t; break; }
       }
     }catch(e){}
+    if(text) break;
   }
   if(!text) return null;
   const mm=String(mo).padStart(2,'0');
@@ -7606,7 +7650,11 @@ async function owFetchGsynresForce(ind, y, mo, d){
   if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
   const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
   const nums=(after.match(/-?\\d+\\.\\d+/g)||[]).map(parseFloat);
-  if(nums.length>=7 && nums[6]>=0 && nums[6]<500) rr=nums[6];
+  if(nums.length>=7){
+    let cand=nums[6];
+    if(cand>=900 && nums.length>=8) cand=nums[7];
+    if(cand>=0 && cand<500) rr=cand;
+  }
   const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
   _gsynCache[ck]=res;
   return res;
@@ -7669,14 +7717,13 @@ async function owFetchGsynres(ind, y, mo, d){
     // Prec column only: need a full-looking row (enough decimals after max/min)
     const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
     const nums=(after.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
+    // Prec is after Pres; if index 6 looks like pressure (>=900), use index 7
     if(nums.length>=7){
-      const cand=nums[6];
-      if(cand>=0 && cand<500) rr=cand;
-    }else if(nums.length>=8){
-      const cand=nums[7];
+      let cand=nums[6];
+      if(cand>=900 && nums.length>=8) cand=nums[7];
       if(cand>=0 && cand<500) rr=cand;
     }
-    // Incomplete rows (e.g. SVVA short) → leave rr null, do not guess
+    // Incomplete rows → leave rr null
     const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
     _gsynCache[ck]=res;
     return res;
@@ -8230,8 +8277,9 @@ async function owLoad(force, emptyOnly){
       // Never soft-skip while MUHA (or SVVA) still missing max/min
       const needGsyn=keep0.some(function(r){
         if(!r||r.sep) return false;
-        if(['MUHA','SVVA','KATL','KMIA','KLGA','TJSJ','SMJP','EHAM'].indexOf(r.icao)<0) return false;
-        return (r.tmax==null||r.tmax==='')||(r.tmin==null||r.tmin==='')||!r.wx;
+        if(['MUHA','SVVA','KATL','KMIA','KLGA','TJSJ','SMJP','EHAM','MDSD','TNCC','TNCA','TNCB'].indexOf(r.icao)<0) return false;
+        const re=function(v){ return v==null||v===''||v==='—.—'||v==='---'||v==='—'; };
+        return re(r.tmax)||re(r.tmin)||re(r.rr)||!r.wx;
       });
       // Before 10:30 AST still run empty-only path so late 12Z/gsynres can fill
       const morning=typeof owAutoFetchWindow==='function' && owAutoFetchWindow();
@@ -8296,8 +8344,17 @@ async function owLoad(force, emptyOnly){
   await owMapPool(OW_STATIONS, 6, async (stn,idx)=>{
     if(stn.sep) return;
     const row0=rows[idx];
-    // emptyOnly / soft: skip OW-complete stations; full force refreshes all
-    if(row0 && owRowFilledOw(row0) && (emptyOnly || !force)) return;
+    // Perf: skip complete stations unless force needs ww refresh for weak weertype
+    const owComplete=row0 && owRowFilledOw(row0);
+    const wxWeak=function(w){
+      if(!w||!String(w).trim()) return true;
+      const t=String(w).toLowerCase().trim();
+      return /^(onbewolkt|licht bewolkt|half bewolkt|zwaar bewolkt|geheel bewolkt)$/.test(t);
+    };
+    const needWw=owComplete && emptyOnly && force && (wxWeak(row0.wx)||wxWeak(row0.wx2));
+    const wwOnly=!!needWw;
+    if(owComplete && !force) return;
+    if(owComplete && emptyOnly && !needWw) return;
     let parsed=[];
     if(stn.wmo.length===1){
       const u0=owOgimetUrl(stn.wmo[0], win.begin, win.end);
@@ -8335,10 +8392,13 @@ async function owLoad(force, emptyOnly){
     const d06=r06?owDecode(r06.rep):null;
     const row=rows[idx];
     if(d12){
+      // Present ww (e.g. 10 nevel, 60 regen) always wins over saved cloud-only text
       const wx=owWeertype(d12.N,d12.ww);
-      if(wx && (!row.wx || force)) row.wx=wx;
+      const wwN=parseInt(d12.ww,10);
+      const significant=!isNaN(wwN)&&wwN>=10;
+      if(wx && (!row.wx || force || significant)) row.wx=wx;
       const wx2=ow2Weertype(d12.N,d12.ww)||'';
-      if(wx2 && (!row.wx2 || force)) row.wx2=wx2;
+      if(wx2 && (!row.wx2 || force || significant)) row.wx2=wx2;
     }
     let tmax=null,tmin=null,rr=null;
     if(stn.icao==='SKBO'){
@@ -8366,13 +8426,18 @@ async function owLoad(force, emptyOnly){
     else if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
     if(d12&&d12._r24!=null) rr=d12._r24;
     else if(d06&&d06._r24!=null) rr=d06._r24;
-    if(tmax!=null && (row.tmax==null||row.tmax==='')) row.tmax=owRound(tmax);
-    if(tmin!=null && (row.tmin==null||row.tmin==='')) row.tmin=owRound(tmin);
-    if(rr!=null && (row.rr==null||row.rr==='')) row.rr=(Math.round(rr*10)/10).toFixed(1);
-    // OW2: only groups present on this fetch. No invented 0.0 rain, no stale max/min.
-    if((row.tmax2==null||row.tmax2==='') && tmax!=null) row.tmax2=owRound(tmax);
-    if((row.tmin2==null||row.tmin2==='') && tmin!=null) row.tmin2=owRound(tmin);
-    if((row.rr2==null||row.rr2==='') && rr!=null) row.rr2=(Math.round(rr*10)/10).toFixed(1);
+    // wwOnly (tab empty-only on complete rows): weertype already updated; skip synop climate
+    if(!wwOnly){
+      if(tmax!=null && (row.tmax==null||row.tmax==='')) row.tmax=owRound(tmax);
+      if(tmin!=null && (row.tmin==null||row.tmin==='')) row.tmin=owRound(tmin);
+      if(rr!=null && (row.rr==null||row.rr==='')) row.rr=(Math.round(rr*10)/10).toFixed(1);
+    }
+    // OW2 climate from synop (skip when wwOnly)
+    if(!wwOnly){
+      if((row.tmax2==null||row.tmax2==='') && tmax!=null) row.tmax2=owRound(tmax);
+      if((row.tmin2==null||row.tmin2==='') && tmin!=null) row.tmin2=owRound(tmin);
+      if((row.rr2==null||row.rr2==='') && rr!=null) row.rr2=(Math.round(rr*10)/10).toFixed(1);
+    }
   });
   // OW + OW2: Ogimet gsynres daily Max/Min/Prec for selected stations
   // 81225 Paramaribo, 06240 Amsterdam, 78224 Havana, 80472 Valencia
@@ -8394,11 +8459,15 @@ async function owLoad(force, emptyOnly){
         const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
         if(mi<0) return;
         const row=rows[mi];
-        const needOw=(row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin==='')||(row.rr==null||row.rr==='');
-        const needOw2=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||(row.rr2==null||row.rr2==='');
-        const forceGsynOw=false; // MUHA/SVVA filled only in harden block (avoid double fetch)
-        if(!needOw && !needOw2 && !forceGsynOw) return;
-        if(emptyOnly && !needOw && !needOw2) return;
+        const _rrE=function(v){ return v==null||v===''||v==='—.—'||v==='---'||v==='—'||v==='--.--'; };
+        const needOw=(row.tmax==null||row.tmax==='')||(row.tmin==null||row.tmin==='')||_rrE(row.rr);
+        const needOw2=(row.tmax2==null||row.tmax2==='')||(row.tmin2==null||row.tmin2==='')||_rrE(row.rr2);
+        // Full force: always refresh climate from gsynres. Empty-only: only if gaps.
+        if(!force && !needOw && !needOw2) return;
+        if(emptyOnly && !force && !needOw && !needOw2) return;
+        if(force && !emptyOnly){
+          try{ delete _gsynCache[String(GSYN[icao])+'|'+y+'-'+mo+'-'+d]; }catch(e){}
+        }
         let g=await owFetchGsynres(GSYN[icao], y, mo, d);
         // Last-good gsynres from localStorage if today empty
         if(!g){
@@ -8412,19 +8481,13 @@ async function owLoad(force, emptyOnly){
           }catch(e){}
         }
         if(!g) return;
-        if(forceGsynOw){
-          if(isFinite(g.tmax)) row.tmax=owRound(g.tmax);
-          if(isFinite(g.tmin)) row.tmin=owRound(g.tmin);
-          if(isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
-        }else if(needOw){
-          if((row.tmax==null||row.tmax==='') && isFinite(g.tmax)) row.tmax=owRound(g.tmax);
-          if((row.tmin==null||row.tmin==='') && isFinite(g.tmin)) row.tmin=owRound(g.tmin);
-          if((row.rr==null||row.rr==='') && isFinite(g.rr)) row.rr=(Math.round(g.rr*10)/10).toFixed(1);
-        }
-        if(needOw2){
-          if((row.tmax2==null||row.tmax2==='') && isFinite(g.tmax)) row.tmax2=owRound(g.tmax);
-          if((row.tmin2==null||row.tmin2==='') && isFinite(g.tmin)) row.tmin2=owRound(g.tmin);
-          if((row.rr2==null||row.rr2==='') && isFinite(g.rr)) row.rr2=(Math.round(g.rr*10)/10).toFixed(1);
+        const rrE=function(v){ return v==null||v===''||v==='—.—'||v==='---'||v==='—'||v==='--.--'; };
+        // Prefer gsynres climate (max/min/rain) over SYNOP when gsynres has values
+        if(isFinite(g.tmax)){ row.tmax=owRound(g.tmax); row.tmax2=owRound(g.tmax); }
+        if(isFinite(g.tmin)){ row.tmin=owRound(g.tmin); row.tmin2=owRound(g.tmin); }
+        if(g.rr!=null && isFinite(g.rr)){
+          const rr=(Math.round(g.rr*10)/10).toFixed(1);
+          row.rr=rr; row.rr2=rr;
         }
       }));
     }
@@ -8437,7 +8500,8 @@ async function owLoad(force, emptyOnly){
     await owMapPool(OW_STATIONS, 6, async function(stn,idx){
       if(stn.sep) return;
       const row=rows[idx];
-      if(row.wx2 && row.tmax2!=null && row.tmax2!=='' && row.tmin2!=null && row.tmin2!=='' && row.rr2!=null && row.rr2!=='') return;
+      const _e2=function(v){ return v==null||v===''||v==='—.—'||v==='---'||v==='—'||v==='--.--'; };
+      if(row.wx2 && !_e2(row.tmax2) && !_e2(row.tmin2) && !_e2(row.rr2)) return;
       const lines=await owFetchMetar24(stn.icao);
       if(!lines||!lines.length) return;
       const mt=owMetarTemps(lines);
@@ -8450,13 +8514,20 @@ async function owLoad(force, emptyOnly){
       }
     });
   }
-  // OW2 final gap-fill: Open-Meteo only after 08:30 AST
+  // OW2 final gap-fill: Open-Meteo only after 08:30 AST, only if any gap
   if(typeof owLocalMinutes==='function' && owLocalMinutes()>=8*60+30){
+  const _eOm=function(v){ return v==null||v===''||v==='—.—'||v==='---'||v==='—'||v==='--.--'; };
+  const omNeed=OW_STATIONS.some(function(stn,idx){
+    if(stn.sep) return false;
+    const row=rows[idx];
+    return !row.wx2 || _eOm(row.tmax2) || _eOm(row.tmin2) || _eOm(row.rr2);
+  });
+  if(omNeed){
   if(st2pre) st2pre.textContent='Laden Open-Meteo…';
   await owMapPool(OW_STATIONS, 4, async function(stn,idx){
     if(stn.sep) return;
     const row=rows[idx];
-    const need=!row.wx2 || row.tmax2==null || row.tmax2==='' || row.tmin2==null || row.tmin2==='' || row.rr2==null || row.rr2==='';
+    const need=!row.wx2 || _eOm(row.tmax2) || _eOm(row.tmin2) || _eOm(row.rr2);
     if(!need) return;
     const c=OW_COORDS[stn.icao];
     if(!c) return;
@@ -8467,6 +8538,7 @@ async function owLoad(force, emptyOnly){
     if((row.tmin2==null||row.tmin2==='') && om.tmin!=null && isFinite(om.tmin)) row.tmin2=owRound(om.tmin);
     if((row.rr2==null||row.rr2==='') && om.rr!=null && isFinite(om.rr)) row.rr2=(Math.round(om.rr*10)/10).toFixed(1);
   });
+  } // omNeed
   } // end Open-Meteo after 08:30
   const got=rows.some(r=>!r.sep&&(r.wx||r.tmax!==''||r.tmin!==''||r.rr));
   const got2=rows.some(r=>!r.sep&&(r.wx2||r.tmax2!==''||r.tmin2!==''||r.rr2));
@@ -8560,7 +8632,9 @@ if(name==='ow'||name==='ow2'){
 if(name==='atc'){
 try{ atcEnsureFrame(); atcInitMap(); }catch(e){}
 setTimeout(function(){ try{ atcEnsureFrame(); if(atcMap) atcMap.invalidateSize(); }catch(e){} }, 200);
-setTimeout(function(){ try{ atcEnsureFrame(); }catch(e){} }, 1500);
+try{ if(!window.atcTimer) window.atcTimer=setInterval(function(){ atcTrafficRefresh(); }, 30000); }catch(e){}
+}else{
+try{ if(window.atcTimer){ clearInterval(atcTimer); atcTimer=null; } }catch(e){}
 }
 if(name==='stations'){
 setTimeout(()=>{

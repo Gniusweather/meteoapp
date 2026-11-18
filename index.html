@@ -756,6 +756,8 @@ body.speci-on #app{padding-top:calc(var(--hdr) + env(safe-area-inset-top) + 8px)
 
 .enc-pres-spark{display:inline-block;vertical-align:middle;margin-left:8px;height:22px;min-width:72px;}
 .enc-pres-spark svg{display:block;height:22px;width:72px;}
+td.ow-fb{position:relative}
+td.ow-fb::after{content:'';position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#e8890c}
 </style>
 </head>
 <body>
@@ -2750,7 +2752,7 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
   <div class="s-head">
     <div class="s-title">Overzicht weersgesteldheid</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="ow-status" id="ow-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <span class="ow-status" id="ow-status">Wacht tot 08:30 LT (12:30Z) of druk ↻</span>
       <button class="s-btn" id="ow-copy-btn" onclick="owCopyTable('ow')" title="Copy full OW table">Copy</button>
       <button class="s-btn" id="ow-retry-empty-btn" onclick="owLoad(true,true)" title="Only fill empty stations">Empty</button>
       <button class="s-btn" id="ow-refresh-btn" onclick="owLoad(true,false)" title="Full refresh">↻</button>
@@ -2768,7 +2770,7 @@ onerror="this.closest('.wx-chart-wrap').classList.add('fail')"/>
   <div class="s-head">
     <div class="s-title">OW2</div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <span class="ow-status" id="ow2-status">Wacht tot 08:10 LT (12:10Z) of druk ↻</span>
+      <span class="ow-status" id="ow2-status">Wacht tot 08:30 LT (12:30Z) of druk ↻</span>
       <button class="s-btn" id="ow2-copy-btn" onclick="owCopyTable('ow2')" title="Copy full OW2 table">Copy</button>
       <button class="s-btn" id="ow2-refresh-btn" onclick="owLoad(true)">↻</button>
     </div>
@@ -7111,20 +7113,30 @@ return {
 };
 }
 async function renderOgYear(box){
-const y=2026; // fixed climate year Jan–Dec 2026
+const y=new Date().getFullYear();
+const curM=new Date().getMonth()+1;
 const names=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const yk=OGSUM_KEY+'year_'+y;
 let store={};
 try{store=JSON.parse(localStorage.getItem(yk)||'{}')||{};}catch(e){}
-box.innerHTML='<div class="loading-msg">Loading 2026 year summary (Jan–Dec) from Ogimet…</div>';
-// Fetch all 12 months; future months with no bulletins stay empty
-for(let m=1;m<=12;m++){
-  if(store[m] && store[m].n) continue;
-  try{
-    const row=await ogSumFetchMonthAvg(y, m);
-    if(row){ store[m]=row; try{localStorage.setItem(yk, JSON.stringify(store));}catch(e){} }
-  }catch(e){}
+box.innerHTML='<div class="loading-msg">Loading '+y+' year summary from Ogimet…</div>';
+// Past months are final once stored; current month refreshed when older than 3 h; future months skipped
+const todo=[];
+for(let m=1;m<=curM;m++){
+  const r=store[m];
+  const fresh=r&&r.n&&(m<curM||(r.t&&Date.now()-r.t<3*3600*1000));
+  if(!fresh) todo.push(m);
 }
+let idx=0;
+async function worker(){
+  while(idx<todo.length){
+    const m=todo[idx++];
+    let row=null;
+    for(let a=0;a<2&&!row;a++){ try{ row=await ogSumFetchMonthAvg(y,m); }catch(e){} }
+    if(row){ row.t=Date.now(); store[m]=row; try{localStorage.setItem(yk,JSON.stringify(store));}catch(e){} }
+  }
+}
+await Promise.all([worker(),worker(),worker()]);
 let html='<table class="sum-tbl"><thead><tr><th>Month</th><th>T avg</th><th>Tmax</th><th>Tmin</th><th>Vis</th><th>Wind</th><th>QNH</th><th>Rain</th></tr></thead><tbody>';
 let any=false;
 const acc={T:[],Tmax:[],Tmin:[],vis:[],wind:[],pmsl:[],rain:[]};
@@ -7145,7 +7157,7 @@ if(any){
   html+='<tr><td><b>Year avg</b></td><td><b>'+(pickNum(acc.T)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmax)??'—')+'</b></td><td><b>'+(pickNum(acc.Tmin)??'—')+'</b></td><td><b>'+(pickNum(acc.vis)!=null?pickNum(acc.vis)+' km':'—')+'</b></td><td><b>'+(pickNum(acc.wind)??'—')+'</b></td><td><b>'+(pickNum(acc.pmsl)??'—')+'</b></td><td><b>'+(pickNum(acc.rain)??'—')+'</b></td></tr>';
 }
 html+='</tbody></table>';
-box.innerHTML=html+(any?'':'<p class="wx-model-note">No 2026 year data from Ogimet yet.</p>');
+box.innerHTML=html+(any?'':'<p class="wx-model-note">No '+y+' year data from Ogimet yet.</p>');
 }
 /* ── TABS ── */
 function suV(id){const e=document.getElementById(id);return e?String(e.value||'').trim():'';}
@@ -7567,7 +7579,7 @@ return out;
 
 
 
-/* ── WEERSGESTELDHEID (08:10 AST / 12Z) ── */
+/* ── WEERSGESTELDHEID (08:30 LT / 12:30Z) ── */
 const OW_STATIONS=[
   {name:'Aruba (Reina Beatrix)',wmo:['78982'],icao:'TNCA'},
   {name:'Bonaire (Flamingo)',wmo:['78990'],icao:'TNCB'},
@@ -7613,57 +7625,14 @@ function owWmoFromCode(code){
 }
 const _gsynCache=Object.create(null);
 
-
-function owParseGsynresText(text, y, mo, d){
-  if(!text||text.length<80) return null;
-  const mm=String(mo).padStart(2,'0');
-  const dd=String(d).padStart(2,'0');
-  // Work on a single flattened plain line set; match the data ROW only
-  const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
-  // Prefer "mm/dd max min" not caption dates
-  const re=new RegExp(mm+'/'+dd+'\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)([^]*?)(?=\\s'+mm+'/'+'\\d{2}\\s+-?\\d|\\s*$)');
-  let m=plain.match(new RegExp(mm+'/'+dd+'\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)(.{0,180})'));
-  if(!m) return null;
-  let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]);
-  if(!isFinite(tmax)||!isFinite(tmin)) return null;
-  if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
-  // Tokenize the slice after max/min: Avg Td Hr AppT Dir Int Pres Prec TotCl...
-  const slice=(m[3]||'');
-  const tokens=slice.trim().split(/\\s+/);
-  let rr=null;
-  // Find pressure-like token then next is Prec (number or Tr/Trace)
-  for(let i=0;i<tokens.length;i++){
-    const t=tokens[i];
-    const n=parseFloat(t);
-    if(isFinite(n) && n>=700 && n<=1050){
-      // next token precip
-      if(i+1<tokens.length){
-        const p=tokens[i+1];
-        if(/^(Tr|T|tr|trace)$/i.test(p)) rr=0;
-        else {
-          const pn=parseFloat(p);
-          if(isFinite(pn) && pn>=0 && pn<500) rr=pn;
-        }
-      }
-      break;
-    }
-  }
-  // No pressure (some stations): if a later small number after enough fields — careful skip
-  if(rr==null){
-    // look for Tr in tokens
-    for(let i=0;i<tokens.length;i++){
-      if(/^(Tr|T|tr|trace)$/i.test(tokens[i])){ rr=0; break; }
-    }
-  }
-  return {tmax:tmax, tmin:tmin, rr:rr};
-}
-
 async function owFetchGsynresForce(ind, y, mo, d){
+  // Bypass cache — always try network for MUHA/SVVA
   const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
   try{ delete _gsynCache[ck]; }catch(e){}
   const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=10&ano='+y+
     '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
   const bare=url.replace(/^https?:\/\//,'');
+  // Direct first; proxies only if direct fails
   const tries=[url, 'https://r.jina.ai/http://'+bare, 'https://r.jina.ai/https://'+bare];
   let text='';
   for(let ti=0;ti<tries.length;ti++){
@@ -7682,27 +7651,96 @@ async function owFetchGsynresForce(ind, y, mo, d){
     if(text) break;
   }
   if(!text) return null;
-  const parsed=owParseGsynresText(text, y, mo, d);
-  if(!parsed) return null;
-  const res={tmax:parsed.tmax, tmin:parsed.tmin, rr:parsed.rr, ind:String(ind)};
+  const mm=String(mo).padStart(2,'0');
+  const dd=String(d).padStart(2,'0');
+  const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
+  let m=plain.match(new RegExp(mm+'/'+dd+'\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)'));
+  if(!m) m=plain.match(new RegExp(mm+'/'+dd+'[^0-9]{0,15}(-?\\d+\\.\\d+)[^0-9]{0,15}(-?\\d+\\.\\d+)'));
+  if(!m) return null;
+  let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]), rr=null;
+  if(!isFinite(tmax)||!isFinite(tmin)) return null;
+  if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
+  const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
+  const nums=(after.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
+  if(nums.length>=7){
+    let cand=nums[6];
+    if(cand>=900 && nums.length>=8) cand=nums[7];
+    if(cand>=0 && cand<500) rr=cand;
+  }
+  const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
   _gsynCache[ck]=res;
   return res;
 }
+async function owApplyMuhaSvvaGsyn(rows, y, mo, d, fd, key){
+  const hard=[['MUHA','78224'],['SVVA','80472']];
+  let any=false;
+  for(let hi=0;hi<hard.length;hi++){
+    const icao=hard[hi][0], ind=hard[hi][1];
+    const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
+    if(mi<0) continue;
+    const row=rows[mi];
+    if(!row||row.sep) continue;
+    let g=await owFetchGsynresForce(ind, y, mo, d);
+    if(!g){
+      try{ const lg=JSON.parse(localStorage.getItem('meteo_gsynLast_'+icao)||'null'); if(lg&&isFinite(lg.tmax)) g=lg; }catch(e){}
+    }
+    if(!g) continue;
+    any=true;
+    if(isFinite(g.tmax)){ row.tmax=owRound(g.tmax); row.tmax2=owRound(g.tmax); }
+    if(isFinite(g.tmin)){ row.tmin=owRound(g.tmin); row.tmin2=owRound(g.tmin); }
+    if(g.rr!=null && isFinite(g.rr)){
+      const rr=(Math.round(g.rr*10)/10).toFixed(1);
+      row.rr=rr; row.rr2=rr;
+    }
+    try{ localStorage.setItem('meteo_gsynLast_'+icao, JSON.stringify({tmax:g.tmax,tmin:g.tmin,rr:g.rr,at:Date.now()})); }catch(e){}
+  }
+  if(any){
+    try{
+      owWriteKeep(key, rows);
+      owRender(rows, fd, true);
+      owRender(rows, fd, true, 'ow2-table-host', 'wx2');
+    }catch(e){}
+  }
+  return any;
+}
+
 async function owFetchGsynres(ind, y, mo, d){
   const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
   if(_gsynCache[ck]) return _gsynCache[ck];
+  // Ogimet daily summary Max Min Prec — strip HTML so caption dates do not win
   const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=10&ano='+y+
     '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
   try{
     const text=await owGet(url);
-    const parsed=owParseGsynresText(text, y, mo, d);
-    if(!parsed) return null;
-    const res={tmax:parsed.tmax, tmin:parsed.tmin, rr:parsed.rr, ind:String(ind)};
+    if(!text||text.length<80) return null;
+    const mm=String(mo).padStart(2,'0');
+    const dd=String(d).padStart(2,'0');
+    const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
+    // Data row: mm/dd Max Min ...
+    let m=plain.match(new RegExp(mm+'/'+dd+'\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)'));
+    if(!m){
+      m=plain.match(new RegExp(mm+'/'+dd+'[^0-9]{0,15}(-?\d+\.\d+)[^0-9]{0,15}(-?\d+\.\d+)'));
+    }
+    if(!m) return null;
+    let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]), rr=null;
+    if(!isFinite(tmax)||!isFinite(tmin)) return null;
+    if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
+    // After max/min: Avg Td Hr AppT Dir Int Pres Prec — find pressure then next number as prec
+    // Prec column only: need a full-looking row (enough decimals after max/min)
+    const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
+    const nums=(after.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
+    // Prec is after Pres; if index 6 looks like pressure (>=900), use index 7
+    if(nums.length>=7){
+      let cand=nums[6];
+      if(cand>=900 && nums.length>=8) cand=nums[7];
+      if(cand>=0 && cand<500) rr=cand;
+    }
+    // Incomplete rows → leave rr null
+    const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
     _gsynCache[ck]=res;
     return res;
   }catch(e){ return null; }
 }
-
 async function owFetchMuhaGsynres(y, mo, d){
   return owFetchGsynres('78224', y, mo, d);
 }
@@ -7869,31 +7907,30 @@ function owParseR24(raw){
   const m=String(raw).match(/\b333\b[\s\S]{0,260}?\b7(\d{4})\b/);
   if(!m) return null;
   const n=parseInt(m[1],10);
-  if(isNaN(n)||n>=9998) return 0;
-  if(n>=9900) return (n-9900)/10;
+  if(isNaN(n)||n>=9999) return 0; // 9999 = trace
   return n/10;
 }
 function owFormDay(){
   const d=new Date(Date.now()-4*3600e3);
   const mins=d.getUTCHours()*60+d.getUTCMinutes();
-  if(mins<8*60+10) d.setUTCDate(d.getUTCDate()-1);
+  if(mins<8*60+30) d.setUTCDate(d.getUTCDate()-1);
   return {y:d.getUTCFullYear(),mo:d.getUTCMonth()+1,d:d.getUTCDate()};
 }
 function owAfter810(){
   const loc=new Date(Date.now()-4*3600e3);
-  return (loc.getUTCHours()*60+loc.getUTCMinutes())>=8*60+10;
+  return (loc.getUTCHours()*60+loc.getUTCMinutes())>=8*60+30;
 }
 function owLocalMinutes(){
   const loc=new Date(Date.now()-4*3600e3);
   return loc.getUTCHours()*60+loc.getUTCMinutes();
 }
 function owAfter815(){
-  return owLocalMinutes()>=8*60+15;
+  return owLocalMinutes()>=8*60+30; // name kept; cutoff is 08:30 LT
 }
 function owAutoFetchWindow(){
-  // 08:15–10:30 AST auto-retry for 12Z
+  // 08:30–12:00 LT auto-retry for late 12Z reports
   const m=owLocalMinutes();
-  return m>=8*60+15 && m<=10*60+30;
+  return m>=8*60+30 && m<=12*60;
 }
 const ow12zReady=Object.create(null); // form-day key → true when 12Z considered in
 function owMark12zIfReady(rows, key){
@@ -7927,25 +7964,17 @@ const _owGetCache=Object.create(null);
 async function owGet(url){
   if(_owGetCache[url]!=null && _owGetCache[url]!=='') return _owGetCache[url];
   const bare=url.replace(/^https?:\/\//,'');
+  // fetchRetry already tries direct + proxies; no second raw fetch of the same URL
   const tries=[
     url,
     'https://r.jina.ai/http://'+bare,
-    'https://r.jina.ai/https://'+bare,
     'https://corsproxy.io/?'+encodeURIComponent(url)
   ];
   for(let ti=0;ti<tries.length;ti++){
-    const u=tries[ti];
     try{
-      const o=await fetchRetry(u,1);
+      const o=await fetchRetry(tries[ti],1);
       if(o&&o.ok&&o.text&&o.text.length>40&&!looksLikeFetchError(o.text)){
         _owGetCache[url]=o.text; return o.text;
-      }
-    }catch(e){}
-    try{
-      const r=await fetch(u,{cache:'no-store'});
-      if(r&&r.ok){
-        const t=await r.text();
-        if(t&&t.length>40&&!looksLikeFetchError(t)){ _owGetCache[url]=t; return t; }
       }
     }catch(e){}
   }
@@ -8038,6 +8067,14 @@ function owDecode(repText){
   else if(r.Tmin===0) r.Tmin=null;
   return r;
 }
+// precipitation/thunderstorm in the METAR body (not remarks); handles TSRA, +SHRA, -DZ, VCTS, FZRA
+function owMetarWet(l){
+  const body=String(l||'').toUpperCase().split(/\bRMK\b/)[0];
+  return body.split(/\s+/).some(function(t){
+    t=t.replace(/^[+\-]/,'').replace(/^VC/,'');
+    return /^(TS|SH)$/.test(t) || /^(FZ|SH|TS|BL|DR)?(RA|DZ|SN|SG|GR|GS|PL|IC|UP)+$/.test(t);
+  });
+}
 function owMetarTemps(lines){
   let tmax=null,tmin=null,wx='';
   (lines||[]).forEach(raw=>{
@@ -8081,10 +8118,11 @@ function owRender(rows, fd, filled, hostId, wxKey){
   const days=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
   const dow=days[new Date(Date.UTC(fd.y,fd.mo-1,fd.d,16)).getUTCDay()]||'';
   const dd=String(fd.d).padStart(2,'0')+' - '+String(fd.mo).padStart(2,'0')+' - '+fd.y;
-  const cell=function(cls, val, missing){
+  const cell=function(cls, val, missing, note){
     const show=(val===''||val==null)?missing:String(val);
     const safe=show.split('"').join('');
-    return '<td class="'+cls+'" data-copy="'+safe+'" ondblclick="owCopyCell(event)">'+show+'</td>';
+    const fb=(note&&show!==missing)?(' ow-fb" title="'+note):'';
+    return '<td class="'+cls+fb+'" data-copy="'+safe+'" ondblclick="owCopyCell(event)">'+show+'</td>';
   };
   let html='<div class="ow-sub"><span>Weercondities vanmorgen om 08:00 uur<br>Antilliaanse tijd:</span><span>Condities afgelopen 24 uur:</span></div>';
   html+='<div class="ow-scroll"><table class="ow-tbl"><thead>';
@@ -8095,8 +8133,8 @@ function owRender(rows, fd, filled, hostId, wxKey){
     html+='<tr>';
     html+=cell('', r.name, r.name);
     html+=cell('wx', r[wxKey], '---');
-    html+=cell('num', r[wxKey==='wx2'?'tmax2':'tmax'], '---');
-    html+=cell('num', r[wxKey==='wx2'?'tmin2':'tmin'], '---');
+    html+=cell('num', r[wxKey==='wx2'?'tmax2':'tmax'], '---', r.tmaxFb?('Tmax uit '+r.tmaxFb+', niet uit 12Z-rapport'):'');
+    html+=cell('num', r[wxKey==='wx2'?'tmin2':'tmin'], '---', r.tminFb?('Tmin uit '+r.tminFb+', niet uit 12Z-rapport'):'');
     html+=cell('num', wxKey==='wx2'?r.rr2:r.rr, '--.--');
     html+='</tr>';
   });
@@ -8187,6 +8225,16 @@ function owWriteKeep(key, rows){
   const copy=(rows||[]).map(function(r){return Object.assign({}, r);});
   window.owKeep={key:key, rows:copy};
   try{ localStorage.setItem('meteo_owKeep_'+key, JSON.stringify({key:key, rows:copy, at:Date.now()})); }catch(e){}
+  try{ // prune saved days older than 7 days
+    const old=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.indexOf('meteo_owKeep_')===0&&k!=='meteo_owKeep_'+key){
+        try{ const j=JSON.parse(localStorage.getItem(k)||'null'); if(!j||!j.at||Date.now()-j.at>7*86400e3) old.push(k); }catch(e){ old.push(k); }
+      }
+    }
+    old.forEach(function(k){localStorage.removeItem(k);});
+  }catch(e){}
 }
 async function owMapPool(items, limit, fn){
   const out=new Array(items.length);
@@ -8242,7 +8290,7 @@ async function owLoad(force, emptyOnly){
   const fd=owFormDay();
   const key=fd.y+'-'+fd.mo+'-'+fd.d;
   emptyOnly=!!emptyOnly;
-  if(owBusy && !force) return;
+  if(owBusy) return; // never two loads at once
   // Soft open: saved keep for this form day + OW rows complete → skip network
   if(!force){
     const keep0=owReadKeep(key);
@@ -8391,19 +8439,21 @@ async function owLoad(force, emptyOnly){
       });
       tmax=best!=null?best:eve;
     }
+    let tmaxFb='',tminFb='';
     if(tmax==null && d12&&d12.Tmax!=null) tmax=d12.Tmax;
-    else if(tmax==null && d18&&d18.Tmax!=null) tmax=d18.Tmax;
+    else if(tmax==null && d18&&d18.Tmax!=null){ tmax=d18.Tmax; if(us) tmaxFb=String(r18.h).padStart(2,'0')+':'+String(r18.mi).padStart(2,'0')+'Z'; }
     const autoMin=['TNCB','EHAM','TNCE'].includes(stn.icao);
     if(autoMin){
       if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
     }else if(d12&&d12.Tmin!=null) tmin=d12.Tmin;
-    else if(d06&&d06.Tmin!=null) tmin=d06.Tmin;
+    else if(d06&&d06.Tmin!=null){ tmin=d06.Tmin; if(us) tminFb=String(r06.h).padStart(2,'0')+':'+String(r06.mi).padStart(2,'0')+'Z'; }
     if(d12&&d12._r24!=null) rr=d12._r24;
     else if(d06&&d06._r24!=null) rr=d06._r24;
     // wwOnly (tab empty-only on complete rows): weertype already updated; skip synop climate
     if(!wwOnly){
-      if(tmax!=null && (row.tmax==null||row.tmax==='')) row.tmax=owRound(tmax);
-      if(tmin!=null && (row.tmin==null||row.tmin==='')) row.tmin=owRound(tmin);
+      // a cell from a fallback hour (17Z/05Z) is replaced once the 12Z report carries the value
+      if(tmax!=null && (row.tmax==null||row.tmax===''||(row.tmaxFb&&!tmaxFb))){ row.tmax=owRound(tmax); row.tmaxFb=tmaxFb; if(row.tmaxFb==='') row.tmax2=owRound(tmax); }
+      if(tmin!=null && (row.tmin==null||row.tmin===''||(row.tminFb&&!tminFb))){ row.tmin=owRound(tmin); row.tminFb=tminFb; if(row.tminFb==='') row.tmin2=owRound(tmin); }
       if(rr!=null && (row.rr==null||row.rr==='')) row.rr=(Math.round(rr*10)/10).toFixed(1);
     }
     // OW2 climate from synop (skip when wwOnly)
@@ -8456,14 +8506,11 @@ async function owLoad(force, emptyOnly){
         }
         if(!g) return;
         const rrE=function(v){ return v==null||v===''||v==='—.—'||v==='---'||v==='—'||v==='--.--'; };
-        // SYNOP section-3 tmax/tmin wins when already set; gsynres fills gaps + rain (Tr→0.0)
-        if(rrE(row.tmax) && isFinite(g.tmax)){ row.tmax=owRound(g.tmax); }
-        if(rrE(row.tmin) && isFinite(g.tmin)){ row.tmin=owRound(g.tmin); }
-        if(rrE(row.tmax2) && isFinite(g.tmax)){ row.tmax2=owRound(g.tmax); }
-        if(rrE(row.tmin2) && isFinite(g.tmin)){ row.tmin2=owRound(g.tmin); }
+        // Prefer gsynres climate (max/min/rain) over SYNOP when gsynres has values
+        if(isFinite(g.tmax)){ row.tmax=owRound(g.tmax); row.tmax2=owRound(g.tmax); }
+        if(isFinite(g.tmin)){ row.tmin=owRound(g.tmin); row.tmin2=owRound(g.tmin); }
         if(g.rr!=null && isFinite(g.rr)){
           const rr=(Math.round(g.rr*10)/10).toFixed(1);
-          // Prefer gsynres rain (includes 0.0); overwrites wrong TotCl-as-rain keep
           row.rr=rr; row.rr2=rr;
         }
       }));
@@ -8486,7 +8533,7 @@ async function owLoad(force, emptyOnly){
       if((row.tmax2==null||row.tmax2==='') && mt.tmax!=null) row.tmax2=owRound(mt.tmax);
       if((row.tmin2==null||row.tmin2==='') && mt.tmin!=null) row.tmin2=owRound(mt.tmin);
       if((row.rr2==null||row.rr2==='') && lines.length){
-        const wet=lines.some(function(l){return /\b(RA|SHRA|DZ|TS|SH)\b/.test(l.toUpperCase());});
+        const wet=lines.some(owMetarWet);
         if(!wet) row.rr2='0.0';
       }
     });
@@ -8554,8 +8601,8 @@ function owWatch(){
       // New form day → allow auto again
       if(owLastKey && owLastKey!==key){ /* keep flags per key */ }
       if(!owAutoFetchWindow()) return;
-      if(ow12zReady[key]) return; // 12Z already in — no auto refresh
       if(owBusy) return;
+      { const k=owReadKeep(key); if(k && !k.some(function(r){return !r.sep && !owRowFilledOw(r);})) return; } // everything filled
       // Retry incomplete stations only (not full wipe)
       owLoad(true, true);
     }catch(e){}
@@ -8565,13 +8612,14 @@ function owWatch(){
     try{
       const f=owFormDay();
       const key=f.y+'-'+f.mo+'-'+f.d;
-      if(owAutoFetchWindow() && !ow12zReady[key] && !owBusy) owLoad(true, true);
+      if(owAutoFetchWindow() && !owBusy) owLoad(true, true);
     }catch(e){}
   }, 8000);
 }
 owWatch();
 window.owCopyCell=owCopyCell;
 window.owLoad=owLoad;
+window.owCopyTable=owCopyTable;
 try{
   const _fd=owFormDay();
   owRender(owBlankRows(), _fd, false);

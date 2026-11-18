@@ -7613,14 +7613,57 @@ function owWmoFromCode(code){
 }
 const _gsynCache=Object.create(null);
 
+
+function owParseGsynresText(text, y, mo, d){
+  if(!text||text.length<80) return null;
+  const mm=String(mo).padStart(2,'0');
+  const dd=String(d).padStart(2,'0');
+  // Work on a single flattened plain line set; match the data ROW only
+  const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
+  // Prefer "mm/dd max min" not caption dates
+  const re=new RegExp(mm+'/'+dd+'\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)([^]*?)(?=\\s'+mm+'/'+'\\d{2}\\s+-?\\d|\\s*$)');
+  let m=plain.match(new RegExp(mm+'/'+dd+'\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)(.{0,180})'));
+  if(!m) return null;
+  let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]);
+  if(!isFinite(tmax)||!isFinite(tmin)) return null;
+  if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
+  // Tokenize the slice after max/min: Avg Td Hr AppT Dir Int Pres Prec TotCl...
+  const slice=(m[3]||'');
+  const tokens=slice.trim().split(/\\s+/);
+  let rr=null;
+  // Find pressure-like token then next is Prec (number or Tr/Trace)
+  for(let i=0;i<tokens.length;i++){
+    const t=tokens[i];
+    const n=parseFloat(t);
+    if(isFinite(n) && n>=700 && n<=1050){
+      // next token precip
+      if(i+1<tokens.length){
+        const p=tokens[i+1];
+        if(/^(Tr|T|tr|trace)$/i.test(p)) rr=0;
+        else {
+          const pn=parseFloat(p);
+          if(isFinite(pn) && pn>=0 && pn<500) rr=pn;
+        }
+      }
+      break;
+    }
+  }
+  // No pressure (some stations): if a later small number after enough fields — careful skip
+  if(rr==null){
+    // look for Tr in tokens
+    for(let i=0;i<tokens.length;i++){
+      if(/^(Tr|T|tr|trace)$/i.test(tokens[i])){ rr=0; break; }
+    }
+  }
+  return {tmax:tmax, tmin:tmin, rr:rr};
+}
+
 async function owFetchGsynresForce(ind, y, mo, d){
-  // Bypass cache — always try network for MUHA/SVVA
   const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
   try{ delete _gsynCache[ck]; }catch(e){}
   const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=10&ano='+y+
     '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
   const bare=url.replace(/^https?:\/\//,'');
-  // Direct first; proxies only if direct fails
   const tries=[url, 'https://r.jina.ai/http://'+bare, 'https://r.jina.ai/https://'+bare];
   let text='';
   for(let ti=0;ti<tries.length;ti++){
@@ -7639,96 +7682,27 @@ async function owFetchGsynresForce(ind, y, mo, d){
     if(text) break;
   }
   if(!text) return null;
-  const mm=String(mo).padStart(2,'0');
-  const dd=String(d).padStart(2,'0');
-  const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
-  let m=plain.match(new RegExp(mm+'/'+dd+'\\s+(-?\\d+\\.\\d+)\\s+(-?\\d+\\.\\d+)'));
-  if(!m) m=plain.match(new RegExp(mm+'/'+dd+'[^0-9]{0,15}(-?\\d+\\.\\d+)[^0-9]{0,15}(-?\\d+\\.\\d+)'));
-  if(!m) return null;
-  let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]), rr=null;
-  if(!isFinite(tmax)||!isFinite(tmin)) return null;
-  if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
-  const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
-  const nums=(after.match(/-?\\d+\\.\\d+/g)||[]).map(parseFloat);
-  if(nums.length>=7){
-    let cand=nums[6];
-    if(cand>=900 && nums.length>=8) cand=nums[7];
-    if(cand>=0 && cand<500) rr=cand;
-  }
-  const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
+  const parsed=owParseGsynresText(text, y, mo, d);
+  if(!parsed) return null;
+  const res={tmax:parsed.tmax, tmin:parsed.tmin, rr:parsed.rr, ind:String(ind)};
   _gsynCache[ck]=res;
   return res;
 }
-async function owApplyMuhaSvvaGsyn(rows, y, mo, d, fd, key){
-  const hard=[['MUHA','78224'],['SVVA','80472']];
-  let any=false;
-  for(let hi=0;hi<hard.length;hi++){
-    const icao=hard[hi][0], ind=hard[hi][1];
-    const mi=OW_STATIONS.findIndex(function(st){return st.icao===icao;});
-    if(mi<0) continue;
-    const row=rows[mi];
-    if(!row||row.sep) continue;
-    let g=await owFetchGsynresForce(ind, y, mo, d);
-    if(!g){
-      try{ const lg=JSON.parse(localStorage.getItem('meteo_gsynLast_'+icao)||'null'); if(lg&&isFinite(lg.tmax)) g=lg; }catch(e){}
-    }
-    if(!g) continue;
-    any=true;
-    if(isFinite(g.tmax)){ row.tmax=owRound(g.tmax); row.tmax2=owRound(g.tmax); }
-    if(isFinite(g.tmin)){ row.tmin=owRound(g.tmin); row.tmin2=owRound(g.tmin); }
-    if(g.rr!=null && isFinite(g.rr)){
-      const rr=(Math.round(g.rr*10)/10).toFixed(1);
-      row.rr=rr; row.rr2=rr;
-    }
-    try{ localStorage.setItem('meteo_gsynLast_'+icao, JSON.stringify({tmax:g.tmax,tmin:g.tmin,rr:g.rr,at:Date.now()})); }catch(e){}
-  }
-  if(any){
-    try{
-      owWriteKeep(key, rows);
-      owRender(rows, fd, true);
-      owRender(rows, fd, true, 'ow2-table-host', 'wx2');
-    }catch(e){}
-  }
-  return any;
-}
-
 async function owFetchGsynres(ind, y, mo, d){
   const ck=String(ind)+'|'+y+'-'+mo+'-'+d;
   if(_gsynCache[ck]) return _gsynCache[ck];
-  // Ogimet daily summary Max Min Prec — strip HTML so caption dates do not win
   const url='https://www.ogimet.com/cgi-bin/gsynres?lang=en&ord=REV&ndays=10&ano='+y+
     '&mes='+String(mo).padStart(2,'0')+'&day='+String(d).padStart(2,'0')+'&hora=12&ind='+ind;
   try{
     const text=await owGet(url);
-    if(!text||text.length<80) return null;
-    const mm=String(mo).padStart(2,'0');
-    const dd=String(d).padStart(2,'0');
-    const plain=String(text).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ');
-    // Data row: mm/dd Max Min ...
-    let m=plain.match(new RegExp(mm+'/'+dd+'\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)'));
-    if(!m){
-      m=plain.match(new RegExp(mm+'/'+dd+'[^0-9]{0,15}(-?\d+\.\d+)[^0-9]{0,15}(-?\d+\.\d+)'));
-    }
-    if(!m) return null;
-    let tmax=parseFloat(m[1]), tmin=parseFloat(m[2]), rr=null;
-    if(!isFinite(tmax)||!isFinite(tmin)) return null;
-    if(tmin>tmax){ const x=tmax; tmax=tmin; tmin=x; }
-    // After max/min: Avg Td Hr AppT Dir Int Pres Prec — find pressure then next number as prec
-    // Prec column only: need a full-looking row (enough decimals after max/min)
-    const after=plain.slice(m.index+m[0].length, m.index+m[0].length+160);
-    const nums=(after.match(/-?\d+\.\d+/g)||[]).map(parseFloat);
-    // Prec is after Pres; if index 6 looks like pressure (>=900), use index 7
-    if(nums.length>=7){
-      let cand=nums[6];
-      if(cand>=900 && nums.length>=8) cand=nums[7];
-      if(cand>=0 && cand<500) rr=cand;
-    }
-    // Incomplete rows → leave rr null
-    const res={tmax:tmax, tmin:tmin, rr:rr, ind:String(ind)};
+    const parsed=owParseGsynresText(text, y, mo, d);
+    if(!parsed) return null;
+    const res={tmax:parsed.tmax, tmin:parsed.tmin, rr:parsed.rr, ind:String(ind)};
     _gsynCache[ck]=res;
     return res;
   }catch(e){ return null; }
 }
+
 async function owFetchMuhaGsynres(y, mo, d){
   return owFetchGsynres('78224', y, mo, d);
 }
@@ -8482,11 +8456,14 @@ async function owLoad(force, emptyOnly){
         }
         if(!g) return;
         const rrE=function(v){ return v==null||v===''||v==='—.—'||v==='---'||v==='—'||v==='--.--'; };
-        // Prefer gsynres climate (max/min/rain) over SYNOP when gsynres has values
-        if(isFinite(g.tmax)){ row.tmax=owRound(g.tmax); row.tmax2=owRound(g.tmax); }
-        if(isFinite(g.tmin)){ row.tmin=owRound(g.tmin); row.tmin2=owRound(g.tmin); }
+        // SYNOP section-3 tmax/tmin wins when already set; gsynres fills gaps + rain (Tr→0.0)
+        if(rrE(row.tmax) && isFinite(g.tmax)){ row.tmax=owRound(g.tmax); }
+        if(rrE(row.tmin) && isFinite(g.tmin)){ row.tmin=owRound(g.tmin); }
+        if(rrE(row.tmax2) && isFinite(g.tmax)){ row.tmax2=owRound(g.tmax); }
+        if(rrE(row.tmin2) && isFinite(g.tmin)){ row.tmin2=owRound(g.tmin); }
         if(g.rr!=null && isFinite(g.rr)){
           const rr=(Math.round(g.rr*10)/10).toFixed(1);
+          // Prefer gsynres rain (includes 0.0); overwrites wrong TotCl-as-rain keep
           row.rr=rr; row.rr2=rr;
         }
       }));

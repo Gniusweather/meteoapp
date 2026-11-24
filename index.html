@@ -7924,22 +7924,28 @@ function owWxFromMetar(raw){
 }
 function owParseR24(raw){
   if(!raw) return null;
+  // ONLY section 333 — never section-1 7wwW1W2 (that produced absurd values e.g. 832.5)
   const s3=String(raw).match(/\b333\b([\s\S]{0,280}?)(?:\b222\b|\b444\b|\b555\b|=|$)/);
-  const block=s3?s3[1]:String(raw);
+  if(!s3) return null;
+  const block=s3[1];
   let m=block.match(/\b7(\d{4})\b/);
   if(m){
     const n=parseInt(m[1],10);
     if(!isNaN(n)&&n<9998){
       if(n>=9900) return (n-9900)/10;
-      return n/10;
+      const mm=n/10;
+      // Caribbean daily rain sanity (reject garbage)
+      if(mm>=0 && mm<=400) return mm;
     }
     if(n>=9999) return 0;
   }
   m=block.match(/\b6(\d{3})(\d)\b/);
   if(m){
     const n=parseInt(m[1],10);
-    if(!isNaN(n)&&n<990) return n/10;
-    if(n>=990&&n<=999) return (n-990)/10;
+    let mm=null;
+    if(!isNaN(n)&&n<990) mm=n/10;
+    else if(n>=990&&n<=999) mm=(n-990)/10;
+    if(mm!=null && mm>=0 && mm<=400) return mm;
   }
   return null;
 }
@@ -8511,8 +8517,8 @@ async function owLoad(force, emptyOnly){
       else if(d12&&d12.Tmin!=null) tmin=d12.Tmin;
     }else if(d12&&d12.Tmin!=null) tmin=d12.Tmin;
     else if(d06&&d06.Tmin!=null){ tmin=d06.Tmin; if(us) tminFb=String(r06.h).padStart(2,'0')+':'+String(r06.mi).padStart(2,'0')+'Z'; }
-    if(d12&&d12._r24!=null) rr=d12._r24;
-    else if(d06&&d06._r24!=null) rr=d06._r24;
+    if(d12&&d12._r24!=null && d12._r24<=400) rr=d12._r24;
+    else if(d06&&d06._r24!=null && d06._r24<=400) rr=d06._r24;
     // wwOnly (tab empty-only on complete rows): weertype already updated; skip synop climate
     if(!wwOnly){
       // a cell from a fallback hour (17Z/05Z) is replaced once the 12Z report carries the value
@@ -8575,7 +8581,7 @@ async function owLoad(force, emptyOnly){
         if(rrE(row.tmin) && isFinite(g.tmin)){ row.tmin=owRound(g.tmin); }
         if(rrE(row.tmax2) && isFinite(g.tmax)){ row.tmax2=owRound(g.tmax); }
         if(rrE(row.tmin2) && isFinite(g.tmin)){ row.tmin2=owRound(g.tmin); }
-        if(g.rr!=null && isFinite(g.rr)){
+        if(g.rr!=null && isFinite(g.rr) && g.rr>=0 && g.rr<=400){
           const rr=(Math.round(g.rr*10)/10).toFixed(1);
           row.rr=rr; row.rr2=rr;
         }

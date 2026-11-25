@@ -7659,7 +7659,7 @@ const OW_STATIONS=[
   {name:'Paramaribo',wmo:['81225'],icao:'SMJP'},
   {name:'Port of Spain',wmo:['78970'],icao:'TTPP'},
   {name:'San Juan',wmo:['78526'],icao:'TJSJ'},
-  {name:'Santo Domingo',wmo:['78485'],icao:'MDSD'},
+  {name:'Santo Domingo',wmo:['78486'],icao:'MDSD'},
   {name:'Valencia',wmo:['80472'],icao:'SVVA'}
 ];
 const OW_COORDS={
@@ -8542,7 +8542,7 @@ async function owLoad(force, emptyOnly){
     TNCA:'78982',TNCB:'78990',TNCC:'78988',TNCE:'78873',TNCM:'78866',
     EHAM:'06240',KATL:'72219',SKBO:'80222',MUHA:'78224',MKJP:'78397',
     KMIA:'72202',KLGA:'72503',SMJP:'81225',TTPP:'78970',TJSJ:'78526',
-    MDSD:'78485',SVVA:'80472'
+    MDSD:'78486',SVVA:'80472'
   };
   try{
     const gsynList=Object.keys(GSYN);
@@ -8604,10 +8604,8 @@ async function owLoad(force, emptyOnly){
       if(!row.wx2 && mt.wx && String(mt.wx).toLowerCase()!=='motregen') row.wx2=mt.wx;
       if((row.tmax2==null||row.tmax2==='') && mt.tmax!=null) row.tmax2=owRound(mt.tmax);
       if((row.tmin2==null||row.tmin2==='') && mt.tmin!=null) row.tmin2=owRound(mt.tmin);
-      if((row.rr2==null||row.rr2==='') && lines.length){
-        const wet=lines.some(owMetarWet);
-        if(!wet) row.rr2='0.0';
-      }
+      // No rain from 24h METAR backup — leave blank
+      if(row.rr2==null||row.rr2===''||row.rr2==='---'||row.rr2==='--.--') row.rr2='—.—';
     });
   }
   // OW2 final gap-fill: Open-Meteo only after 08:30 AST, only if any gap

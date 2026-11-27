@@ -7706,6 +7706,7 @@ function owParseGsynresText(text, y, mo, d){
       if(i+1<tokens.length){
         const p=tokens[i+1];
         if(/^(Tr|T|tr|trace)$/i.test(p)) rr=0;
+        else if(/^(----|\/\/\/|\.\.\.\.|\/\/\/\/)$/i.test(p)) rr=null;
         else { const pn=parseFloat(p); if(isFinite(pn)&&pn>=0&&pn<500) rr=pn; }
       }
       break;
@@ -8583,7 +8584,9 @@ async function owLoad(force, emptyOnly){
         if(rrE(row.tmin2) && isFinite(g.tmin)){ row.tmin2=owRound(g.tmin); }
         if(g.rr!=null && isFinite(g.rr) && g.rr>=0 && g.rr<=400){
           const rr=(Math.round(g.rr*10)/10).toFixed(1);
-          row.rr=rr; row.rr2=rr;
+          // Prefer existing SYNOP section-3 24h rain; gsynres only fills gaps
+          if(rrE(row.rr)) row.rr=rr;
+          if(rrE(row.rr2)) row.rr2=rr;
         }
       }));
     }
